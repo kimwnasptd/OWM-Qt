@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>748</width>
+    <height>405</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>OWM: Overworld Manager</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QTreeView" name="OWTreeView">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>261</width>
+      <height>331</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>748</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen_ROM"/>
+    <addaction name="actionSave_ROM"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit_2"/>
+   </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Actions</string>
+    </property>
+    <widget class="QMenu" name="menuFrames_Sheet">
+     <property name="title">
+      <string>Frames Sheet</string>
+     </property>
+     <addaction name="actionImport_Frames_Sheet"/>
+     <addaction name="actionExport_Frames_Sheet"/>
+    </widget>
+    <widget class="QMenu" name="menuSpriter_s_Resource">
+     <property name="title">
+      <string>Spriter's Resource</string>
+     </property>
+     <addaction name="actionImport_OW"/>
+     <addaction name="actionImport_Pokemon"/>
+    </widget>
+    <addaction name="menuFrames_Sheet"/>
+    <addaction name="menuSpriter_s_Resource"/>
+   </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>Info</string>
+    </property>
+    <addaction name="actionREADME"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuOptions"/>
+   <addaction name="menuAbout"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpen_ROM">
+   <property name="text">
+    <string>Open ROM...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSave_ROM">
+   <property name="text">
+    <string>Save ROM...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionImport_Frames_Sheet">
+   <property name="text">
+    <string>Import Frames Sheet</string>
+   </property>
+  </action>
+  <action name="actionExport_Frames_Sheet">
+   <property name="text">
+    <string>Export Frames Sheet</string>
+   </property>
+  </action>
+  <action name="actionImport_OW">
+   <property name="text">
+    <string>Import OW</string>
+   </property>
+  </action>
+  <action name="actionImport_Pokemon">
+   <property name="text">
+    <string>Import Pokemon</string>
+   </property>
+  </action>
+  <action name="actionExit_2">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionREADME">
+   <property name="text">
+    <string>README</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
