@@ -24,7 +24,7 @@ original_ow_pointers = 0x0
 original_ow_data_pointers = 0x0
 original_num_of_ows = 0
 free_space = 0x0
-frames_end = 0x2135F0
+frames_end = 2176496  # 0x2135F0
 
 
 # ----------------------Functions------------------------------
@@ -59,11 +59,11 @@ def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, f
 
 def get_word(address):
     rom.seek(address)
-    byte1 = rom.read_byte() * 256 * 256 * 256
-    byte2 = rom.read_byte() * 256 * 256
-    byte3 = rom.read_byte() * 256
+    byte1 = rom.read_byte() << 24
+    byte2 = rom.read_byte() << 16
+    byte3 = rom.read_byte() << 8
     byte4 = rom.read_byte()
-    return byte4 + byte3 + byte2 + byte1
+    return byte4 | byte3 | byte2 | byte1
 
 
 def find_free_space(size, start_address=0, ending=0):
@@ -87,6 +87,14 @@ def find_free_space(size, start_address=0, ending=0):
             working_address += 1
 
 
+def check_pointer(address):
+    rom.seek(address + 3)
+    byte = rom.read_byte()
+    if (byte == 8) or (byte == 9):
+        return 1
+    return 0
+
+
 def get_bytes_bits(byte, bit, to=0):
     if to == 0:
         to = bit
@@ -102,6 +110,19 @@ def get_bytes_bits(byte, bit, to=0):
     return result
 
 
+def write_word(value, address):
+    rom.seek(address)
+
+    for i in range(0, 4):
+        byte = get_bytes_bits(value, 1, 8)
+        rom.write_byte(byte)
+        value >>= 8
+
+
+def write_pointer(pointer_address, address_to_write):
+    write_word(pointer_address + 0x08000000, address_to_write)
+
+
 def read_word(address):
     rom.seek(address)
     byte1 = rom.read_byte()
@@ -115,33 +136,20 @@ def read_word(address):
     byte4 = rom.read_byte()
     byte4 <<= 24
 
-    return byte1 | byte2 | byte3 | byte4
-
-
-def write_word(value, address):
-    rom.seek(address)
-
-    for i in range(0, 4):
-        byte = get_bytes_bits(value, 1, 8)
-        rom.write_byte(byte)
-        value >>= 8
-
-
-def check_pointer(address):
-    rom.seek(address + 3)
-    byte = rom.read_byte()
-    if (byte == 8) or (byte == 9):
-        return 1
-    return 0
-
-
-def write_pointer(pointer_address, address_to_write):
-    write_word(pointer_address + 0x08000000, address_to_write)
+    return byte1 + byte2 + byte3 + byte4
 
 
 def pointer_to_address(address):
-    value = read_word(address)
-    return value - 0x08000000
+    rom.seek(address)
+    byte1 = rom.read_byte()
+    byte2 = rom.read_byte() << 8
+    byte3 = rom.read_byte() << 16
+    subfix = rom.read_byte()
+
+    if subfix == 9:
+        return byte3 + byte2 + byte1 + 0x1000000
+    else:
+        return byte3 + byte2 + byte1
 
 
 def is_ow_data(address):
@@ -417,19 +425,11 @@ def capitalized_hex(address):
 
 
 def get_animation_address(ow_data_address):
-    data_tuple = (0, 0, 0, 0)
-    data_tuple[0] = pointer_to_address(ow_data_address + 0x10)
-    data_tuple[1] = pointer_to_address(ow_data_address + 0x14)
-    data_tuple[2] = pointer_to_address(ow_data_address + 0x18)
-    data_tuple[3] = pointer_to_address(ow_data_address + 0x20)
-    return data_tuple
+    return pointer_to_address(ow_data_address + 0x18)
 
 
-def write_animation_pointer(ow_data_address, data_tuple):
-    write_pointer(data_tuple[0], ow_data_address + 0x10)
-    write_pointer(data_tuple[1], ow_data_address + 0x14)
-    write_pointer(data_tuple[2], ow_data_address + 0x18)
-    write_pointer(data_tuple[3], ow_data_address + 0x20)
+def write_animation_pointer(ow_data_address, animation_address):
+    write_pointer(animation_address, ow_data_address + 0x18)
 
 
 # -----------------Classes--------------------

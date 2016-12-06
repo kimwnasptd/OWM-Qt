@@ -157,20 +157,24 @@ class MyApp(base, form):
         self.sprite_manager = None
         self.rom_info = None
 
-        rootNode = Node("Root")
-        childNode0 = TransformNode("Table 0", rootNode)
-        childNode1 = Node("Overworld 0", childNode0)
-        childNode2 = CameraNode("Table 1", rootNode)
-        childNode3 = Node("Overworld 0", childNode2)
-        childNode4 = Node("Overworld 1", childNode2)
-        childNode5 = LightNode("Overworld 2", childNode2)
+        self.treeRootNode = Node("root")
+        # childNode0 = TableNode("Table 0", rootNode)
+        # childNode1 = OWNode("Overworld 0", childNode0)
+        # childNode2 = TableNode("Table 1", rootNode)
+        # childNode3 = OWNode("Overworld 0", childNode2)
+        # childNode4 = OWNode("Overworld 1", childNode2)
+        # childNode5 = OWNode("Overworld 2", childNode2)
 
-        model = TreeViewModel(rootNode)
-        self.OWTreeView.setModel(model)
+        self.tree_model = TreeViewModel(self.treeRootNode)
+        self.OWTreeView.setModel(self.tree_model)
 
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom(None, self))
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(self))
         self.actionExit_2.triggered.connect(menu_functions.exit_app)
+
+        # micro patches, fix the header sizes
+        self.OWTreeView.resizeColumnToContents(1)
+        self.OWTreeView.resizeColumnToContents(2)
 
     def open_rom(self, fn=None, ui=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
@@ -197,6 +201,12 @@ class MyApp(base, form):
 
             change_core_root(self.root)
             change_image_root(self.root)
+
+            init_tree_files(self.rom, self.root)
+
+            self.treeRootNode = Node("root")
+            self.tree_model = TreeViewModel(self.treeRootNode)
+            ui.OWTreeView.setModel(self.tree_model)
 
     def save_rom(self, app=None):
         ''' The file might have changed while we were editing, so
