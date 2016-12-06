@@ -131,16 +131,14 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         global root
 
-        print("hey")
         for table in range(len(root.tables_list)):
             # add the table nodes
             newTableNode = TableNode("Table " + str(table), self._rootNode)
 
             for ow in range(len(root.tables_list[table].ow_data_pointers)):
                 # add the ow nodes
-                print(ow)
+                print("Configuring OW: " + str(ow))
                 newOWNode = OWNode("Overworld " + str(ow), newTableNode)
-        print("there")
 
 
     """INPUTS: QModelIndex"""

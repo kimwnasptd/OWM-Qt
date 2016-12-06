@@ -425,11 +425,19 @@ def capitalized_hex(address):
 
 
 def get_animation_address(ow_data_address):
-    return pointer_to_address(ow_data_address + 0x18)
+    data_tuple = [0, 0, 0, 0]
+    data_tuple[0] = pointer_to_address(ow_data_address + 0x10)
+    data_tuple[1] = pointer_to_address(ow_data_address + 0x14)
+    data_tuple[2] = pointer_to_address(ow_data_address + 0x18)
+    data_tuple[3] = pointer_to_address(ow_data_address + 0x20)
+    return data_tuple
 
 
-def write_animation_pointer(ow_data_address, animation_address):
-    write_pointer(animation_address, ow_data_address + 0x18)
+def write_animation_pointer(ow_data_address, data_tuple):
+    write_pointer(data_tuple[0], ow_data_address + 0x10)
+    write_pointer(data_tuple[1], ow_data_address + 0x14)
+    write_pointer(data_tuple[2], ow_data_address + 0x18)
+    write_pointer(data_tuple[3], ow_data_address + 0x20)
 
 
 # -----------------Classes--------------------
