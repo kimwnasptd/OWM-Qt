@@ -6,6 +6,7 @@ from tkinter import messagebox
 from PIL import ImageTk
 from IniHandler import *
 import webbrowser
+from tkinter.colorchooser import *
 
 # Globals: working_table, working_ow, file, rom, app, is_rom_open
 is_rom_open = 0
@@ -1270,11 +1271,42 @@ def close(window):
 
 # --- Windows Classes ---
 
+class SelectColor(Tk):
+    def __init__(self):
+        Tk.__init__(self)
+        self.title("Select your Color")
+        # self.iconbitmap(r'Files/App.ico')
+
+        self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
+        self.container.grid(row=0, column=0, columnspan=4)
+
+        # Label
+        sure = ttk.Label(self.container, text="OWM: OverWorld Manager 1.2.1",
+                         padding=(12, 12, 12, 12))
+        sure.grid(row=0, column=0, columnspan=4)
+
+        message = "Credits/Special Thanks:\n\n"
+        message += "Karatekid and Darthron for their tutorials and research in OWs Structure.\n"
+        message += "Metapd23 for his tutorial on adding OWs with JPAN's engine.\n"
+        message += "JPAN for his beautiful engine and documentation on OWs and Palettes.\n"
+        message += "link12552 for his NSE, and the creator of OW RE. \n"
+        message += "FBI for his hex to ASCII converter script and answering all my questions.\n\n"
+        message += "Created by: Kimonas\n"
+        blah = ttk.Label(self.container, text=message)
+        blah.grid(row=1, column=0, columnspan=4)
+
+        OK = ttk.Button(self.container, text="OK", command=lambda: close(self))
+        OK.grid(row=20, column=2, sticky=E)
+
+        Cancel = ttk.Button(self.container, text="Cancel", command=lambda: close(self))
+        Cancel.grid(row=20, column=3, sticky=W)
+
+
 class OWM_Info(Tk):
     def __init__(self):
         Tk.__init__(self)
         self.title("About OWM")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid(row=0, column=0, columnspan=4)
@@ -1305,7 +1337,7 @@ class RemoveTable(Tk):
     def __init__(self):
         Tk.__init__(self)
         self.title("Remove Table")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid()
@@ -1326,7 +1358,7 @@ class TableInsert(Tk):
     def __init__(self):
         Tk.__init__(self)
         self.title("Table Settings")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid()
@@ -1371,7 +1403,7 @@ class OWInsertSettings(Tk):
     def __init__(self):
         Tk.__init__(self)
         self.title("OW Settings")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid()
@@ -1410,7 +1442,7 @@ class OWResizeSettings(Tk):
     def __init__(self):
         Tk.__init__(self)
         self.title("OW Resize Settings")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid()
@@ -1445,7 +1477,7 @@ class OWSettings(Tk):
 
         self.attributes("-topmost", True)
         self.title("OW Settings")
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         self.container = ttk.Frame(self, padding=(12, 12, 12, 12))
         self.container.grid()
@@ -1486,7 +1518,7 @@ class OWEditor(Tk):
         self.title("OWM: OverWorld Manager")
         self.container = ttk.Frame(self)
         self.container.grid()
-        self.iconbitmap(r'Files/App.ico')
+        # self.iconbitmap(r'Files/App.ico')
 
         Init_Lists_UI(self)
 

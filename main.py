@@ -158,12 +158,12 @@ class MyApp(base, form):
         self.rom_info = None
 
         rootNode = Node("Hips")
-        childNode0 = TransformNode("RightPirateLeg", rootNode)
-        childNode1 = Node("RightPirateLeg_END", childNode0)
-        childNode2 = CameraNode("LeftFemur", rootNode)
-        childNode3 = Node("LeftTibia", childNode2)
-        childNode4 = Node("LeftFoot", childNode3)
-        childNode5 = LightNode("LeftFoot_END", childNode4)
+        childNode0 = TransformNode("Table 0", rootNode)
+        childNode1 = Node("Overworld 0", childNode0)
+        childNode2 = CameraNode("Table 1", rootNode)
+        childNode3 = Node("Overworld 0", childNode2)
+        childNode4 = Node("Overworld 1", childNode2)
+        childNode5 = LightNode("Overworld 2", childNode2)
 
         model = TreeViewModel(rootNode)
         self.OWTreeView.setModel(model)

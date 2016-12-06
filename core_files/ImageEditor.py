@@ -213,6 +213,14 @@ def swap_colors(id1, id2, palette, image):
 
     image.putpalette(palette)
 
+    # Change the image pixels accordingly
+    for i in range(0, image.width):
+        for j in range(0, image.height):
+            if image.getpixel((i, j)) == id1:
+                image.putpixel((i, j), id2)
+            elif image.getpixel((i, j)) == id2:
+                image.putpixel((i, j), id1)
+
 
 def make_bg_color_first(image):
     bg_color = get_background_color(image)
@@ -226,14 +234,6 @@ def make_bg_color_first(image):
 
     bg_index = int(k / 3)
     swap_colors(0, bg_index, palette, image)
-
-    # Change the image pixels accordingly
-    for i in range(0, image.width):
-        for j in range(0, image.height):
-            if image.getpixel((i, j)) == 0:
-                image.putpixel((i, j), bg_index)
-            elif image.getpixel((i, j)) == bg_index:
-                image.putpixel((i, j), 0)
 
 
 def write_color(color, address):
