@@ -157,7 +157,7 @@ class MyApp(base, form):
         self.sprite_manager = None
         self.rom_info = None
 
-        rootNode = Node("Hips")
+        rootNode = Node("Root")
         childNode0 = TransformNode("Table 0", rootNode)
         childNode1 = Node("Overworld 0", childNode0)
         childNode2 = CameraNode("Table 1", rootNode)

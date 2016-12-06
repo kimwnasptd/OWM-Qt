@@ -78,25 +78,17 @@ class Node(object):
         return self.log()
 
 
-class TransformNode(Node):
+class TableNode(Node):
     def __init__(self, name, parent=None):
-        super(TransformNode, self).__init__(name, parent)
+        super(TableNode, self).__init__(name, parent)
 
     def typeInfo(self):
         return "TRANSFORM"
 
 
-class CameraNode(Node):
+class OWNode(Node):
     def __init__(self, name, parent=None):
-        super(CameraNode, self).__init__(name, parent)
-
-    def typeInfo(self):
-        return "CAMERA"
-
-
-class LightNode(Node):
-    def __init__(self, name, parent=None):
-        super(LightNode, self).__init__(name, parent)
+        super(OWNode, self).__init__(name, parent)
 
     def typeInfo(self):
         return "LIGHT"
@@ -182,7 +174,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
     """OUTPUT: int (flag)"""
 
     def flags(self, index):
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     """INPUTS: QModelIndex"""
     """OUTPUT: QModelIndex"""
