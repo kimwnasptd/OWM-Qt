@@ -1,5 +1,4 @@
 import mmap
-from random import randint
 from core_files.rom_api import *
 
 
@@ -73,24 +72,6 @@ def update_frames_address(num, address, ow_type):
     for i in range(1, num + 1):
         address += get_frame_size(ow_type)
     return address
-
-
-def pointer_to_address_n(address, n):
-    for i in range(1, n + 1):
-        address = pointer_to_address(address)
-    return address
-
-
-def fill_with_data(address, num_of_bytes, write_data):
-    # If write_data is < 0, then a random number is selected (where 0<= write_data <= 254)
-    if write_data < 0:
-        write_data = randint(0x1, 0xe)
-        write_data += write_data * 16
-
-    rom.seek(address)
-    for i in range(1, num_of_bytes + 1):
-        rom.write_byte(write_data)
-    rom.flush()
 
 
 def get_frame_size(ow_type):
