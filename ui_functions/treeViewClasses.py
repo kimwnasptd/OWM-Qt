@@ -1,5 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
+from core_files.ImageEditor import *
+from PIL.ImageQt import ImageQt
+
+# the root is defined in ImageEditor.py
+# the rom is defined in the rom_api.py
 
 
 class Node(object):
@@ -8,6 +13,7 @@ class Node(object):
         self._name = name
         self._children = []
         self._parent = parent
+        self.image = None
 
         if parent is not None:
             parent.addChild(self)
@@ -77,29 +83,52 @@ class Node(object):
     def __repr__(self):
         return self.log()
 
+    def getNum(self):
+        num = str(self._name).split(" ")
+        return int(num[1])
+
 
 class TableNode(Node):
     def __init__(self, name, parent=None):
         super(TableNode, self).__init__(name, parent)
 
     def typeInfo(self):
-        return "TRANSFORM"
+        return "table_node"
 
 
 class OWNode(Node):
     def __init__(self, name, parent=None):
         super(OWNode, self).__init__(name, parent)
+        self.frames = 0
+
+        table_id = self._parent.getNum()
+        ow_id = self.getNum()
+
+        self.image = ImageManager().get_ow_frame(ow_id, table_id, 0)
+        self.frames = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
 
     def typeInfo(self):
-        return "LIGHT"
+        return "ow_node"
 
 
 class TreeViewModel(QtCore.QAbstractItemModel):
     """INPUTS: Node, QObject"""
 
-    def __init__(self, root, parent=None):
+    def __init__(self, model_root, parent=None):
         super(TreeViewModel, self).__init__(parent)
-        self._rootNode = root
+        self._rootNode = model_root
+
+        global root
+
+        for table in range(len(root.tables_list)):
+            # add the table nodes
+            newTableNode = TableNode("Table " + str(table), self._rootNode)
+
+            for ow in range(len(root.tables_list[table].ow_data_pointers)):
+                # add the ow nodes
+                print("Configuring OW: " + str(ow))
+                newOWNode = OWNode("Overworld " + str(ow), newTableNode)
+
 
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
@@ -116,7 +145,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
     """OUTPUT: int"""
 
     def columnCount(self, parent):
-        return 2
+        return 3
 
     """INPUTS: QModelIndex, int"""
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
@@ -131,21 +160,29 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if index.column() == 0:
                 return node.name()
+            elif index.column() == 2:
+                global root
 
-        '''
+                if isinstance(node, OWNode):
+                    return node.frames
+
+                return None
+
         if role == QtCore.Qt.DecorationRole:
-            if index.column() == 0:
+            if index.column() == 1:
                 typeInfo = node.typeInfo()
 
-                if typeInfo == "LIGHT":
-                    return QtGui.QIcon(QtGui.QPixmap(":/Light.png"))
+                if typeInfo == "ow_node":
+                    return QtGui.QIcon(QtGui.QPixmap.fromImage(ImageQt(node.image)))
 
+                '''
                 if typeInfo == "TRANSFORM":
                     return QtGui.QIcon(QtGui.QPixmap(":/Transform.png"))
 
                 if typeInfo == "CAMERA":
                     return QtGui.QIcon(QtGui.QPixmap(":/Camera.png"))
-        '''
+                '''
+
 
     """INPUTS: QModelIndex, QVariant, int (flag)"""
 
@@ -167,7 +204,9 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole:
             if section == 0:
                 return "OWs Structure"
-            else:
+            elif section == 1:
+                return "Preview"
+            elif section == 2:
                 return "Frames"
 
     """INPUTS: QModelIndex"""
@@ -262,15 +301,5 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return success
 
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-
-    '''
-    rightPirateLeg = model.index(0, 0, QtCore.QModelIndex())
-
-        model.insertRows(1, 5, rightPirateLeg)
-        model.insertLights(1, 5, rightPirateLeg)
-    '''
-
-    sys.exit(app.exec_())
+    def clear(self):
+        pass

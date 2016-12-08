@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
+
 from PyQt5 import QtWidgets, uic
 from ui_functions.treeViewClasses import *
 from ui_functions import menu_functions
 from core_files import game
 from core_files.IniHandler import *
-from core_files.ImageEditor import *
+
+# the root is defined in ImageEditor.py
+# the rom is defined in the rom_api.py
 
 
 class RomInfo:
@@ -35,6 +39,7 @@ class RomInfo:
             self.Profiler = ProfileManager(self.name)
 
             # Initialize the OW Table Info
+            print(hex(self.original_ow_pointers_address))
             change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
                              self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
 
@@ -152,25 +157,21 @@ class MyApp(base, form):
         self.setupUi(self)
 
         # Variables
-        self.rom = game.Game()
-        self.root = None
         self.sprite_manager = None
         self.rom_info = None
 
-        rootNode = Node("Root")
-        childNode0 = TransformNode("Table 0", rootNode)
-        childNode1 = Node("Overworld 0", childNode0)
-        childNode2 = CameraNode("Table 1", rootNode)
-        childNode3 = Node("Overworld 0", childNode2)
-        childNode4 = Node("Overworld 1", childNode2)
-        childNode5 = LightNode("Overworld 2", childNode2)
-
-        model = TreeViewModel(rootNode)
-        self.OWTreeView.setModel(model)
+        self.treeRootNode = Node("root")
+        self.tree_model = TreeViewModel(self.treeRootNode)
+        self.OWTreeView.setModel(self.tree_model)
 
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom(None, self))
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(self))
+        self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as(self))
         self.actionExit_2.triggered.connect(menu_functions.exit_app)
+
+        # micro patches, fix the header sizes
+        self.OWTreeView.resizeColumnToContents(1)
+        self.OWTreeView.resizeColumnToContents(2)
 
     def open_rom(self, fn=None, ui=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
@@ -180,54 +181,71 @@ class MyApp(base, form):
         if not fn:
             return
 
-        self.rom.load_rom(fn)
-
-        change_core_rom(self.rom)
-        change_image_rom(self.rom)
+        rom.load_rom(fn)
 
         self.rom_info = RomInfo()
-        self.rom.rom_path = fn
+        rom.rom_path = fn
 
         if self.rom_info.rom_successfully_loaded == 1:
 
             ui.statusbar.showMessage("Repointing OWs...")
-            self.root = Root()
+            root.__init__()
             self.sprite_manager = ImageManager()
+
+            self.rom_info = RomInfo()
+
+            self.treeRootNode = Node("root")
+            self.tree_model = TreeViewModel(self.treeRootNode)
+            ui.OWTreeView.setModel(self.tree_model)
             ui.statusbar.showMessage("Ready")
 
-            change_core_root(self.root)
-            change_image_root(self.root)
-
-    def save_rom(self, app=None):
+    def save_rom(self, app=None, fn=rom.rom_file_name):
         ''' The file might have changed while we were editing, so
                 we reload it and apply the modifications to it. '''
         app.statusbar.showMessage("Saving...")
-        if not self.rom.rom_file_name:
+        if not rom.rom_file_name:
             QtWidgets.QMessageBox.critical(self, "ERROR!", "No ROM loaded!")
             return
         try:
-            with open(self.rom.rom_file_name, "rb") as rom_file:
+            with open(rom.rom_file_name, "rb") as rom_file:
                 actual_rom_contents = bytearray(rom_file.read())
         except FileNotFoundError:
-            with open(self.rom.rom_file_name, "wb") as rom_file:
-                rom_file.write(self.rom.rom_contents)
+            with open(rom.rom_file_name, "wb") as rom_file:
+                rom_file.write(rom.rom_contents)
             return
 
         app.statusbar.showMessage("Saving... Writing...")
-        if self.rom.rom_contents == self.rom.original_rom_contents:
+        '''
+        if rom.rom_contents == rom.original_rom_contents:
             self.statusbar.showMessage("Nothing to save")
             return
+        '''
 
-        for i in range(len(self.rom.rom_contents)):
-            if self.rom.rom_contents[i] != self.rom.original_rom_contents[i]:
-                actual_rom_contents[i] = self.rom.rom_contents[i]
+        for i in range(len(rom.rom_contents)):
+            if rom.rom_contents[i] != rom.original_rom_contents[i]:
+                actual_rom_contents[i] = rom.rom_contents[i]
 
-        with open(self.rom.rom_file_name, "wb") as rom_file:
+        with open(fn, "wb+") as rom_file:
             rom_file.write(actual_rom_contents)
 
         # The new original rom contents are the edited contents
-        self.rom.original_rom_contents = self.rom.rom_contents
-        app.statusbar.showMessage("Saved {}".format(self.rom.rom_file_name))
+        rom.original_rom_contents = rom.rom_contents
+        app.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
+
+    def save_rom_as(self, app=None):
+        fn, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save ROM file',
+                                                      QtCore.QDir.homePath(),
+                                                      "GBA ROM (*.gba);;"
+                                                      "All files (*)")
+
+        if not fn:
+            app.statusbar.showMessage("Cancelled...")
+            return
+
+        import shutil
+        shutil.copyfile(rom.rom_file_name, fn)
+        rom.rom_file_name = fn
+        self.save_rom(app)
 
 
 if __name__ == '__main__':

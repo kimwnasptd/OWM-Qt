@@ -34,7 +34,7 @@ class Game:
 
     def read_byte(self):
         self.pos += 1
-        return self.rom_contents[self.pos - 1]
+        return int(self.rom_contents[self.pos - 1])
 
     def write_byte(self, val):
         if 0 <= val <= 255:

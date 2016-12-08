@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>798</width>
+    <width>811</width>
     <height>523</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>OWM: Overworld Manager</string>
+   <string>OverWorld Manager</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QGroupBox" name="paletteBox">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>580</x>
       <y>270</y>
-      <width>231</width>
+      <width>221</width>
       <height>201</height>
      </rect>
     </property>
@@ -36,78 +36,71 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="paletteOptionsGridLayout">
-      <item row="2" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Palette Address:</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="3" column="1">
        <widget class="QLabel" name="label_16">
         <property name="text">
          <string>0x800000</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="2" column="1">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>0x800000</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="1" column="1">
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>0x800000</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="4" column="1">
        <widget class="QLabel" name="label_17">
         <property name="text">
          <string>0x800000</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Palettes Cleanup</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_12">
         <property name="text">
          <string>Available Palettes:</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_11">
         <property name="text">
          <string>Used Palettes:</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="0" column="1">
+       <widget class="QComboBox" name="comboBox"/>
+      </item>
+      <item row="2" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
          <string>Palette Table Address:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="0" column="0">
        <widget class="QLabel" name="label_18">
         <property name="text">
          <string>Palette ID:</string>
         </property>
        </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="comboBox"/>
       </item>
      </layout>
     </widget>
@@ -115,7 +108,7 @@
    <widget class="QGroupBox" name="tablesButtonBox">
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>340</x>
       <y>270</y>
       <width>219</width>
       <height>201</height>
@@ -227,7 +220,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>320</x>
+      <x>340</x>
       <y>10</y>
       <width>219</width>
       <height>241</height>
@@ -399,7 +392,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>291</width>
+      <width>311</width>
       <height>461</height>
      </rect>
     </property>
@@ -411,7 +404,7 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>271</width>
+       <width>291</width>
        <height>421</height>
       </rect>
      </property>
@@ -454,7 +447,17 @@
        </spacer>
       </item>
       <item row="1" column="0" colspan="5">
-       <widget class="QTreeView" name="OWTreeView"/>
+       <widget class="QTreeView" name="OWTreeView">
+        <attribute name="headerCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="headerDefaultSectionSize">
+         <number>140</number>
+        </attribute>
+        <attribute name="headerMinimumSectionSize">
+         <number>24</number>
+        </attribute>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -462,7 +465,7 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>580</x>
       <y>10</y>
       <width>221</width>
       <height>241</height>
@@ -496,7 +499,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>798</width>
+     <width>811</width>
      <height>27</height>
     </rect>
    </property>
@@ -506,6 +509,7 @@
     </property>
     <addaction name="actionOpen_ROM"/>
     <addaction name="actionSave_ROM"/>
+    <addaction name="actionSave_ROM_As"/>
     <addaction name="separator"/>
     <addaction name="actionExit_2"/>
    </widget>
@@ -539,8 +543,16 @@
     <addaction name="actionREADME"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuProfiles_Offsets">
+    <property name="title">
+     <string>Profiles/Offsets</string>
+    </property>
+    <addaction name="actionSearch_for_Offsets"/>
+    <addaction name="actionCreate_Templates_2"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
+   <addaction name="menuProfiles_Offsets"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -605,7 +617,22 @@
   </action>
   <action name="actionCreate_Templates">
    <property name="text">
-    <string>Create Templates </string>
+    <string>Palette Cleanup</string>
+   </property>
+  </action>
+  <action name="actionCreate_Templates_2">
+   <property name="text">
+    <string>Create Templates</string>
+   </property>
+  </action>
+  <action name="actionSearch_for_Offsets">
+   <property name="text">
+    <string>Search for Offsets</string>
+   </property>
+  </action>
+  <action name="actionSave_ROM_As">
+   <property name="text">
+    <string>Save ROM As...</string>
    </property>
   </action>
  </widget>
