@@ -5,7 +5,9 @@ from ui_functions.treeViewClasses import *
 from ui_functions import menu_functions
 from core_files import game
 from core_files.IniHandler import *
-from core_files.ImageEditor import *
+
+# the root is defined in ImageEditor.py
+# the rom is defined in the rom_api.py
 
 
 class RomInfo:
@@ -154,18 +156,10 @@ class MyApp(base, form):
         self.setupUi(self)
 
         # Variables
-        self.rom = game.Game()
-        self.root = None
         self.sprite_manager = None
         self.rom_info = None
 
         self.treeRootNode = Node("root")
-        # childNode0 = TableNode("Table 0", rootNode)
-        # childNode1 = OWNode("Overworld 0", childNode0)
-        # childNode2 = TableNode("Table 1", rootNode)
-        # childNode3 = OWNode("Overworld 0", childNode2)
-        # childNode4 = OWNode("Overworld 1", childNode2)
-        # childNode5 = OWNode("Overworld 2", childNode2)
 
         self.tree_model = TreeViewModel(self.treeRootNode)
         self.OWTreeView.setModel(self.tree_model)
@@ -186,25 +180,17 @@ class MyApp(base, form):
         if not fn:
             return
 
-        self.rom.load_rom(fn)
-
-        change_core_rom(self.rom)
-        change_image_rom(self.rom)
+        rom.load_rom(fn)
 
         self.rom_info = RomInfo()
-        self.rom.rom_path = fn
+        rom.rom_path = fn
 
         if self.rom_info.rom_successfully_loaded == 1:
 
             ui.statusbar.showMessage("Repointing OWs...")
-            self.root = Root()
+            root.__init__()
             self.sprite_manager = ImageManager()
             ui.statusbar.showMessage("Ready")
-
-            change_core_root(self.root)
-            change_image_root(self.root)
-
-            init_tree_files(self.rom, self.root)
 
             self.treeRootNode = Node("root")
             self.tree_model = TreeViewModel(self.treeRootNode)

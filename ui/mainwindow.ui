@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>OWM: Overworld Manager</string>
+   <string>OverWorld Manager</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QGroupBox" name="paletteBox">
@@ -535,6 +535,7 @@
     <addaction name="separator"/>
     <addaction name="actionCreate_Templates"/>
     <addaction name="actionCreate_Templates_2"/>
+    <addaction name="actionSearch_for_Offsets"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -615,6 +616,11 @@
   <action name="actionCreate_Templates_2">
    <property name="text">
     <string>Create Templates</string>
+   </property>
+  </action>
+  <action name="actionSearch_for_Offsets">
+   <property name="text">
+    <string>Search for Offsets</string>
    </property>
   </action>
  </widget>

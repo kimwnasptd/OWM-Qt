@@ -3,19 +3,8 @@ import sys
 from core_files.ImageEditor import *
 from PIL.ImageQt import ImageQt
 
-
-root = Root()
-
-
-def init_tree_files(new_rom, new_root):
-    change_core_rom(new_rom)
-    change_image_rom(new_rom)
-
-    change_core_root(new_root)
-    change_image_root(new_root)
-
-    global root
-    root = new_root
+# the root is defined in ImageEditor.py
+# the rom is defined in the rom_api.py
 
 
 class Node(object):

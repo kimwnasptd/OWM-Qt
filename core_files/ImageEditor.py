@@ -1,10 +1,7 @@
 from PIL import Image
 from core_files.core import *
 
-file = open('Files/Assistant', 'r+b')
-rom = mmap.mmap(file.fileno(), 0)
-
-change_core_rom(rom)
+root = Root()
 
 palette_table_pointer_address = []
 palette_table_address = 0
@@ -20,16 +17,6 @@ def change_image_editor_info(pointers_list, num_of_palettes, original_table, fre
     original_num_of_palettes = num_of_palettes
     original_palette_table_address = original_table
     free_space = free_space_area
-
-
-def change_image_rom(new_rom):
-    global rom
-    rom = new_rom
-
-
-def change_image_root(new_root):
-    global root
-    root = new_root
 
 
 def write_two_pixels(index1, index2, address):

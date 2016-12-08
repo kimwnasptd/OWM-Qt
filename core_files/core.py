@@ -1,8 +1,7 @@
 import mmap
 from random import randint
+from core_files.rom_api import *
 
-file = open('Files/Assistant', 'r+b')
-rom = mmap.mmap(file.fileno(), 0)
 
 TemplateList = ['Template1', 'Template2', 'Template3', 'Template4', 'Template5', 'Template6', 'Template7', 'Template8']
 
@@ -28,14 +27,6 @@ frames_end = 2176496  # 0x2135F0
 
 
 # ----------------------Functions------------------------------
-def change_core_rom(new_rom):
-    global rom
-    rom = new_rom
-
-
-def change_core_root(new_root):
-    global root
-    root = new_root
 
 
 def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, free_space_area, files_path):
@@ -55,101 +46,6 @@ def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, f
         temp = open(path, 'r+b')
         template = mmap.mmap(temp.fileno(), 0)
         Templates.append(template)
-
-
-def get_word(address):
-    rom.seek(address)
-    byte1 = rom.read_byte() << 24
-    byte2 = rom.read_byte() << 16
-    byte3 = rom.read_byte() << 8
-    byte4 = rom.read_byte()
-    return byte4 | byte3 | byte2 | byte1
-
-
-def find_free_space(size, start_address=0, ending=0):
-    working_address = start_address
-    while 1:
-        rom.seek(working_address)
-        found = 1
-        i = 0
-        while found == 1:
-            if i == size + ending:
-                working_address = working_address - size - ending
-
-                if (ending != 0) and (working_address % ending != 0):
-                    working_address += working_address % ending
-
-                return working_address
-            if rom.read_byte() != 255:
-                found = 0
-
-            i += 1
-            working_address += 1
-
-
-def check_pointer(address):
-    rom.seek(address + 3)
-    byte = rom.read_byte()
-    if (byte == 8) or (byte == 9):
-        return 1
-    return 0
-
-
-def get_bytes_bits(byte, bit, to=0):
-    if to == 0:
-        to = bit
-
-    bit_length = to - bit + 1
-
-    result = byte << (32 - to)
-    # Clear bits > 8
-    mask = 0xffffffff
-    result &= mask
-    result >>= 32 - bit_length
-
-    return result
-
-
-def write_word(value, address):
-    rom.seek(address)
-
-    for i in range(0, 4):
-        byte = get_bytes_bits(value, 1, 8)
-        rom.write_byte(byte)
-        value >>= 8
-
-
-def write_pointer(pointer_address, address_to_write):
-    write_word(pointer_address + 0x08000000, address_to_write)
-
-
-def read_word(address):
-    rom.seek(address)
-    byte1 = rom.read_byte()
-
-    byte2 = rom.read_byte()
-    byte2 <<= 8
-
-    byte3 = rom.read_byte()
-    byte3 <<= 16
-
-    byte4 = rom.read_byte()
-    byte4 <<= 24
-
-    return byte1 + byte2 + byte3 + byte4
-
-
-def pointer_to_address(address):
-    rom.seek(address)
-    byte1 = rom.read_byte()
-    byte2 = rom.read_byte() << 8
-    byte3 = rom.read_byte() << 16
-    subfix = rom.read_byte()
-
-    if subfix == 9:
-        return byte3 + byte2 + byte1 + 0x1000000
-    else:
-        return byte3 + byte2 + byte1
 
 
 def is_ow_data(address):
@@ -820,9 +716,14 @@ class Root:
     tables_list = []
 
     def __init__(self):
+
         self.tables_list = []
         self.ow_tables_address = OW_Tables_Pointers_Address
         address = self.ow_tables_address
+
+        # Don't initialize in case a rom is not loaded
+        if rom.rom_contents is None:
+            return
 
         while 1:
             if check_pointer(address) == 1:
@@ -1016,3 +917,4 @@ class Root:
                 check_address += 4
                 i += 1
         return i
+
