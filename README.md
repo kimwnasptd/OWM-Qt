@@ -7,3 +7,5 @@ To-Do:
 Dependencies:
 PyQt5
 pillow
+
+To start OWM, run the main.py
