@@ -39,7 +39,6 @@ class RomInfo:
             self.Profiler = ProfileManager(self.name)
 
             # Initialize the OW Table Info
-            print(hex(self.original_ow_pointers_address))
             change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
                              self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
 
