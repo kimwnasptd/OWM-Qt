@@ -588,11 +588,11 @@ def save_image():
 def check_type_availability(ow_type):
     global Info
 
-    if Info.name[:3] == 'BPR' or Info.name == 'JPAN' or Info.name[:3] == 'BPG':
+    if Info.id[:3] == 'BPR' or Info.id == 'JPAN' or Info.id[:3] == 'BPG':
         if (ow_type >= 1) and (ow_type <= 5):
             return 1
         return 0
-    elif Info.name[:3] == 'BPE' or Info.name[:3] == 'AXV':
+    elif Info.id[:3] == 'BPE' or Info.id[:3] == 'AXV':
         if (ow_type >= 1) and (ow_type <= 8):
             if ow_type != 5:
                 return 1

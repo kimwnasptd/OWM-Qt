@@ -44,30 +44,30 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QLabel" name="label_16">
+       <widget class="QLabel" name="usedPalettesLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="label_13">
+       <widget class="QLabel" name="paletteTableAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLabel" name="label_8">
+       <widget class="QLabel" name="paletteAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QLabel" name="label_17">
+       <widget class="QLabel" name="availablePalettesLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -86,7 +86,17 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="paletteIDComboBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_10">
@@ -144,7 +154,7 @@
       <item row="1" column="1">
        <widget class="QLabel" name="tableAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -172,33 +182,36 @@
       <item row="2" column="1">
        <widget class="QLabel" name="pointersAddressTableLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QLabel" name="dataAddressTableLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
        <widget class="QLabel" name="framesPointersTableLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="5" column="1">
        <widget class="QLabel" name="framesAddressTableLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="addTableButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Add</string>
         </property>
@@ -206,6 +219,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="removeTableButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Remove</string>
         </property>
@@ -259,6 +275,9 @@
      <layout class="QGridLayout" name="owInfoLayout" rowstretch="0,0,0,0,0,0,0,0">
       <item row="1" column="1">
        <widget class="QPushButton" name="removeOwButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Remove</string>
         </property>
@@ -267,14 +286,14 @@
       <item row="5" column="1">
        <widget class="QLabel" name="dataAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QLabel" name="framesLabel">
         <property name="text">
-         <string>9</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -288,7 +307,7 @@
       <item row="6" column="1">
        <widget class="QLabel" name="framesPointersLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -309,7 +328,7 @@
       <item row="7" column="1">
        <widget class="QLabel" name="framesAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -330,14 +349,14 @@
       <item row="4" column="1">
        <widget class="QLabel" name="pointerAddressLabel">
         <property name="text">
-         <string>0x800000</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
        <widget class="QLabel" name="typeLabel">
         <property name="text">
-         <string>1</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -351,7 +370,7 @@
       <item row="1" column="0">
        <widget class="QPushButton" name="resizeOwButton">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="toolTip">
          <string>Change the dimensions and frames number of current OW</string>
@@ -363,6 +382,9 @@
       </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="addOwButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
          <string>Add a new OW to the end of the current Table</string>
         </property>
@@ -376,6 +398,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="insertOwButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="toolTip">
          <string>Insert  an OW before the selected one</string>
         </property>
@@ -448,6 +473,15 @@
       </item>
       <item row="1" column="0" colspan="5">
        <widget class="QTreeView" name="OWTreeView">
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
         <attribute name="headerCascadingSectionResizes">
          <bool>false</bool>
         </attribute>
@@ -485,10 +519,27 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QGraphicsView" name="graphicsView"/>
+       <widget class="QGraphicsView" name="owGraphicsView">
+        <property name="sizeAdjustPolicy">
+         <enum>QAbstractScrollArea::AdjustToContents</enum>
+        </property>
+        <property name="transformationAnchor">
+         <enum>QGraphicsView::AnchorViewCenter</enum>
+        </property>
+        <property name="resizeAnchor">
+         <enum>QGraphicsView::AnchorViewCenter</enum>
+        </property>
+        <property name="viewportUpdateMode">
+         <enum>QGraphicsView::MinimalViewportUpdate</enum>
+        </property>
+       </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_2"/>
+       <widget class="QSpinBox" name="framesSpinBox">
+        <property name="maximum">
+         <number>10</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -518,13 +569,19 @@
      <string>Actions</string>
     </property>
     <widget class="QMenu" name="menuFrames_Sheet">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Frames Sheet</string>
      </property>
      <addaction name="actionImport_Frames_Sheet"/>
      <addaction name="actionExport_Frames_Sheet"/>
     </widget>
-    <widget class="QMenu" name="menuSpriter_s_Resource">
+    <widget class="QMenu" name="menuSpriters_Resource">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Spriter's Resource</string>
      </property>
@@ -532,7 +589,7 @@
      <addaction name="actionImport_Pokemon"/>
     </widget>
     <addaction name="menuFrames_Sheet"/>
-    <addaction name="menuSpriter_s_Resource"/>
+    <addaction name="menuSpriters_Resource"/>
     <addaction name="separator"/>
     <addaction name="actionCreate_Templates"/>
    </widget>
@@ -578,13 +635,25 @@
    </property>
   </action>
   <action name="actionImport_Frames_Sheet">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Import Frames Sheet</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
   </action>
   <action name="actionExport_Frames_Sheet">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Export Frames Sheet</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="actionImport_OW">

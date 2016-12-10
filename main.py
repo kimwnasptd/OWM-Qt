@@ -1,151 +1,12 @@
 #!/usr/bin/env python3
 
-from PyQt5 import QtWidgets, uic
-from ui_functions.treeViewClasses import *
+from PyQt5 import uic
 from ui_functions import menu_functions
-from core_files import game
-from core_files.IniHandler import *
+from ui_functions.graphics_class import ImageItem
+from ui_functions.ui_updater import *
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
-
-
-class RomInfo:
-    name = ""
-    palette_table_address = 0x0
-    original_ow_table_pointer = 0x0
-    original_ow_pointers_address = 0x0
-    ow_table_pointer = 0x0
-    palette_table_pointer_address = []
-    original_num_of_ows = 0x0
-    original_num_of_palettes = 0x0
-    original_palette_table_address = 0x0
-    ow_fix_address = 0x0
-    free_space = 0x0
-    path = ''
-    rom_base = ''
-    rom_successfully_loaded = 0
-
-    Profiler = ProfileManager("")
-
-    def __init__(self):
-
-        self.set_name()
-
-        if check_if_name_exists(self.name) == 1:
-            self.rom_successfully_loaded = 1
-
-            self.set_info(get_name_line_index(self.name))
-            self.Profiler = ProfileManager(self.name)
-
-            # Initialize the OW Table Info
-            change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
-                             self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
-
-            # Initialize the palette table info
-            change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
-                                     self.original_palette_table_address, self.free_space)
-
-        else:
-            message = "Your ROM's base name in 0xAC is [" + self.name + "]." + "\n"
-            message += "There is no Profile with such a name in the INI." + '\n'
-            message += "Please create a Custom Profile in the INI with that name and the appropriate addresses \n"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
-
-    def set_name(self):
-
-        name_raw = get_word(0xAC)
-        rom_name = capitalized_hex(name_raw)[2:]  # Removes the 0x
-        self.name = hex_to_text(rom_name)
-
-        # Checks if Rom uses JPAN's Engine
-        if pointer_to_address(0x160EE0) == 0x1A2000:
-            self.name = "JPAN"
-
-        # Change the name if MrDS
-        if self.name == "MrDS":
-            self.name = "BPRE"
-
-    def set_info(self, start_pos):
-
-        self.ow_table_pointer = get_line_offset(start_pos + 2)
-        self.original_ow_table_pointer = get_line_offset(start_pos + 3)
-        self.original_ow_pointers_address = get_line_offset(start_pos + 4)
-        self.original_num_of_ows = get_line_offset(start_pos + 5, 1)
-
-        self.palette_table_pointer_address = get_palette_pointers(start_pos + 7)
-        self.palette_table_address = pointer_to_address(self.palette_table_pointer_address[0])
-        self.original_palette_table_address = get_line_offset(start_pos + 8)
-        self.original_num_of_palettes = get_line_offset(start_pos + 9, 1)
-
-        self.ow_fix_address = get_line_offset(start_pos + 11)
-
-        self.free_space = get_line_offset(start_pos + 13)
-        self.rom_base = get_line_string(start_pos + 14).split(" = ")[1]
-
-        self.path = 'Files/' + self.rom_base + "/"
-
-    def ow_fix(self):
-        # Makes sure more OWs can be added
-        if self.ow_fix_address != 0:
-            rom.seek(self.ow_fix_address)
-            rom.write_byte(255)
-            rom.flush()
-
-            message = "Changed byte in " + capitalized_hex(self.ow_fix_address) + " to 0xFF"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Completed!", message)
-
-        else:
-            message = "The OW Fix Address is set to 0x000000. To apply the fix provide \n"
-            message += "the address of the OW Limiter"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
-
-
-'''
-
-    def load_from_profile(self, profile):
-
-        self.set_info(get_name_line_index(profile))
-
-        # Initialize the OW Table Info
-        change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
-                         self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
-
-        # Initialize the palette table info
-        change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
-                                 self.original_palette_table_address, self.free_space)
-
-        global root, SpriteManager
-        root = Root()
-        SpriteManager = ImageManager()
-
-        change_core_root(root)
-        change_image_root(root)
-
-        global app, working_ow, working_table
-        app.OWs.delete(0, "end")
-        app.OWList.delete(0, "end")
-        app.PaletteCleanup['state'] = 'enabled'
-
-        if root.get_table_num() != 0:
-            working_table = 0
-        else:
-            working_table = -1
-        working_ow = -1
-
-        Update_OW_Table_Lists(app)
-
-        Update_OW_Menu_Buttons(0)
-        Update_OW_Info(0)
-        Update_Table_Info(0)
-        Update_Palette_Info(0)
-        Update_Table_Menu_Buttons(0)
-        Update_Menu_Buttons()
-
-        if root.get_num_of_available_table_pointers() != 0:
-            app.Insert_Table_Button['state'] = 'enabled'
-
-'''
 
 base, form = uic.loadUiType("ui/mainwindow.ui")
 
@@ -158,21 +19,34 @@ class MyApp(base, form):
         # Variables
         self.sprite_manager = None
         self.rom_info = None
+        self.selected_ow = None
+        self.selected_table = None
 
+        # TreeView
         self.treeRootNode = Node("root")
         self.tree_model = TreeViewModel(self.treeRootNode)
         self.OWTreeView.setModel(self.tree_model)
+        self.tree_selection_model = self.OWTreeView.selectionModel()
 
-        self.actionOpen_ROM.triggered.connect(lambda: self.open_rom(None, self))
-        self.actionSave_ROM.triggered.connect(lambda: self.save_rom(self))
-        self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as(self))
+        # Graphics Viewer
+        self.ow_graphics_scene = QtWidgets.QGraphicsScene()
+
+        # SpinBox
+        self.framesSpinBox.valueChanged.connect(self.spinbox_changed)
+
+        # Menu
+        self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
+        self.actionSave_ROM.triggered.connect(lambda: self.save_rom(rom.rom_path))
+        self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
         self.actionExit_2.triggered.connect(menu_functions.exit_app)
+
+        self.actionExport_Frames_Sheet.triggered.connect(lambda: menu_functions.export_ow_image(self))
 
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
         self.OWTreeView.resizeColumnToContents(2)
 
-    def open_rom(self, fn=None, ui=None):
+    def open_rom(self, fn=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
         if fn is None:
             dlg = QtWidgets.QFileDialog()
@@ -187,7 +61,7 @@ class MyApp(base, form):
 
         if self.rom_info.rom_successfully_loaded == 1:
 
-            ui.statusbar.showMessage("Repointing OWs...")
+            self.statusbar.showMessage("Repointing OWs...")
             root.__init__()
             self.sprite_manager = ImageManager()
 
@@ -195,13 +69,21 @@ class MyApp(base, form):
 
             self.treeRootNode = Node("root")
             self.tree_model = TreeViewModel(self.treeRootNode)
-            ui.OWTreeView.setModel(self.tree_model)
-            ui.statusbar.showMessage("Ready")
+            self.OWTreeView.setModel(self.tree_model)
+            self.statusbar.showMessage("Ready")
 
-    def save_rom(self, app=None, fn=rom.rom_file_name):
+            # Reset the selection model
+            self.tree_selection_model = self.OWTreeView.selectionModel()
+            self.tree_selection_model.currentChanged.connect(self.item_selected)
+
+            self.selected_table = None
+            self.selected_ow = None
+            update_gui(self)
+
+    def save_rom(self, fn=rom.rom_path):
         ''' The file might have changed while we were editing, so
                 we reload it and apply the modifications to it. '''
-        app.statusbar.showMessage("Saving...")
+        self.statusbar.showMessage("Saving...")
         if not rom.rom_file_name:
             QtWidgets.QMessageBox.critical(self, "ERROR!", "No ROM loaded!")
             return
@@ -213,12 +95,7 @@ class MyApp(base, form):
                 rom_file.write(rom.rom_contents)
             return
 
-        app.statusbar.showMessage("Saving... Writing...")
-        '''
-        if rom.rom_contents == rom.original_rom_contents:
-            self.statusbar.showMessage("Nothing to save")
-            return
-        '''
+        self.statusbar.showMessage("Saving... Writing...")
 
         for i in range(len(rom.rom_contents)):
             if rom.rom_contents[i] != rom.original_rom_contents[i]:
@@ -229,23 +106,66 @@ class MyApp(base, form):
 
         # The new original rom contents are the edited contents
         rom.original_rom_contents = rom.rom_contents
-        app.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
+        self.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
 
-    def save_rom_as(self, app=None):
+    def save_rom_as(self):
+        if not rom.rom_file_name:
+            QtWidgets.QMessageBox.critical(self, "ERROR!", "No ROM loaded!")
+            return
+
         fn, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save ROM file',
                                                       QtCore.QDir.homePath(),
                                                       "GBA ROM (*.gba);;"
                                                       "All files (*)")
 
         if not fn:
-            app.statusbar.showMessage("Cancelled...")
+            self.statusbar.showMessage("Cancelled...")
             return
 
+        fn += ".gba"
         import shutil
         shutil.copyfile(rom.rom_file_name, fn)
         rom.rom_file_name = fn
-        self.save_rom(app)
+        self.save_rom(rom.rom_file_name)
 
+    def paint_graphics_view(self, image):
+        # Print an Image obj on the Graphics View
+
+        self.ow_graphics_scene = QtWidgets.QGraphicsScene()
+        self.owGraphicsView.setScene(self.ow_graphics_scene)
+
+        if image is not None:
+            image_to_draw = ImageItem(image)
+            self.ow_graphics_scene.addItem(image_to_draw)
+            self.ow_graphics_scene.update()
+
+    def spinbox_changed(self, i):
+
+        if self.selected_ow is None:
+            self.framesSpinBox.setValue(0)
+            return
+
+        self.paint_graphics_view(self.sprite_manager.get_ow_frame(self.selected_ow, self.selected_table, i))
+
+    def item_selected(self, index):
+        node = index.internalPointer()
+
+        if isinstance(node, OWNode):
+            self.selected_table = node.parent().getId()
+            self.selected_ow = node.getId()
+
+            self.paint_graphics_view(node.image)
+
+            # Update the SpinBox
+            self.framesSpinBox.setRange(0, node.frames - 1)
+            self.framesSpinBox.setValue(0)
+        else:
+            self.selected_table = node.getId()
+            self.selected_ow = None
+
+            self.paint_graphics_view(None)
+
+        update_gui(self)
 
 if __name__ == '__main__':
     import sys

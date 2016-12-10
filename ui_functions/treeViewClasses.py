@@ -1,6 +1,6 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui
 import sys
-from core_files.ImageEditor import *
+from ui_functions.rominfo_class import *
 from PIL.ImageQt import ImageQt
 
 # the root is defined in ImageEditor.py
@@ -8,9 +8,10 @@ from PIL.ImageQt import ImageQt
 
 
 class Node(object):
-    def __init__(self, name, parent=None):
+    def __init__(self, id, parent=None):
 
-        self._name = name
+        self._id = id
+        self.name = ""
         self._children = []
         self._parent = parent
         self.image = None
@@ -43,8 +44,8 @@ class Node(object):
 
         return True
 
-    def name(self):
-        return self._name
+    def id(self):
+        return self.id
 
     def setName(self, name):
         self._name = name
@@ -83,26 +84,27 @@ class Node(object):
     def __repr__(self):
         return self.log()
 
-    def getNum(self):
-        num = str(self._name).split(" ")
-        return int(num[1])
+    def getId(self):
+        return self._id
 
 
 class TableNode(Node):
-    def __init__(self, name, parent=None):
-        super(TableNode, self).__init__(name, parent)
+    def __init__(self, id, parent=None):
+        super(TableNode, self).__init__(id, parent)
+        self.name = "Table "
 
     def typeInfo(self):
         return "table_node"
 
 
 class OWNode(Node):
-    def __init__(self, name, parent=None):
-        super(OWNode, self).__init__(name, parent)
+    def __init__(self, id, parent=None):
+        super(OWNode, self).__init__(id, parent)
+        self.name = "Overworld "
         self.frames = 0
 
-        table_id = self._parent.getNum()
-        ow_id = self.getNum()
+        table_id = self._parent.getId()
+        ow_id = self._id
 
         self.image = ImageManager().get_ow_frame(ow_id, table_id, 0)
         self.frames = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
@@ -122,12 +124,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         for table in range(len(root.tables_list)):
             # add the table nodes
-            newTableNode = TableNode("Table " + str(table), self._rootNode)
+            newTableNode = TableNode(table, self._rootNode)
 
             for ow in range(len(root.tables_list[table].ow_data_pointers)):
                 # add the ow nodes
-                print("Configuring OW: " + str(ow))
-                newOWNode = OWNode("Overworld " + str(ow), newTableNode)
+                newOWNode = OWNode(ow, newTableNode)
 
 
     """INPUTS: QModelIndex"""
@@ -159,7 +160,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if index.column() == 0:
-                return node.name()
+                return node.name + str(node.getId())
             elif index.column() == 2:
                 global root
 
