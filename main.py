@@ -69,9 +69,6 @@ class MyApp(base, form):
 
             self.treeRootNode = Node("root")
             self.tree_model = TreeViewModel(self.treeRootNode)
-            # Table0 = self.tree_model.index(0, 0, QtCore.QModelIndex())
-            # self.tree_model.insertRows(1, 1, QtCore.QModelIndex())
-            self.tree_model.insertOWs(-1, 2, 1, 2, self.tree_model.index(0, 0, QtCore.QModelIndex()))
 
             self.OWTreeView.setModel(self.tree_model)
             self.statusbar.showMessage("Ready")

@@ -288,8 +288,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
                 # Re-init the node, so it loads the frame
                 self.setData(self.index(row + position, 0, parent), None)
             if parentNode.typeInfo() == "NODE":
-                childNode = TableNode(position + row)
-                success = parentNode.insertChild(position, childNode)
+                childNode = TableNode(childCount)
+                success = parentNode.insertChild(childCount, childNode)
 
         # Only for the OWs, increase the name Id by one, in case an OW was INSERTED
         if parentNode.typeInfo() == "table_node":
@@ -310,19 +310,52 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         for row in range(rows):
             success = parentNode.removeChild(position)
 
+            if parentNode.typeInfo() == "table_node":
+                #remove OW
+                root.tables_list[parentNode.getId()].remove_ow(position)
+            elif parentNode.typeInfo() == "NODE":
+                root.remove_table(position)
+
+        for row in range(position, parentNode.childCount()):
+            self.setData(self.index(row, 0, parent), row)
+
         self.endRemoveRows()
 
         return success
 
-    def insertOWs(self, position, rows, ow_type, num_of_frames, parent=QtCore.QModelIndex()):
+    # OW/Table interacting functionsqt c
 
+    def insertOWs(self, ow_id, table_id, rows, ow_type, num_of_frames):
+
+        parent = self.index(table_id, 0, QtCore.QModelIndex())
         parentNode = self.getNode(parent)
 
         for ow in range(rows):
-            if position == -1:
-                position = parentNode.childCount()
+            if ow_id == -1:
+                ow_id = parentNode.childCount()
                 root.tables_list[parentNode.getId()].add_ow(ow_type, num_of_frames)
             else:
-                root.tables_list[parentNode.getId()].insert_ow(position, ow_type, num_of_frames)
+                root.tables_list[parentNode.getId()].insert_ow(ow_id, ow_type, num_of_frames)
 
-        self.insertRows(position, rows, parent)
+        self.insertRows(ow_id, rows, parent)
+
+    def removeOWs(self, ow_id, table_id, rows):
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        self.removeRows(ow_id, rows, tableNode)
+
+    def resizeOW(self, ow_id, table_id, ow_type, num_of_frames):
+
+        root.tables_list[table_id].resize_ow(ow_id, ow_type, num_of_frames)
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        owNode = self.index(ow_id, 0, tableNode)
+        self.setData(owNode, None)
+
+    def insertTable(self, ow_pointers, data_pointers, frames_pointers, frames_address):
+        parent = QtCore.QModelIndex()
+        parentNode = self.getNode(parent)
+
+        root.custom_table_import(ow_pointers, data_pointers, frames_pointers, frames_address)
+        self.insertRows(-1, 1, parent)
+
+    def removeTable(self, table_id):
+        self.removeRows(table_id, 1, QtCore.QModelIndex())
