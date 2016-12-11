@@ -44,9 +44,6 @@ class Node(object):
 
         return True
 
-    def id(self):
-        return self.id
-
     def setName(self, name):
         self._name = name
 
@@ -87,6 +84,9 @@ class Node(object):
     def getId(self):
         return self._id
 
+    def setId(self, val):
+        self._id = val
+
 
 class TableNode(Node):
     def __init__(self, id, parent=None):
@@ -103,14 +103,18 @@ class OWNode(Node):
         self.name = "Overworld "
         self.frames = 0
 
+        if parent is not None:
+            self.setInfo()
+
+    def typeInfo(self):
+        return "ow_node"
+
+    def setInfo(self):
         table_id = self._parent.getId()
         ow_id = self._id
 
         self.image = ImageManager().get_ow_frame(ow_id, table_id, 0)
         self.frames = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
-
-    def typeInfo(self):
-        return "ow_node"
 
 
 class TreeViewModel(QtCore.QAbstractItemModel):
@@ -191,11 +195,21 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if index.isValid():
 
-            if role == QtCore.Qt.EditRole:
-                node = index.internalPointer()
-                node.setName(value)
+            node = index.internalPointer()
 
-                return True
+            # For the OWs
+            if node.typeInfo() == "ow_node":
+                if value is not None:
+                    node.setId(value)
+                else:
+                    node.setInfo()
+
+            # For the Tables
+            if node.typeInfo() == "table_node":
+                node.setId(value)
+
+            return True
+
         return False
 
     """INPUTS: int, Qt::Orientation, int"""
@@ -263,26 +277,24 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         parentNode = self.getNode(parent)
 
         self.beginInsertRows(parent, position, position + rows - 1)
+        childCount = parentNode.childCount()
 
         for row in range(rows):
-            childCount = parentNode.childCount()
-            childNode = Node("untitled" + str(childCount))
-            success = parentNode.insertChild(position, childNode)
 
-        self.endInsertRows()
+            if parentNode.typeInfo() == "table_node":
+                # Adding OWs
+                childNode = OWNode(position + row)
+                success = parentNode.insertChild(position + row, childNode)
+                # Re-init the node, so it loads the frame
+                self.setData(self.index(row + position, 0, parent), None)
+            if parentNode.typeInfo() == "NODE":
+                childNode = TableNode(position + row)
+                success = parentNode.insertChild(position, childNode)
 
-        return success
-
-    def insertLights(self, position, rows, parent=QtCore.QModelIndex()):
-
-        parentNode = self.getNode(parent)
-
-        self.beginInsertRows(parent, position, position + rows - 1)
-
-        for row in range(rows):
-            childCount = parentNode.childCount()
-            childNode = LightNode("light" + str(childCount))
-            success = parentNode.insertChild(position, childNode)
+        # Only for the OWs, increase the name Id by one, in case an OW was INSERTED
+        if parentNode.typeInfo() == "table_node":
+            for row in range(position + rows, childCount + rows):
+                self.setData(self.index(row, 0, parent), row)
 
         self.endInsertRows()
 
@@ -302,5 +314,15 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return success
 
-    def clear(self):
-        pass
+    def insertOWs(self, position, rows, ow_type, num_of_frames, parent=QtCore.QModelIndex()):
+
+        parentNode = self.getNode(parent)
+
+        for ow in range(rows):
+            if position == -1:
+                position = parentNode.childCount()
+                root.tables_list[parentNode.getId()].add_ow(ow_type, num_of_frames)
+            else:
+                root.tables_list[parentNode.getId()].insert_ow(position, ow_type, num_of_frames)
+
+        self.insertRows(position, rows, parent)
