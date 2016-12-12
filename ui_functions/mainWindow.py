@@ -168,11 +168,4 @@ class MyApp(base, form):
 
         update_gui(self)
 
-if __name__ == '__main__':
-    import sys
 
-    app = QtWidgets.QApplication(sys.argv)
-
-    window = MyApp()
-    window.show()
-    sys.exit(app.exec())

@@ -1,11 +1,15 @@
 OWM build with Qt
-
+-
 To-Do:
+-
+-   Create the Windows for adding/removing/resizing OWs/Tables
 
--Finalize the UI
+-   Palette Management Buttons
+
+-   Add auto-offset-finding and auto-template-creation functions
 
 Dependencies:
-PyQt5
-pillow
+-
+PyQt5, pillow
 
-To start OWM, run the main.py
+
