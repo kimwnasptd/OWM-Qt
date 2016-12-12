@@ -15,6 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    addow.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    addow.ui
+
+RESOURCES +=
+
+DISTFILES +=

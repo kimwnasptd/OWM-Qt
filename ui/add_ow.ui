@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>814</width>
+    <width>811</width>
     <height>523</height>
    </rect>
   </property>
@@ -508,24 +508,17 @@
     <property name="title">
      <string>Sprite View</string>
     </property>
-    <widget class="QWidget" name="gridLayoutWidget">
+    <widget class="QWidget" name="verticalLayoutWidget">
      <property name="geometry">
       <rect>
-       <x>9</x>
+       <x>10</x>
        <y>30</y>
        <width>201</width>
        <height>201</height>
       </rect>
      </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="framesSpinBox">
-        <property name="maximum">
-         <number>10</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="3">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
        <widget class="QGraphicsView" name="owGraphicsView">
         <property name="sizeAdjustPolicy">
          <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -541,6 +534,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QSpinBox" name="framesSpinBox">
+        <property name="maximum">
+         <number>10</number>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </widget>
@@ -550,7 +550,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>814</width>
+     <width>811</width>
      <height>27</height>
     </rect>
    </property>

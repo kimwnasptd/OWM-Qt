@@ -323,7 +323,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return success
 
-    # OW/Table interacting functionsqt c
+    # OW/Table interacting functionsqt
 
     def insertOWs(self, ow_id, table_id, rows, ow_type, num_of_frames):
 
