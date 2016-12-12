@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from PyQt5 import uic
-from ui_functions import menu_functions
+from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
 from ui_functions.ui_updater import *
+from ui_functions.supportWindows import *
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -34,13 +34,17 @@ class MyApp(base, form):
         # SpinBox
         self.framesSpinBox.valueChanged.connect(self.spinbox_changed)
 
+        # Buttons
+        self.addOwButton.clicked.connect(lambda: menu_buttons_functions.addOWButtonFunction(self))
+        self.insertOwButton.clicked.connect(lambda: menu_buttons_functions.insertOWuttonFunction(self))
+
         # Menu
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(rom.rom_path))
         self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
-        self.actionExit_2.triggered.connect(menu_functions.exit_app)
+        self.actionExit_2.triggered.connect(menu_buttons_functions.exit_app)
 
-        self.actionExport_Frames_Sheet.triggered.connect(lambda: menu_functions.export_ow_image(self))
+        self.actionExport_Frames_Sheet.triggered.connect(lambda: menu_buttons_functions.export_ow_image(self))
 
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)

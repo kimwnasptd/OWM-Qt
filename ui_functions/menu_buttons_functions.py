@@ -1,5 +1,6 @@
 from core_files.ImageEditor import *
 from PyQt5 import QtWidgets, QtCore
+from ui_functions.supportWindows import *
 import sys
 
 
@@ -29,3 +30,12 @@ def export_ow_image(ui):
     image.save(fn)
 
 
+def addOWButtonFunction(ui):
+
+    owWindow = addOWWindow(ui)
+    owWindow.exec()
+
+
+def insertOWuttonFunction(ui):
+    owWindow = insertOWWindow(ui)
+    owWindow.exec()

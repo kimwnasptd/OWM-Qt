@@ -1,5 +1,4 @@
 from PyQt5 import QtCore, QtGui
-import sys
 from ui_functions.rominfo_class import *
 from PIL.ImageQt import ImageQt
 
@@ -138,7 +137,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QtCore.QModelIndex()):
         if not parent.isValid():
             parentNode = self._rootNode
         else:
@@ -359,3 +358,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
     def removeTable(self, table_id):
         self.removeRows(table_id, 1, QtCore.QModelIndex())
+
+    def tablesCount(self):
+        return self.rowCount()
+
+    def owsCount(self, table_id):
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        return self.rowCount(tableNode)
