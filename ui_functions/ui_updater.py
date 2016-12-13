@@ -107,6 +107,7 @@ def update_menu_actions(ui):
     ui.menuSpriters_Resource.setEnabled(False)
     ui.actionImport_Frames_Sheet.setEnabled(False)
     ui.actionExport_Frames_Sheet.setEnabled(False)
+    ui.actionPaletteCleanup.setEnabled(True)
 
     if ui.selected_ow is not None:
         ui.menuFrames_Sheet.setEnabled(True)

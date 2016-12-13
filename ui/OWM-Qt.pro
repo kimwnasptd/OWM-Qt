@@ -20,7 +20,8 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
     addow.ui \
-    insertow.ui
+    insertow.ui \
+    resizeow.ui
 
 RESOURCES +=
 

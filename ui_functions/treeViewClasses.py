@@ -338,16 +338,22 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         self.insertRows(ow_id, rows, parent)
 
-    def removeOWs(self, ow_id, table_id, rows):
+    def removeOWs(self, ow_id, table_id, rows, ui):
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         self.removeRows(ow_id, rows, tableNode)
 
-    def resizeOW(self, ow_id, table_id, ow_type, num_of_frames):
+        # Manually reset the selected Item in the View, removeRows
+        # removeRows deletes the currentIndex in the selectionModel, so the next one becomes current
+        ui.OWTreeView.selectionModel().setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
+        ui.item_selected(self.index(ow_id, 0, tableNode))
+
+    def resizeOW(self, ow_id, table_id, ow_type, num_of_frames, ui):
 
         root.tables_list[table_id].resize_ow(ow_id, ow_type, num_of_frames)
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
+        ui.item_selected(self.index(ow_id, 0, tableNode))
 
     def insertTable(self, ow_pointers, data_pointers, frames_pointers, frames_address):
         parent = QtCore.QModelIndex()
@@ -365,3 +371,71 @@ class TreeViewModel(QtCore.QAbstractItemModel):
     def owsCount(self, table_id):
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         return self.rowCount(tableNode)
+
+    def importOWFrames(self, image_obj, ow_id, table_id, ui):
+        # Check if it needs to repoint the palette table
+        free_slots = ui.sprite_manager.get_free_slots()
+        if free_slots == 0:
+            ui.sprite_manager.repoint_palette_table()
+            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+
+        ui.sprite_manager.import_sprites(image_obj, table_id, ow_id)
+
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        owNode = self.index(ow_id, 0, tableNode)
+        self.setData(owNode, None)
+        ui.item_selected(self.index(ow_id, 0, tableNode))
+
+    def importPokeSpr(self, image_obj, ow_id, table_id, ui):
+
+        free_slots = ui.sprite_manager.get_free_slots()
+        if free_slots == 0:
+            ui.sprite_manager.repoint_palette_table()
+            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+
+        ow_type = root.tables_list[ui.selected_table].ow_data_pointers[ow_id].frames.get_type()
+        frames_num = root.tables_list[ui.selected_table].ow_data_pointers[ow_id].frames.get_num()
+
+        if (ow_type != 2) or (frames_num != 9):
+            root.tables_list[ui.selected_table].resize_ow(ow_id, 2, 9)
+            root.__init__()
+
+        ui.sprite_manager.import_pokemon(image_obj, table_id, ow_id)
+
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        owNode = self.index(ow_id, 0, tableNode)
+        self.setData(owNode, None)
+        ui.item_selected(self.index(ow_id, 0, tableNode))
+
+    def importOWSpr(self, image_obj, ow_id, table_id, ui):
+
+        free_slots = ui.sprite_manager.get_free_slots()
+        if free_slots == 0:
+            ui.sprite_manager.repoint_palette_table()
+            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+
+        ow_type = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_type()
+        frames_num = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
+
+        if (ow_type != 2) or (frames_num != 9):
+            root.tables_list[table_id].resize_ow(ow_id, 2, 9)
+            root.__init__()
+
+        ui.sprite_manager.import_ow(image_obj, table_id, ow_id)
+
+        tableNode = self.index(table_id, 0, QtCore.QModelIndex())
+        owNode = self.index(ow_id, 0, tableNode)
+        self.setData(owNode, None)
+        ui.item_selected(self.index(ow_id, 0, tableNode))
+
+    def paletteCleanup(self, ui):
+
+        ui.sprite_manager.palette_cleanup()
+        from ui_functions.ui_updater import update_gui
+        update_gui(ui)
+
+        if ui.selected_ow is not None and ui.selected_table is not None:
+            tableNode = self.index(ui.selected_table, 0, QtCore.QModelIndex())
+            owNode = self.index(ui.selected_ow, 0, tableNode)
+            self.setData(owNode, None)
+            ui.item_selected(self.index(ui.selected_ow, 0, tableNode))

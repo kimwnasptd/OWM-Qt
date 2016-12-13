@@ -2,6 +2,7 @@ from PyQt5 import uic, QtGui, QtWidgets
 
 addOWBase, addOWForm = uic.loadUiType("ui/addow.ui")
 insertOWBase, insertOWForm = uic.loadUiType("ui/insertow.ui")
+resizeOWBase, resizeOWForm = uic.loadUiType("ui/resizeow.ui")
 
 
 def check_type_availability(ow_type, ui):
@@ -48,9 +49,9 @@ class insertOWWindow(insertOWBase, insertOWForm):
         super(insertOWBase, self).__init__(parent)
         self.setupUi(self)
 
-        self.owTypeLineEdit.setValidator(QtGui.QIntValidator(0, 9))
-        self.framesNumLineEdit.setValidator(QtGui.QIntValidator(0, 1000))
-        self.owNumLineEdit.setValidator(QtGui.QIntValidator(0, 256))
+        self.owTypeLineEdit.setValidator(QtGui.QIntValidator(1, 9))
+        self.framesNumLineEdit.setValidator(QtGui.QIntValidator(1, 1000))
+        self.owNumLineEdit.setValidator(QtGui.QIntValidator(1, 256))
 
         self.buttonBox.accepted.connect(lambda: self.insertOW(ui))
 
@@ -70,3 +71,25 @@ class insertOWWindow(insertOWBase, insertOWForm):
             else:
                 message = "Cant insert that number of OWs\nMax number of OWs a table can hold is 256"
                 QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't Add so many OWs", message)
+
+
+class resizeOWWindow(resizeOWBase, resizeOWForm):
+    def __init__(self, ui, parent=None):
+        super(resizeOWBase, self).__init__(parent)
+        self.setupUi(self)
+
+        self.owTypeLineEdit.setValidator(QtGui.QIntValidator(1, 9))
+        self.framesNumLineEdit.setValidator(QtGui.QIntValidator(1, 1000))
+
+        self.buttonBox.accepted.connect(lambda: self.resizeOW(ui))
+
+    def resizeOW(self, ui):
+        ow_type = int(self.owTypeLineEdit.text())
+        frames_num = int(self.framesNumLineEdit.text())
+
+        if check_type_availability(ow_type, ui):
+            ui.tree_model.resizeOW(ui.selected_ow, ui.selected_table, ow_type, frames_num, ui)
+        else:
+            message = "Please insert a correct type"
+            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't create OW with Type: " + str(ow_type), message)
+

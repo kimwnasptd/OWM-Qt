@@ -36,7 +36,9 @@ class MyApp(base, form):
 
         # Buttons
         self.addOwButton.clicked.connect(lambda: menu_buttons_functions.addOWButtonFunction(self))
-        self.insertOwButton.clicked.connect(lambda: menu_buttons_functions.insertOWuttonFunction(self))
+        self.insertOwButton.clicked.connect(lambda: menu_buttons_functions.insertOWButtonFunction(self))
+        self.resizeOwButton.clicked.connect(lambda: menu_buttons_functions.resizeOWButtonFunction(self))
+        self.removeOwButton.clicked.connect(lambda: menu_buttons_functions.removeOWButtonFunction(self))
 
         # Menu
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
@@ -44,7 +46,11 @@ class MyApp(base, form):
         self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
         self.actionExit_2.triggered.connect(menu_buttons_functions.exit_app)
 
+        self.actionImport_Frames_Sheet.triggered.connect(lambda: menu_buttons_functions.import_frames_sheet(self))
         self.actionExport_Frames_Sheet.triggered.connect(lambda: menu_buttons_functions.export_ow_image(self))
+        self.actionImport_OW.triggered.connect(lambda: menu_buttons_functions.import_ow_sprsrc(self))
+        self.actionImport_Pokemon.triggered.connect(lambda: menu_buttons_functions.import_pokemon_sprsrc(self))
+        self.actionPaletteCleanup.triggered.connect(lambda: menu_buttons_functions.palette_cleanup(self))
 
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
@@ -155,7 +161,7 @@ class MyApp(base, form):
     def item_selected(self, index):
         node = index.internalPointer()
 
-        if isinstance(node, OWNode):
+        if node.typeInfo() == "ow_node":
             self.selected_table = node.parent().getId()
             self.selected_ow = node.getId()
 

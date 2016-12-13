@@ -591,7 +591,7 @@
     <addaction name="menuFrames_Sheet"/>
     <addaction name="menuSpriters_Resource"/>
     <addaction name="separator"/>
-    <addaction name="actionCreate_Templates"/>
+    <addaction name="actionPaletteCleanup"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -684,9 +684,15 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionCreate_Templates">
+  <action name="actionPaletteCleanup">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Palette Cleanup</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionCreate_Templates_2">
