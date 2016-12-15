@@ -317,6 +317,16 @@ def write_animation_pointer(ow_data_address, data_tuple):
     write_pointer(data_tuple[3], ow_data_address + 0x20)
 
 
+def get_text_color(ow_data_address):
+    rom.seek(ow_data_address + 0xE)
+    return rom.read_byte()
+
+
+def set_text_color(ow_data_address, val):
+    rom.seek(ow_data_address + 0xE)
+    rom.write_byte(val)
+
+
 # -----------------Classes--------------------
 
 class FramesPointers:
@@ -820,6 +830,12 @@ class Root:
             data_pointer = pointer_to_address(pointer)
             animation_addresses.append(get_animation_address(data_pointer))
 
+        # Text Color Bytes
+        text_bytes = []
+        for pointer in range(original_ow_pointers, original_ow_pointers + (4 * original_num_of_ows), 4):
+            data_pointer = pointer_to_address(pointer)
+            text_bytes.append(get_text_color(data_pointer))
+
         # Find the Type of each OW
         types = []
         for frames_pointers_address in frames_pointers:
@@ -843,6 +859,7 @@ class Root:
             write_ow_palette_id(repointed_table.ow_data_pointers[-1].ow_data_address, palettes[i])
             write_palette_slot(repointed_table.ow_data_pointers[-1].ow_data_address, slots[i])
             write_animation_pointer(repointed_table.ow_data_pointers[-1].ow_data_address, animation_addresses[i])
+            set_text_color(repointed_table.ow_data_pointers[-1].ow_data_address, text_bytes[i])
 
             # Copy the actual frames
             for j in range(0, frames[i]):

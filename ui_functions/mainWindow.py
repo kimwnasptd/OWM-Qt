@@ -34,6 +34,9 @@ class MyApp(base, form):
         # SpinBox
         self.framesSpinBox.valueChanged.connect(self.spinbox_changed)
 
+        # ComboBoxes
+        self.paletteIDComboBox.currentIndexChanged.connect(self.palette_id_changed)
+
         # Buttons
         self.addOwButton.clicked.connect(lambda: menu_buttons_functions.addOWButtonFunction(self))
         self.insertOwButton.clicked.connect(lambda: menu_buttons_functions.insertOWButtonFunction(self))
@@ -90,6 +93,8 @@ class MyApp(base, form):
             self.selected_table = None
             self.selected_ow = None
             update_gui(self)
+            self.initColorTextComboBox()
+            self.initPaletteIdComboBox()
 
     def save_rom(self, fn=rom.rom_path):
         ''' The file might have changed while we were editing, so
@@ -158,6 +163,22 @@ class MyApp(base, form):
 
         self.paint_graphics_view(self.sprite_manager.get_ow_frame(self.selected_ow, self.selected_table, i))
 
+    def palette_id_changed(self, val):
+        palette_id = self.paletteIDComboBox.itemText(val)
+        # When the palette combobox gets cleared and the first item is added, the currentIndex changes
+        combobox_gets_initialized = self.paletteIDComboBox.count() == 0 or self.paletteIDComboBox.count() == 1
+
+        if palette_id != "" \
+                and self.selected_ow is not None \
+                and self.selected_table is not None \
+                and not combobox_gets_initialized:
+            palette_id = int(palette_id, 16)
+            ow_data_address = root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address
+            write_ow_palette_id(ow_data_address, palette_id)
+            self.tree_model.initOW(self.selected_table, self.selected_ow)
+
+        update_viewer(self)
+
     def item_selected(self, index):
         node = index.internalPointer()
 
@@ -177,5 +198,25 @@ class MyApp(base, form):
             self.paint_graphics_view(None)
 
         update_gui(self)
+
+    def initColorTextComboBox(self):
+        # Text color ComboBox
+        if self.rom_info.name[:3] == 'BPR':
+            self.textColorComboBox.setEnabled(True)
+            colors_list = ['Black', 'Blue', 'Red']
+            self.textColorComboBox.clear()
+            self.textColorComboBox.addItems(colors_list)
+
+    def initPaletteIdComboBox(self):
+
+        self.paletteIDComboBox.setEnabled(True)
+        # Create the list with the palette IDs
+        id_list = []
+        self.paletteIDComboBox.clear()
+        for pal_id in self.sprite_manager.used_palettes:
+            id_list.append(capitalized_hex(pal_id))
+            self.paletteIDComboBox.addItem(id_list[-1])
+
+
 
 

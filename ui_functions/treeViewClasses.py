@@ -386,6 +386,12 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
+        #ui.initPaletteIdComboBox()
+        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+
+        from ui_functions.ui_updater import update_palette_info
+        update_palette_info(ui)
+
     def importPokeSpr(self, image_obj, ow_id, table_id, ui):
 
         free_slots = ui.sprite_manager.get_free_slots()
@@ -406,6 +412,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
+        ui.initPaletteIdComboBox()
 
     def importOWSpr(self, image_obj, ow_id, table_id, ui):
 
@@ -427,6 +434,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
+        ui.initPaletteIdComboBox()
 
     def paletteCleanup(self, ui):
 
@@ -439,3 +447,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             owNode = self.index(ui.selected_ow, 0, tableNode)
             self.setData(owNode, None)
             ui.item_selected(self.index(ui.selected_ow, 0, tableNode))
+            ui.initPaletteIdComboBox()
+            # Used to set the currentIndex in the selected palette
+            update_gui(ui)
+
+    def initOW(self, table_id, ow_id):
+        parent = self.index(table_id, 0, QtCore.QModelIndex())
+        ow = self.index(ow_id, 0, parent)
+        self.setData(ow, None)

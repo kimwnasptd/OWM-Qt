@@ -80,19 +80,25 @@ def update_palette_info(ui):
 
     if ui.selected_table is not None:
         ui.paletteIDComboBox.setEnabled(False)
+        ui.textColorComboBox.setEnabled(False)
 
         if ui.selected_ow is not None:
             ui.paletteIDComboBox.setEnabled(True)
-            # Create the list with the palette IDs
+            ui.textColorComboBox.setEnabled(True)
+
             id_list = []
-            ui.paletteIDComboBox.clear()
             for pal_id in ui.sprite_manager.used_palettes:
                 id_list.append(capitalized_hex(pal_id))
-                ui.paletteIDComboBox.addItem(id_list[-1])
 
+            # Sync the Text Color ComboBox
+            ow_data_address = root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address
+            ui.textColorComboBox.setCurrentIndex(get_text_color(ow_data_address))
+
+            # Sync the Palette Id ComboBox
             palette_id = get_ow_palette_id(root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address)
             index = id_list.index(capitalized_hex(palette_id))
             ui.paletteIDComboBox.setCurrentIndex(index)
+
             ui.paletteAddressLabel.setText(capitalized_hex(ui.sprite_manager.get_palette_address(palette_id)))
         else:
             ui.paletteAddressLabel.setText("")
@@ -116,11 +122,17 @@ def update_menu_actions(ui):
         ui.actionExport_Frames_Sheet.setEnabled(True)
 
 
-def update_gui(ui):
+def update_viewer(ui):
+    if ui.selected_ow is not None:
+        frame = ui.framesSpinBox.value()
+        ui.paint_graphics_view(ui.sprite_manager.get_ow_frame(ui.selected_ow, ui.selected_table, frame))
 
+
+def update_gui(ui):
     update_ow_menu_buttons(ui)
     update_ow_text_menu(ui)
     update_tables_menu_buttons(ui)
     update_tables_text_menu(ui)
     update_palette_info(ui)
     update_menu_actions(ui)
+    #update_viewer(ui)
