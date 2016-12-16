@@ -93,49 +93,27 @@ class RomInfo:
             message += "the address of the OW Limiter"
             QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
 
+    def load_from_profile(self, profile, ui):
 
-'''
+        if profile != "":
+            self.set_info(get_name_line_index(profile))
 
-    def load_from_profile(self, profile):
+            # Initialize the OW Table Info
+            change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
+                             self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
 
-        self.set_info(get_name_line_index(profile))
+            # Initialize the palette table info
+            change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
+                                     self.original_palette_table_address, self.free_space)
 
-        # Initialize the OW Table Info
-        change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
-                         self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
+            root.__init__()
+            ui.sprite_manager = ImageManager()
 
-        # Initialize the palette table info
-        change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
-                                 self.original_palette_table_address, self.free_space)
+            ui.selected_table = None
+            ui.selected_ow = None
 
-        global root, SpriteManager
-        root = Root()
-        SpriteManager = ImageManager()
+            from ui_functions.ui_updater import update_gui, update_tree_model
+            update_tree_model(ui)
+            update_gui(ui)
 
-        change_core_root(root)
-        change_image_root(root)
 
-        global app, working_ow, working_table
-        app.OWs.delete(0, "end")
-        app.OWList.delete(0, "end")
-        app.PaletteCleanup['state'] = 'enabled'
-
-        if root.get_table_num() != 0:
-            working_table = 0
-        else:
-            working_table = -1
-        working_ow = -1
-
-        Update_OW_Table_Lists(app)
-
-        Update_OW_Menu_Buttons(0)
-        Update_OW_Info(0)
-        Update_Table_Info(0)
-        Update_Palette_Info(0)
-        Update_Table_Menu_Buttons(0)
-        Update_Menu_Buttons()
-
-        if root.get_num_of_available_table_pointers() != 0:
-            app.Insert_Table_Button['state'] = 'enabled'
-
-'''

@@ -362,8 +362,27 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         root.custom_table_import(ow_pointers, data_pointers, frames_pointers, frames_address)
         self.insertRows(-1, 1, parent)
 
-    def removeTable(self, table_id):
+    def removeTable(self, table_id, ui):
+        quit_msg = "Are you sure you want to delete the entire table?"
+        reply = QtWidgets.QMessageBox.question(ui, 'Message', quit_msg, QtWidgets.QMessageBox.Yes,
+                                               QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.No:
+            return
+
+        ui.statusbar.showMessage("Removing Table...")
         self.removeRows(table_id, 1, QtCore.QModelIndex())
+        ui.statusbar.showMessage("Ready")
+        n = root.get_table_num()
+
+        if n == 0:
+            ui.selected_table = None
+        else:
+            ui.selected_table -= 1
+        ui.selected_ow = None
+
+        from ui_functions.ui_updater import update_gui
+        update_gui(ui)
 
     def tablesCount(self):
         return self.rowCount()
@@ -440,7 +459,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         ui.sprite_manager.palette_cleanup()
         from ui_functions.ui_updater import update_gui
-        update_gui(ui)
 
         if ui.selected_ow is not None and ui.selected_table is not None:
             tableNode = self.index(ui.selected_table, 0, QtCore.QModelIndex())
@@ -449,7 +467,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ui.item_selected(self.index(ui.selected_ow, 0, tableNode))
             ui.initPaletteIdComboBox()
             # Used to set the currentIndex in the selected palette
-            update_gui(ui)
+
+        update_gui(ui)
 
     def initOW(self, table_id, ow_id):
         parent = self.index(table_id, 0, QtCore.QModelIndex())

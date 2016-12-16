@@ -97,6 +97,10 @@ def import_pokemon_sprsrc(ui):
 def palette_cleanup(ui):
     ui.tree_model.paletteCleanup(ui)
 
+
+def remove_table(ui):
+    ui.tree_model.removeTable(ui.selected_table, ui)
+
 # Buttons Functions
 def addOWButtonFunction(ui):
 
@@ -116,3 +120,8 @@ def resizeOWButtonFunction(ui):
 
 def removeOWButtonFunction(ui):
     ui.tree_model.removeOWs(ui.selected_ow, ui.selected_table, 1, ui)
+
+
+def addTableButtonFunction(ui):
+    addTable = addTableWindow(ui)
+    addTable.exec()

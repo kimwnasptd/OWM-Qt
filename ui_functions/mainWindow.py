@@ -36,12 +36,16 @@ class MyApp(base, form):
 
         # ComboBoxes
         self.paletteIDComboBox.currentIndexChanged.connect(self.palette_id_changed)
+        self.profilesComboBox.currentIndexChanged.connect(self.profile_selected)
+        self.textColorComboBox.currentIndexChanged.connect(self.text_color_changed)
 
         # Buttons
         self.addOwButton.clicked.connect(lambda: menu_buttons_functions.addOWButtonFunction(self))
         self.insertOwButton.clicked.connect(lambda: menu_buttons_functions.insertOWButtonFunction(self))
         self.resizeOwButton.clicked.connect(lambda: menu_buttons_functions.resizeOWButtonFunction(self))
         self.removeOwButton.clicked.connect(lambda: menu_buttons_functions.removeOWButtonFunction(self))
+        self.removeTableButton.clicked.connect(lambda: menu_buttons_functions.remove_table(self))
+        self.addTableButton.clicked.connect(lambda: menu_buttons_functions.addTableButtonFunction(self))
 
         # Menu
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
@@ -80,21 +84,15 @@ class MyApp(base, form):
 
             self.rom_info = RomInfo()
 
-            self.treeRootNode = Node("root")
-            self.tree_model = TreeViewModel(self.treeRootNode)
-
-            self.OWTreeView.setModel(self.tree_model)
             self.statusbar.showMessage("Ready")
-
-            # Reset the selection model
-            self.tree_selection_model = self.OWTreeView.selectionModel()
-            self.tree_selection_model.currentChanged.connect(self.item_selected)
 
             self.selected_table = None
             self.selected_ow = None
             update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
+            self.initProfileComboBox()
+            self.tree_selection_model.currentChanged.connect(self.item_selected)
 
     def save_rom(self, fn=rom.rom_path):
         ''' The file might have changed while we were editing, so
@@ -138,7 +136,7 @@ class MyApp(base, form):
             self.statusbar.showMessage("Cancelled...")
             return
 
-        fn += ".gba"
+        # fn += ".gba"
         import shutil
         shutil.copyfile(rom.rom_file_name, fn)
         rom.rom_file_name = fn
@@ -182,12 +180,15 @@ class MyApp(base, form):
     def item_selected(self, index):
         node = index.internalPointer()
 
+        if node is None:
+            return
+
         if node.typeInfo() == "ow_node":
             self.selected_table = node.parent().getId()
             self.selected_ow = node.getId()
-
             self.paint_graphics_view(node.image)
 
+            print("hi")
             # Update the SpinBox
             self.framesSpinBox.setRange(0, node.frames - 1)
             self.framesSpinBox.setValue(0)
@@ -199,16 +200,28 @@ class MyApp(base, form):
 
         update_gui(self)
 
+    def profile_selected(self, val):
+        if self.rom_info.rom_successfully_loaded == 1:
+
+            profile = self.profilesComboBox.itemText(val)
+            self.rom_info.load_from_profile(profile, self)
+
+    def text_color_changed(self, byte):
+        if self.selected_table is not None and self.selected_ow is not None:
+            set_text_color(root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address, byte)
+
     def initColorTextComboBox(self):
         # Text color ComboBox
-        if self.rom_info.name[:3] == 'BPR':
+        if self.rom_info.name[:3] == 'BPR' or self.rom_info.name == 'JPAN':
+            self.textColorComboBox.clear()
             self.textColorComboBox.setEnabled(True)
-            colors_list = ['Black', 'Blue', 'Red']
+            colors_list = ['Blue', 'Red', 'Black']
             self.textColorComboBox.clear()
             self.textColorComboBox.addItems(colors_list)
 
     def initPaletteIdComboBox(self):
 
+        self.paletteIDComboBox.clear()
         self.paletteIDComboBox.setEnabled(True)
         # Create the list with the palette IDs
         id_list = []
@@ -217,6 +230,12 @@ class MyApp(base, form):
             id_list.append(capitalized_hex(pal_id))
             self.paletteIDComboBox.addItem(id_list[-1])
 
+    def initProfileComboBox(self):
 
+        profiles = self.rom_info.Profiler.default_profiles
+
+        self.profilesComboBox.clear()
+        self.profilesComboBox.addItems(profiles)
+        self.profilesComboBox.setCurrentIndex(self.rom_info.Profiler.current_profile)
 
 

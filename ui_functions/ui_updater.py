@@ -3,6 +3,12 @@ from ui_functions.treeViewClasses import *
 
 def update_ow_menu_buttons(ui):
 
+    if ui.selected_table is None:
+        ui.addOwButton.setEnabled(False)
+        ui.insertOwButton.setEnabled(False)
+        ui.resizeOwButton.setEnabled(False)
+        ui.removeOwButton.setEnabled(False)
+
     if ui.selected_ow is None and ui.selected_table is not None:
         # A Table was selected
         ui.addOwButton.setEnabled(True)
@@ -36,7 +42,7 @@ def update_ow_text_menu(ui):
         ow_type = root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].frames.get_type()
         width, height = get_frame_dimensions(ow_type)
 
-        ui.typeLabel.setText("Type: " + str(ow_type) + "  [" + str(width) + 'x' + str(height) + ']')
+        ui.typeLabel.setText(str(ow_type) + "  [" + str(width) + 'x' + str(height) + ']')
         ui.framesLabel.setText(str(ui.OWTreeView.selectionModel().currentIndex().internalPointer().frames))
         ui.pointerAddressLabel.setText(capitalized_hex(
             root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_pointer_address))
@@ -50,12 +56,18 @@ def update_ow_text_menu(ui):
 
 def update_tables_menu_buttons(ui):
     # They are actually always open
-    ui.addTableButton.setEnabled(True)
-    ui.removeTableButton.setEnabled(True)
+    ui.removeTableButton.setEnabled(False)
 
     if ui.selected_table is None:
         ui.removeTableButton.setEnabled(False)
-    return
+    else:
+        if ui.tree_model.tablesCount() != 1 or root.get_num_of_available_table_pointers() != 0:
+            ui.removeTableButton.setEnabled(True)
+
+    if root.get_num_of_available_table_pointers() != 0:
+        ui.addTableButton.setEnabled(True)
+    else:
+        ui.addTableButton.setEnabled(False)
 
 
 def update_tables_text_menu(ui):
@@ -126,6 +138,18 @@ def update_viewer(ui):
     if ui.selected_ow is not None:
         frame = ui.framesSpinBox.value()
         ui.paint_graphics_view(ui.sprite_manager.get_ow_frame(ui.selected_ow, ui.selected_table, frame))
+
+
+def update_tree_model(ui):
+    ui.statusbar.showMessage("Updating the TreeView...")
+    ui.treeRootNode = Node("root")
+    ui.tree_model = TreeViewModel(ui.treeRootNode)
+    ui.OWTreeView.setModel(ui.tree_model)
+
+    # Reset the selection model
+    ui.tree_selection_model = ui.OWTreeView.selectionModel()
+    ui.tree_selection_model.currentChanged.connect(ui.item_selected)
+    ui.statusbar.showMessage("Ready...")
 
 
 def update_gui(ui):
