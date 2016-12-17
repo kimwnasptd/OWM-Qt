@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>814</width>
-    <height>523</height>
+    <width>895</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="paletteBox">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>270</y>
-      <width>221</width>
-      <height>201</height>
+      <x>610</x>
+      <y>290</y>
+      <width>271</width>
+      <height>231</height>
      </rect>
     </property>
     <property name="title">
@@ -31,11 +31,14 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>222</width>
-       <height>166</height>
+       <width>251</width>
+       <height>191</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="paletteOptionsGridLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinimumSize</enum>
+      </property>
       <item row="2" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
@@ -130,6 +133,9 @@
         <property name="currentText">
          <string/>
         </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+        </property>
        </widget>
       </item>
      </layout>
@@ -138,10 +144,10 @@
    <widget class="QGroupBox" name="tablesButtonBox">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>270</y>
-      <width>219</width>
-      <height>201</height>
+      <x>360</x>
+      <y>290</y>
+      <width>241</width>
+      <height>231</height>
      </rect>
     </property>
     <property name="title">
@@ -152,11 +158,14 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>201</width>
-       <height>161</height>
+       <width>221</width>
+       <height>191</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="tableOptionsGridLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinimumSize</enum>
+      </property>
       <item row="4" column="0">
        <widget class="QLabel" name="lbl_4">
         <property name="text">
@@ -256,10 +265,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>360</x>
       <y>10</y>
-      <width>219</width>
-      <height>241</height>
+      <width>241</width>
+      <height>271</height>
      </rect>
     </property>
     <property name="mouseTracking">
@@ -288,11 +297,14 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>201</width>
-       <height>201</height>
+       <width>221</width>
+       <height>231</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="owInfoLayout" rowstretch="0,0,0,0,0,0,0,0">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
       <item row="1" column="1">
        <widget class="QPushButton" name="removeOwButton">
         <property name="enabled">
@@ -437,8 +449,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>311</width>
-      <height>461</height>
+      <width>341</width>
+      <height>511</height>
      </rect>
     </property>
     <property name="title">
@@ -449,8 +461,8 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>291</width>
-       <height>421</height>
+       <width>321</width>
+       <height>471</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
@@ -472,9 +484,9 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="label_14">
+       <widget class="QLabel" name="romNameLabel">
         <property name="text">
-         <string>BPRE</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -526,10 +538,10 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>580</x>
+      <x>610</x>
       <y>10</y>
-      <width>221</width>
-      <height>241</height>
+      <width>271</width>
+      <height>271</height>
      </rect>
     </property>
     <property name="title">
@@ -540,8 +552,8 @@
       <rect>
        <x>9</x>
        <y>30</y>
-       <width>201</width>
-       <height>201</height>
+       <width>251</width>
+       <height>231</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
@@ -577,7 +589,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>814</width>
+     <width>895</width>
      <height>19</height>
     </rect>
    </property>

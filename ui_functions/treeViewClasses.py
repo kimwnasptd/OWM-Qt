@@ -240,6 +240,9 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         parentNode = self.getNode(parent)
 
+        if row >= parentNode.childCount():
+            return QtCore.QModelIndex()
+
         childItem = parentNode.child(row)
 
         if childItem:
@@ -338,6 +341,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         parent = self.index(table_id, 0, QtCore.QModelIndex())
         parentNode = self.getNode(parent)
+        print(type(parentNode), table_id)
 
         for ow in range(rows):
             if ow_id == -1:
@@ -365,12 +369,13 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-    def insertTable(self, ow_pointers, data_pointers, frames_pointers, frames_address):
+    def insertTable(self, ow_pointers, data_pointers, frames_pointers, frames_address, ui):
         parent = QtCore.QModelIndex()
         parentNode = self.getNode(parent)
 
         root.custom_table_import(ow_pointers, data_pointers, frames_pointers, frames_address)
         self.insertRows(-1, 1, parent)
+        ui.selected_table += 1
 
     def removeTable(self, table_id, ui):
         quit_msg = "Are you sure you want to delete the entire table?"
@@ -388,7 +393,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         if n == 0:
             ui.selected_table = None
         else:
-            ui.selected_table -= 1
+            ui.selected_table = table_id - 1
         ui.selected_ow = None
 
         from ui_functions.ui_updater import update_gui

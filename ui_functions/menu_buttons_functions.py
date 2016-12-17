@@ -23,11 +23,14 @@ def export_ow_image(ui):
 
     fn, ext = QtWidgets.QFileDialog.getSaveFileName(ui, 'Export Frames Sheet',
                                                   QtCore.QDir.homePath() + name,
-                                                  "PNG File (*.png);;All files (*)")
+                                                  "PNG File (*.png);;"
+                                                  "BMP File (*.bmp);;"
+                                                  "JPEG File (*.jpg);;"
+                                                  "All files (*)")
 
     if not fn:
         return
-    fn += ext.split(" ")[2][2:-1]
+    # fn += ext.split(" ")[2][2:-1]
     image.save(fn)
 
 

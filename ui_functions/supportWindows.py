@@ -145,7 +145,7 @@ class addTableWindow(addTableBase, addTableForm):
         else:
             frames_address = int(frames_address, 16)
 
-        ui.tree_model.insertTable(ow_pointers, data_pointers, frames_pointers, frames_address)
+        ui.tree_model.insertTable(ow_pointers, data_pointers, frames_pointers, frames_address, ui)
 
         from ui_functions.ui_updater import update_gui
         update_gui(ui)

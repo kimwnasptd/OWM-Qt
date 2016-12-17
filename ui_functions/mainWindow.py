@@ -89,11 +89,12 @@ class MyApp(base, form):
 
             self.selected_table = None
             self.selected_ow = None
+            self.romNameLabel.setText(rom.rom_path.split('/')[-1])
+
             update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
-            self.tree_selection_model.currentChanged.connect(self.item_selected)
 
     def load_from_profile(self, profile, ui):
 
@@ -228,7 +229,7 @@ class MyApp(base, form):
         update_gui(self)
 
     def profile_selected(self, val):
-        if self.rom_info.rom_successfully_loaded == 1:
+        if self.rom_info.rom_successfully_loaded == 1 and self.profilesComboBox.itemText(val) != "---":
 
             profile = self.profilesComboBox.itemText(val)
             self.load_from_profile(profile, self)
@@ -261,8 +262,10 @@ class MyApp(base, form):
         profiles = self.rom_info.Profiler.default_profiles
 
         self.profilesComboBox.clear()
+        self.profilesComboBox.addItem("---")
         self.profilesComboBox.addItems(profiles)
-        self.profilesComboBox.setCurrentIndex(self.rom_info.Profiler.current_profile)
+        # +1 because the combobox has one extra item in the beginning
+        self.profilesComboBox.setCurrentIndex(self.rom_info.Profiler.current_profile + 1)
 
 
 
