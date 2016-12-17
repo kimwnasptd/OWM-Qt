@@ -19,6 +19,11 @@ def change_image_editor_info(pointers_list, num_of_palettes, original_table, fre
     free_space = free_space_area
 
 
+def resetRoot():
+    global root
+    root.__init__()
+
+
 def write_two_pixels(index1, index2, address):
     # Index <= 0xF
 

@@ -93,27 +93,4 @@ class RomInfo:
             message += "the address of the OW Limiter"
             QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
 
-    def load_from_profile(self, profile, ui):
-
-        if profile != "":
-            self.set_info(get_name_line_index(profile))
-
-            # Initialize the OW Table Info
-            change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
-                             self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
-
-            # Initialize the palette table info
-            change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
-                                     self.original_palette_table_address, self.free_space)
-
-            root.__init__()
-            ui.sprite_manager = ImageManager()
-
-            ui.selected_table = None
-            ui.selected_ow = None
-
-            from ui_functions.ui_updater import update_gui, update_tree_model
-            update_tree_model(ui)
-            update_gui(ui)
-
 

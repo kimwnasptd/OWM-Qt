@@ -27,6 +27,7 @@ class MyApp(base, form):
         self.tree_model = TreeViewModel(self.treeRootNode)
         self.OWTreeView.setModel(self.tree_model)
         self.tree_selection_model = self.OWTreeView.selectionModel()
+        self.tree_selection_model.currentChanged.connect(self.item_selected)
 
         # Graphics Viewer
         self.ow_graphics_scene = QtWidgets.QGraphicsScene()
@@ -93,6 +94,33 @@ class MyApp(base, form):
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
             self.tree_selection_model.currentChanged.connect(self.item_selected)
+
+    def load_from_profile(self, profile, ui):
+
+        if profile != "":
+
+            self.rom_info.set_info(get_name_line_index(profile))
+
+            # Initialize the OW Table Info
+            change_core_info(self.rom_info.ow_table_pointer, self.rom_info.original_ow_table_pointer,
+                             self.rom_info.original_num_of_ows, self.rom_info.original_ow_pointers_address, self.rom_info.free_space, self.rom_info.path)
+
+            # Initialize the palette table info
+            change_image_editor_info(self.rom_info.palette_table_pointer_address, self.rom_info.original_num_of_palettes,
+                                     self.rom_info.original_palette_table_address, self.rom_info.free_space)
+
+            ui.rom_info = RomInfo()
+            root.__init__()
+            ui.sprite_manager = ImageManager()
+
+            ui.selected_table = None
+            ui.selected_ow = None
+
+            from ui_functions.ui_updater import update_gui, update_tree_model
+            update_tree_model(ui)
+            update_gui(ui)
+            self.initColorTextComboBox()
+            self.initPaletteIdComboBox()
 
     def save_rom(self, fn=rom.rom_path):
         ''' The file might have changed while we were editing, so
@@ -188,7 +216,6 @@ class MyApp(base, form):
             self.selected_ow = node.getId()
             self.paint_graphics_view(node.image)
 
-            print("hi")
             # Update the SpinBox
             self.framesSpinBox.setRange(0, node.frames - 1)
             self.framesSpinBox.setValue(0)
@@ -204,7 +231,7 @@ class MyApp(base, form):
         if self.rom_info.rom_successfully_loaded == 1:
 
             profile = self.profilesComboBox.itemText(val)
-            self.rom_info.load_from_profile(profile, self)
+            self.load_from_profile(profile, self)
 
     def text_color_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
@@ -221,7 +248,6 @@ class MyApp(base, form):
 
     def initPaletteIdComboBox(self):
 
-        self.paletteIDComboBox.clear()
         self.paletteIDComboBox.setEnabled(True)
         # Create the list with the palette IDs
         id_list = []
@@ -237,5 +263,6 @@ class MyApp(base, form):
         self.profilesComboBox.clear()
         self.profilesComboBox.addItems(profiles)
         self.profilesComboBox.setCurrentIndex(self.rom_info.Profiler.current_profile)
+
 
 

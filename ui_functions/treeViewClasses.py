@@ -165,8 +165,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             if index.column() == 0:
                 return node.name + str(node.getId())
             elif index.column() == 2:
-                global root
-
                 if isinstance(node, OWNode):
                     return node.frames
 
@@ -178,15 +176,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
                 if typeInfo == "ow_node":
                     return QtGui.QIcon(QtGui.QPixmap.fromImage(ImageQt(node.image)))
-
-                '''
-                if typeInfo == "TRANSFORM":
-                    return QtGui.QIcon(QtGui.QPixmap(":/Transform.png"))
-
-                if typeInfo == "CAMERA":
-                    return QtGui.QIcon(QtGui.QPixmap(":/Camera.png"))
-                '''
-
 
     """INPUTS: QModelIndex, QVariant, int (flag)"""
 
@@ -303,6 +292,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
     def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
 
+        success = True
+        if rows == 0:
+            return
+
         parentNode = self.getNode(parent)
         self.beginRemoveRows(parent, position, position + rows - 1)
 
@@ -321,6 +314,23 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.endRemoveRows()
 
         return success
+
+    def resetModel(self):
+
+        self._rootNode = Node("root")
+        self.beginResetModel()
+
+        self.removeRows(0, self.tablesCount())
+
+        for table in range(root.get_table_num()):
+            # add the table nodes
+            newTableNode = TableNode(table, self._rootNode)
+
+            for ow in range(len(root.tables_list[table].ow_data_pointers)):
+                # add the ow nodes
+                newOWNode = OWNode(ow, newTableNode)
+
+        self.endResetModel()
 
     # OW/Table interacting functionsqt
 

@@ -142,13 +142,7 @@ def update_viewer(ui):
 
 def update_tree_model(ui):
     ui.statusbar.showMessage("Updating the TreeView...")
-    ui.treeRootNode = Node("root")
-    ui.tree_model = TreeViewModel(ui.treeRootNode)
-    ui.OWTreeView.setModel(ui.tree_model)
-
-    # Reset the selection model
-    ui.tree_selection_model = ui.OWTreeView.selectionModel()
-    ui.tree_selection_model.currentChanged.connect(ui.item_selected)
+    ui.tree_model.resetModel()
     ui.statusbar.showMessage("Ready...")
 
 
@@ -159,4 +153,5 @@ def update_gui(ui):
     update_tables_text_menu(ui)
     update_palette_info(ui)
     update_menu_actions(ui)
+    ui.OWTreeView.setFocus()
     #update_viewer(ui)
