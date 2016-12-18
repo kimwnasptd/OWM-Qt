@@ -47,17 +47,6 @@ def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, f
         Templates.append(template)
 
 
-def print_info():
-    global OW_Tables_Pointers_Address, original_table_pointer_address, original_num_of_ows, original_ow_pointers \
-        , free_space
-
-    print(hex(OW_Tables_Pointers_Address),
-          hex(original_table_pointer_address),
-          hex(original_num_of_ows),
-          hex(original_ow_pointers),
-          hex(free_space))
-
-
 def is_ow_data(address):
     # Checks various bytes to see if they are the same with the templates
     done = 1
@@ -798,7 +787,7 @@ class Root:
         fill_with_data(address, 4, 0)
 
         address += 4
-        while pointer_to_address(address) != 0:
+        while pointer_to_address(address) != 0 and check_pointer(address) == 1:
             move_data(address, address - 4, 4, 0)
 
         # Re-initialise the entire root

@@ -375,7 +375,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         root.custom_table_import(ow_pointers, data_pointers, frames_pointers, frames_address)
         self.insertRows(-1, 1, parent)
-        ui.selected_table += 1
+
+        ui.selected_table = self.tablesCount() - 1
+        if ui.selected_table == -1:
+            ui.selected_table = None
 
     def removeTable(self, table_id, ui):
         quit_msg = "Are you sure you want to delete the entire table?"

@@ -23,9 +23,9 @@ class addOWWindow(addOWBase, addOWForm):
         super(addOWBase, self).__init__(parent)
         self.setupUi(self)
 
-        self.owTypeLineEdit.setValidator(QtGui.QIntValidator(0, 9))
-        self.framesNumLineEdit.setValidator(QtGui.QIntValidator(0, 1000))
-        self.owNumLineEdit.setValidator(QtGui.QIntValidator(0, 256))
+        self.owTypeLineEdit.setValidator(QtGui.QIntValidator(1, 9))
+        self.framesNumLineEdit.setValidator(QtGui.QIntValidator(1, 1000))
+        self.owNumLineEdit.setValidator(QtGui.QIntValidator(1, 256))
 
         self.buttonBox.accepted.connect(lambda: self.addOW(ui))
 
@@ -35,7 +35,7 @@ class addOWWindow(addOWBase, addOWForm):
         frames_num = int(self.framesNumLineEdit.text())
         ows_num = int(self.owNumLineEdit.text())
 
-        if check_type_availability(ow_type, ui):
+        if check_type_availability(ow_type, ui) and frames_num != 0:
 
             if ui.tree_model.owsCount(ui.selected_table) + ows_num <= 256:
                 ui.statusbar.showMessage("Adding OWs...")
@@ -63,7 +63,7 @@ class insertOWWindow(insertOWBase, insertOWForm):
         frames_num = int(self.framesNumLineEdit.text())
         ows_num = int(self.owNumLineEdit.text())
 
-        if check_type_availability(ow_type, ui):
+        if check_type_availability(ow_type, ui) and frames_num != 0:
 
             if ui.tree_model.owsCount(ui.selected_table) + ows_num <= 256:
                 ui.statusbar.showMessage("Inserting OWs...")
@@ -91,7 +91,7 @@ class resizeOWWindow(resizeOWBase, resizeOWForm):
         ow_type = int(self.owTypeLineEdit.text())
         frames_num = int(self.framesNumLineEdit.text())
 
-        if check_type_availability(ow_type, ui):
+        if check_type_availability(ow_type, ui) and frames_num != 0:
             ui.tree_model.resizeOW(ui.selected_ow, ui.selected_table, ow_type, frames_num, ui)
         else:
             message = "Please insert a correct type"

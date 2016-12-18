@@ -63,7 +63,7 @@ def update_tables_menu_buttons(ui):
     else:
         if ui.tree_model.tablesCount() != 1 or root.get_num_of_available_table_pointers() != 0:
             ui.removeTableButton.setEnabled(True)
-
+    print(root.get_num_of_available_table_pointers())
     if root.get_num_of_available_table_pointers() != 0:
         ui.addTableButton.setEnabled(True)
     else:
