@@ -341,7 +341,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         parent = self.index(table_id, 0, QtCore.QModelIndex())
         parentNode = self.getNode(parent)
-        print(type(parentNode), table_id)
 
         for ow in range(rows):
             if ow_id == -1:
@@ -358,6 +357,9 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         # Manually reset the selected Item in the View, removeRows
         # removeRows deletes the currentIndex in the selectionModel, so the next one becomes current
+        if ow_id == self.owsCount(table_id):
+            ow_id -= 1
+            
         ui.OWTreeView.selectionModel().setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
