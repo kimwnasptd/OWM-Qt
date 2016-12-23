@@ -63,6 +63,7 @@ class MyApp(base, form):
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
         self.OWTreeView.resizeColumnToContents(2)
+        self.open_analyze()
 
     def open_rom(self, fn=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
@@ -95,6 +96,48 @@ class MyApp(base, form):
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
+
+    def open_analyze(self):
+
+        dlg = QtWidgets.QFileDialog()
+        fn, _ = dlg.getOpenFileName(dlg, 'Open ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
+        if not fn:
+            return
+
+        rom.load_rom(fn)
+
+        self.rom_info = RomInfo()
+        rom.rom_path = fn
+        if self.rom_info.name[:3] == "BPR":
+            folder = "fr"
+            ows_num = 152
+            palettes_num = 18
+        elif self.rom_info.name[:3] == "AXV":
+            folder = "ruby"
+            ows_num = 217
+            palettes_num = 27
+        elif self.rom_info.name[:3] == "BPE":
+            folder = "emerald"
+            ows_num = 246
+            palettes_num = 35
+
+        with open("Files/Analysis/" + folder + "/hero", "rb") as hero_file:
+            hero = hero_file.read()
+        with open("Files/Analysis/" + folder + "/pal", "rb") as pal_file:
+            pal = pal_file.read()
+
+        frames_address = find_bytes_in_rom(hero, 740)
+        frames_pointer_address = find_pointer_in_rom(frames_address)
+        ow_data_address = find_pointer_in_rom(frames_pointer_address) - 0x1c
+        ow_pointers_address = find_pointer_in_rom(ow_data_address)
+        ow_table_address = find_pointer_in_rom(ow_pointers_address)
+        # print(hex(ow_table_address))
+
+        palettes_data_address = find_bytes_in_rom(pal, 22)
+        palette_table = find_pointer_in_rom(palettes_data_address)
+        palette_table_pointers = find_pointer_in_rom(palette_table, 3)
+        # print(palette_table_pointers)
+
 
     def load_from_profile(self, profile, ui):
 

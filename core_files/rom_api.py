@@ -115,3 +115,42 @@ def fill_with_data(address, num_of_bytes, write_data):
     for i in range(1, num_of_bytes + 1):
         rom.write_byte(write_data)
     rom.flush()
+
+
+def find_bytes_in_rom(bytes_to_find, size):
+
+    try:
+        pos = 0
+        while 1:
+            found = 1
+            rom.seek(pos)
+            for byte in range(size):
+                if rom.read_byte() != bytes_to_find[byte]:
+                    found = 0
+                    break
+
+            if found == 1:
+                return pos
+            pos += 1
+    except IndexError:
+        return -1
+
+
+def find_pointer_in_rom(pointing_address, search_for_all=None):
+
+    pointers_address = []
+    try:
+        pos = 0
+        while 1:
+            rom.seek(pos)
+            if check_pointer(pos):
+                if pointer_to_address(pos) == pointing_address:
+                    if search_for_all is None:
+                        # Once its finds a pointer, it returns it
+                        return pos
+                    else:
+                        pointers_address.append(pos)
+
+            pos += 1
+    except IndexError:
+        return pointers_address

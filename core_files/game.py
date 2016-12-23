@@ -43,5 +43,8 @@ class Game:
 
     def flush(self):
         pass
+
+    def pos(self):
+        return self.pos
         
 
