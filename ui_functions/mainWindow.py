@@ -50,6 +50,7 @@ class MyApp(base, form):
 
         # Menu
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
+        self.actionOpen_and_Analyze_ROM.triggered.connect(lambda: self.open_analyze())
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(rom.rom_path))
         self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
         self.actionExit_2.triggered.connect(menu_buttons_functions.exit_app)
@@ -63,7 +64,6 @@ class MyApp(base, form):
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
         self.OWTreeView.resizeColumnToContents(2)
-        self.open_analyze()
 
     def open_rom(self, fn=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
@@ -108,10 +108,23 @@ class MyApp(base, form):
 
         self.rom_info = RomInfo()
         rom.rom_path = fn
+
+        i = 0
+        name = self.rom_info.name + str(i)
+        while check_if_name_exists(name):
+            i += 1
+            name = name[:-1] + str(i)
+        create_profile(name, *self.find_rom_offsets())
+        self.rom_info = RomInfo()
+
+    def find_rom_offsets(self):
+
         if self.rom_info.name[:3] == "BPR":
             folder = "fr"
             ows_num = 152
             palettes_num = 18
+            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
+            free_spc = 0x0800000
         elif self.rom_info.name[:3] == "AXV":
             folder = "ruby"
             ows_num = 217
@@ -126,6 +139,7 @@ class MyApp(base, form):
         with open("Files/Analysis/" + folder + "/pal", "rb") as pal_file:
             pal = pal_file.read()
 
+        self.statusbar.showMessage("Searching for Offsets")
         frames_address = find_bytes_in_rom(hero, 740)
         frames_pointer_address = find_pointer_in_rom(frames_address)
         ow_data_address = find_pointer_in_rom(frames_pointer_address) - 0x1c
@@ -138,6 +152,18 @@ class MyApp(base, form):
         palette_table_pointers = find_pointer_in_rom(palette_table, 3)
         # print(palette_table_pointers)
 
+        ow_fix = find_bytes_in_rom(ow_fix_bytes, 9)
+
+        return [ow_table_address,
+                ow_table_address,
+                ow_pointers_address,
+                ows_num,
+                palette_table_pointers,
+                palette_table,
+                palettes_num,
+                ow_fix,
+                free_spc,
+                self.rom_info.name]
 
     def load_from_profile(self, profile, ui):
 
