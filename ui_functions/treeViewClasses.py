@@ -123,8 +123,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         super(TreeViewModel, self).__init__(parent)
         self._rootNode = model_root
 
-        global root
-
         for table in range(len(root.tables_list)):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
@@ -359,7 +357,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         # removeRows deletes the currentIndex in the selectionModel, so the next one becomes current
         if ow_id == self.owsCount(table_id):
             ow_id -= 1
-            
+
         ui.OWTreeView.selectionModel().setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
@@ -425,7 +423,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-        #ui.initPaletteIdComboBox()
+        # ui.initPaletteIdComboBox()
         ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
         from ui_functions.ui_updater import update_palette_info

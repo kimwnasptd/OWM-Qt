@@ -2,8 +2,8 @@
 
 from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
-from ui_functions.ui_updater import *
 from ui_functions.supportWindows import *
+from ui_functions.ui_updater import *
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -50,6 +50,7 @@ class MyApp(base, form):
 
         # Menu
         self.actionOpen_ROM.triggered.connect(lambda: self.open_rom())
+        self.actionOpen_and_Analyze_ROM.triggered.connect(lambda: self.open_analyze())
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(rom.rom_path))
         self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
         self.actionExit_2.triggered.connect(menu_buttons_functions.exit_app)
@@ -83,8 +84,6 @@ class MyApp(base, form):
             root.__init__()
             self.sprite_manager = ImageManager()
 
-            self.rom_info = RomInfo()
-
             self.statusbar.showMessage("Ready")
 
             self.selected_table = None
@@ -96,30 +95,107 @@ class MyApp(base, form):
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
 
-    def load_from_profile(self, profile, ui):
+    def open_analyze(self):
+
+        dlg = QtWidgets.QFileDialog()
+        fn, _ = dlg.getOpenFileName(dlg, 'Open ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
+        if not fn:
+            return
+
+        rom.load_rom(fn)
+
+        self.rom_info = RomInfo()
+        rom.rom_path = fn
+
+        # If a profile with the rom base name exist, create a profile with different name
+        name = self.rom_info.name
+        if check_if_name_exists(name) == 1:
+            i = 0
+            name += str(i)
+            while check_if_name_exists(name):
+                i += 1
+                name = name[:-1] + str(i)
+
+        create_profile(name, *self.find_rom_offsets())
+
+        self.rom_info.set_info(get_name_line_index(name))
+        self.create_templates(pointer_to_address(self.rom_info.ow_table_pointer))
+
+        self.load_from_profile(name)
+        self.initProfileComboBox()
+        self.profilesComboBox.setCurrentIndex(self.profilesComboBox.findText(name))
+        self.romNameLabel.setText(rom.rom_path.split('/')[-1])
+
+    def find_rom_offsets(self):
+
+        if self.rom_info.name[:3] == "BPR" or self.rom_info.name[:3] == "BPG":
+            folder = "fr"
+            ows_num = 152
+            palettes_num = 18
+            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
+            free_spc = 0x0800000
+        elif self.rom_info.name[:3] == "AXV" or self.rom_info.name[:3] == "AXP":
+            folder = "ruby"
+            ows_num = 217
+            palettes_num = 27
+            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
+            free_spc = 0x6B0E00
+        else:
+            folder = "emerald"
+            ows_num = 246
+            palettes_num = 35
+            ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
+            free_spc = 0xE41DF0
+
+        with open("Files/Analysis/" + folder + "/hero", "rb") as hero_file:
+            hero = hero_file.read()
+        with open("Files/Analysis/" + folder + "/pal", "rb") as pal_file:
+            pal = pal_file.read()
+
+        self.statusbar.showMessage("Searching for Offsets")
+        frames_address = find_bytes_in_rom(hero, 740)
+        frames_pointer_address = find_pointer_in_rom(frames_address)
+        ow_data_address = find_pointer_in_rom(frames_pointer_address) - 0x1c
+        ow_pointers_address = find_pointer_in_rom(ow_data_address)
+        ow_table_address = find_pointer_in_rom(ow_pointers_address)
+        # print(hex(ow_table_address))
+
+        palettes_data_address = find_bytes_in_rom(pal, 22)
+        palette_table = find_pointer_in_rom(palettes_data_address)
+        palette_table_pointers = find_pointer_in_rom(palette_table, 3)
+        # print(palette_table_pointers)
+
+        ow_fix = find_bytes_in_rom(ow_fix_bytes, 9)
+        self.statusbar.showMessage("Analysis Finished!")
+
+        return [ow_table_address,
+                ow_table_address,
+                ow_pointers_address,
+                ows_num,
+                palette_table_pointers,
+                palette_table,
+                palettes_num,
+                ow_fix,
+                free_spc,
+                self.rom_info.name]
+
+    def load_from_profile(self, profile):
 
         if profile != "":
+            self.rom_info.load_profile_data(profile)
 
-            self.rom_info.set_info(get_name_line_index(profile))
-
-            # Initialize the OW Table Info
-            change_core_info(self.rom_info.ow_table_pointer, self.rom_info.original_ow_table_pointer,
-                             self.rom_info.original_num_of_ows, self.rom_info.original_ow_pointers_address, self.rom_info.free_space, self.rom_info.path)
-
-            # Initialize the palette table info
-            change_image_editor_info(self.rom_info.palette_table_pointer_address, self.rom_info.original_num_of_palettes,
-                                     self.rom_info.original_palette_table_address, self.rom_info.free_space)
-
-            ui.rom_info = RomInfo()
+            # self.rom_info = RomInfo()
+            self.statusbar.showMessage("Reloading ROM...")
             root.__init__()
-            ui.sprite_manager = ImageManager()
+            self.statusbar.showMessage("Done")
+            self.sprite_manager = ImageManager()
 
-            ui.selected_table = None
-            ui.selected_ow = None
+            self.selected_table = None
+            self.selected_ow = None
 
             from ui_functions.ui_updater import update_gui, update_tree_model
-            update_tree_model(ui)
-            update_gui(ui)
+            update_tree_model(self)
+            update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
 
@@ -150,6 +226,7 @@ class MyApp(base, form):
         # The new original rom contents are the edited contents
         rom.original_rom_contents = rom.rom_contents
         self.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
+        self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
     def save_rom_as(self):
         if not rom.rom_file_name:
@@ -166,10 +243,151 @@ class MyApp(base, form):
             return
 
         # fn += ".gba"
-        import shutil
+        import shutil, os
+        if os.path.exists(fn):
+            os.remove(fn)
+
         shutil.copyfile(rom.rom_file_name, fn)
         rom.rom_file_name = fn
         self.save_rom(rom.rom_file_name)
+        self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
+
+    def create_templates(self, ow_pointers_address):
+
+        rom_base = self.rom_info.name
+
+        import shutil, os
+        if os.path.exists("Files/" + rom_base):
+            shutil.rmtree("Files/" + rom_base)
+
+        # Remove the old folder, if it exists
+        current_dir = os.getcwd()
+        os.chdir("Files")
+        os.mkdir(rom_base)
+        os.chdir(current_dir)
+
+        # Create the new templates
+        templates = []
+        for i in range(1, 9):
+            templates.append(open("Files/" + rom_base + "/Template" + str(i), "wb+"))
+
+        # Create Template for Type 1
+        rom.seek(pointer_to_address(ow_pointers_address))
+        template_bytes = []
+        for byte in range(0x24):
+            template_bytes.append(rom.read_byte())
+        template_bytes = bytearray(template_bytes)
+        templates[0].write(template_bytes)
+
+        # Create Template for Type 2
+        rom.seek(pointer_to_address(ow_pointers_address + 4))
+        template_bytes = []
+        for byte in range(0x24):
+            template_bytes.append(rom.read_byte())
+        template_bytes = bytearray(template_bytes)
+        templates[1].write(template_bytes)
+
+        # Create Template for Type 3
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address + 16*4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[2].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address + 5 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[2].write(template_bytes)
+
+        # Create Template for Type 4
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address + 108 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[3].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address + 114 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[3].write(template_bytes)
+
+        # Create Template for Type 5 // FR/LG only
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address + 151 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[4].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[4].write(template_bytes)
+
+        # Create Template for Type 6 // EM/Rby/Sap only
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[5].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address + 94 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[5].write(template_bytes)
+
+        # Create Template for Type 7 // EM/Rby/Sap only
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[6].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address + 141 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[6].write(template_bytes)
+
+        # Create Template for Type 8 // EM/Rby/Sap only
+        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+
+            rom.seek(pointer_to_address(ow_pointers_address))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[7].write(template_bytes)
+        else:
+            rom.seek(pointer_to_address(ow_pointers_address + 140 * 4))
+            template_bytes = []
+            for byte in range(0x24):
+                template_bytes.append(rom.read_byte())
+            template_bytes = bytearray(template_bytes)
+            templates[7].write(template_bytes)
 
     def paint_graphics_view(self, image):
         # Print an Image obj on the Graphics View
@@ -232,7 +450,9 @@ class MyApp(base, form):
         if self.rom_info.rom_successfully_loaded == 1 and self.profilesComboBox.itemText(val) != "---":
 
             profile = self.profilesComboBox.itemText(val)
-            self.load_from_profile(profile, self)
+            if profile != "":
+                # self.rom_info.Profiler.current_profile = self.rom_info.Profiler.default_profiles.index(profile)
+                self.load_from_profile(profile)
 
     def text_color_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:

@@ -91,6 +91,36 @@ def get_name_from_line(pos):
             return line[1:-2]
 
 
+def write_text_end(data):
+    with open('settings.ini', 'a+') as current_ini:
+        current_ini.write(data)
+
+    global ini
+    ini = open('settings.ini', 'r')
+
+
+def create_profile(profile_name, ow_table_pointers, original_table_pointers, original_ow_pointers, ow_num,
+                   palette_table_pointers, original_pal_table, pal_num, limiter_address, free_space, rom_base):
+    from core_files.core import capitalized_hex
+
+    text = "\n" + "\n"
+    text += '[' + profile_name + ']' + '\n' + '\n'
+    text += "OW Table Pointers = " + capitalized_hex(ow_table_pointers) + "\n"
+    text += "Original OW Table Pointers = " + capitalized_hex(original_table_pointers) + "\n"
+    text += "Original OW Pointers Address = " + capitalized_hex(original_ow_pointers) + "\n"
+    text += "Original Num of OWs = " + str(ow_num) + "\n" + "\n"
+    text += "Palette Table Pointers Address = " + capitalized_hex(
+        palette_table_pointers[0]) + ", " + capitalized_hex(palette_table_pointers[1]) + ", " + capitalized_hex(
+        palette_table_pointers[2]) + "\n"
+    text += "Original Palette Table Address = " + capitalized_hex(original_pal_table) + "\n"
+    text += "Original Num of Palettes = " + str(pal_num) + "\n" + "\n"
+    text += "OW Limiter Address = " + capitalized_hex(limiter_address) + "\n" + "\n"
+    text += "Free Space Start = " + capitalized_hex(free_space) + "\n"
+    text += "Rom Base = " + rom_base + "\n" + "    "
+
+    write_text_end(text)
+
+
 class ProfileManager:
     rom_names = []
     default_profiles = []

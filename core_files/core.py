@@ -37,34 +37,38 @@ def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, f
     original_ow_pointers = ow_pointers
     free_space = free_space_area
 
-    global TemplateList
+    import os
+    if os.path.exists(files_path):
+        global TemplateList
 
-    for i in range(0, 8):
-        path = files_path + TemplateList[i]
+        for i in range(0, 8):
+            path = files_path + TemplateList[i]
 
-        temp = open(path, 'r+b')
-        template = mmap.mmap(temp.fileno(), 0)
-        Templates.append(template)
+            temp = open(path, 'r+b')
+            template = mmap.mmap(temp.fileno(), 0)
+            Templates.append(template)
 
 
 def is_ow_data(address):
     # Checks various bytes to see if they are the same with the templates
     done = 1
     rom.seek(address)
-    if rom.read_byte() != 255:
+    if rom.read_byte() != 0xFF:
         done = 0
-    if rom.read_byte() != 255:
+    if rom.read_byte() != 0xFF:
         done = 0
-    rom.seek(address + 32)
-    Templates[0].seek(32)
-    if rom.read_byte() != Templates[0].read_byte():
+
+    if check_pointer(address + 0x10) != 1:
         done = 0
-    if rom.read_byte() != Templates[0].read_byte():
+    if check_pointer(address + 0x14) != 1:
         done = 0
-    if rom.read_byte() != Templates[0].read_byte():
+    if check_pointer(address + 0x18) != 1:
         done = 0
-    if rom.read_byte() != Templates[0].read_byte():
+    if check_pointer(address + 0x1c) != 1:
         done = 0
+    if check_pointer(address + 0x20) != 1:
+        done = 0
+
     return done
 
 
@@ -112,25 +116,6 @@ def available_frames_pointer_address(address, num_of_frames):
     return 1
 
 
-def move_data(address_to_copy, address_to_write, num_of_bytes, write_byte=0xff):
-    for i in range(1, num_of_bytes + 1):
-        # Read the byte to write
-        rom.seek(address_to_copy)
-        byte = rom.read_byte()
-
-        # Clear the moved byte
-        rom.seek(address_to_copy)
-        rom.write_byte(write_byte)
-
-        # Write the byte to the address to move
-        rom.seek(address_to_write)
-        rom.write_byte(byte)
-        rom.flush()
-
-        address_to_copy += 1
-        address_to_write += 1
-
-
 def check_frames_end(address):
     global frames_end
 
@@ -176,18 +161,6 @@ def get_frame_dimensions(ow_type):
 
 def get_template(ow_type):
     return Templates[ow_type - 1]
-
-
-def copy_data(address_to_copy_from, address_to_copy_to, num_of_bytes):
-    copied_bytes = []
-    rom.seek(address_to_copy_from)
-    for i in range(0, num_of_bytes):
-        # Read the byte to write
-        copied_bytes.append(rom.read_byte())
-
-    rom.seek(address_to_copy_to)
-    for i in range(0, num_of_bytes):
-        rom.write_byte(copied_bytes[i])
 
 
 def addresses_filter(new_table, ow_data_address, frames_pointers, frames_address):
@@ -291,30 +264,22 @@ def write_palette_slot(data_address, palette_slot):
     rom.flush()
 
 
-def capitalized_hex(address):
-    string = hex(address)
-    string = string.upper()
-
-    string = string[2:]
-    string = '0x' + string
-
-    return string
-
-
 def get_animation_address(ow_data_address):
-    data_tuple = [0, 0, 0, 0]
-    data_tuple[0] = pointer_to_address(ow_data_address + 0x10)
-    data_tuple[1] = pointer_to_address(ow_data_address + 0x14)
-    data_tuple[2] = pointer_to_address(ow_data_address + 0x18)
-    data_tuple[3] = pointer_to_address(ow_data_address + 0x20)
+    data_tuple = [0, 0, 0, 0, 0]
+    data_tuple[0] = read_word(ow_data_address + 0xc)
+    data_tuple[1] = pointer_to_address(ow_data_address + 0x10)
+    data_tuple[2] = pointer_to_address(ow_data_address + 0x14)
+    data_tuple[3] = pointer_to_address(ow_data_address + 0x18)
+    data_tuple[4] = pointer_to_address(ow_data_address + 0x20)
     return data_tuple
 
 
 def write_animation_pointer(ow_data_address, data_tuple):
-    write_pointer(data_tuple[0], ow_data_address + 0x10)
-    write_pointer(data_tuple[1], ow_data_address + 0x14)
-    write_pointer(data_tuple[2], ow_data_address + 0x18)
-    write_pointer(data_tuple[3], ow_data_address + 0x20)
+    write_word(data_tuple[0], ow_data_address + 0xc)
+    write_pointer(data_tuple[1], ow_data_address + 0x10)
+    write_pointer(data_tuple[2], ow_data_address + 0x14)
+    write_pointer(data_tuple[3], ow_data_address + 0x18)
+    write_pointer(data_tuple[4], ow_data_address + 0x20)
 
 
 def get_text_color(ow_data_address):
@@ -500,7 +465,7 @@ class OWData:
             rom.write_byte(template.read_byte())
 
         # Write the pointer to the frames
-        write_pointer(frames_pointers_address, ow_data_address + 28)
+        write_pointer(frames_pointers_address, ow_data_address + 0x1c)
 
     def find_available_ow_data_address(self):
 
@@ -510,7 +475,7 @@ class OWData:
             if is_ow_data(working_address) == 0:
                 return working_address
             else:
-                working_address += 36
+                working_address += 0x24
 
     def clear(self):
         self.frames.clear()
@@ -649,14 +614,14 @@ class OWPointerTable:
         FramesOBJ.add_frames_pointers(ow_type, num_of_frames)
 
         # Create OW Data
-        ow_data_pointer = self.find_available_ow_pointer()
+        ow_pointer = self.find_available_ow_pointer()
 
-        OWDataOBJ = OWData(0, ow_data_pointer, self.ow_data_pointers_address)
+        OWDataOBJ = OWData(0, ow_pointer, self.ow_data_pointers_address)
         OWDataOBJ.add_ow_data(ow_type, FramesOBJ.frames_pointers_address)
         OWDataOBJ.frames = FramesOBJ
 
         # Write the OW Pointer in the Table
-        write_pointer(OWDataOBJ.ow_data_address, ow_data_pointer)
+        write_pointer(OWDataOBJ.ow_data_address, ow_pointer)
 
         # Re-initialise the ow pointers
         self.re_initialize_ow()
@@ -854,6 +819,7 @@ class Root:
             data_pointer = pointer_to_address(pointer)
             slots.append(get_palette_slot(data_pointer))
 
+        # Restore the Data
         for i in range(0, original_num_of_ows):
             repointed_table.add_ow(types[i], frames[i])
             write_ow_palette_id(repointed_table.ow_data_pointers[-1].ow_data_address, palettes[i])
