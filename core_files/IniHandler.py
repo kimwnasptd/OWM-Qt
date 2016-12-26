@@ -103,7 +103,7 @@ def create_profile(profile_name, ow_table_pointers, original_table_pointers, ori
                    palette_table_pointers, original_pal_table, pal_num, limiter_address, free_space, rom_base):
     from core_files.core import capitalized_hex
 
-    text = "\n" + "\n" + "\n"
+    text = "\n" + "\n"
     text += '[' + profile_name + ']' + '\n' + '\n'
     text += "OW Table Pointers = " + capitalized_hex(ow_table_pointers) + "\n"
     text += "Original OW Table Pointers = " + capitalized_hex(original_table_pointers) + "\n"
@@ -116,7 +116,7 @@ def create_profile(profile_name, ow_table_pointers, original_table_pointers, ori
     text += "Original Num of Palettes = " + str(pal_num) + "\n" + "\n"
     text += "OW Limiter Address = " + capitalized_hex(limiter_address) + "\n" + "\n"
     text += "Free Space Start = " + capitalized_hex(free_space) + "\n"
-    text += "Rom Base = " + rom_base + " "
+    text += "Rom Base = " + rom_base + "\n" + "    "
 
     write_text_end(text)
 

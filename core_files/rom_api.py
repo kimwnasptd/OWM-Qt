@@ -154,3 +154,48 @@ def find_pointer_in_rom(pointing_address, search_for_all=None):
             pos += 1
     except IndexError:
         return pointers_address
+
+
+def move_data(address_to_copy, address_to_write, num_of_bytes, write_byte=0xff):
+    for i in range(1, num_of_bytes + 1):
+        # Read the byte to write
+        rom.seek(address_to_copy)
+        byte = rom.read_byte()
+
+        # Clear the moved byte
+        rom.seek(address_to_copy)
+        rom.write_byte(write_byte)
+
+        # Write the byte to the address to move
+        rom.seek(address_to_write)
+        rom.write_byte(byte)
+        rom.flush()
+
+        address_to_copy += 1
+        address_to_write += 1
+
+
+def copy_data(address_to_copy_from, address_to_copy_to, num_of_bytes):
+    copied_bytes = []
+    rom.seek(address_to_copy_from)
+    for i in range(0, num_of_bytes):
+        # Read the byte to write
+        copied_bytes.append(rom.read_byte())
+
+    rom.seek(address_to_copy_to)
+    for i in range(0, num_of_bytes):
+        rom.write_byte(copied_bytes[i])
+
+
+def capitalized_hex(address):
+    string = hex(address)
+    string = string.upper()
+
+    string = string[2:]
+    string = '0x' + string
+
+    return string
+
+
+def printh(num):
+    print(capitalized_hex(num))

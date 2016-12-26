@@ -123,8 +123,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         super(TreeViewModel, self).__init__(parent)
         self._rootNode = model_root
 
-        global root
-
         for table in range(len(root.tables_list)):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
@@ -425,7 +423,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-        #ui.initPaletteIdComboBox()
+        # ui.initPaletteIdComboBox()
         ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
         from ui_functions.ui_updater import update_palette_info

@@ -104,6 +104,23 @@ def is_palette_table_end(address):
     return 0
 
 
+def is_palette_pointer(address):
+
+    palette_pointer = 1
+    if check_pointer(address) != 1:
+        palette_pointer = 0
+
+    rom.seek(address + 5)
+    if rom.read_byte() != 0x11:
+        palette_pointer = 0
+    if rom.read_byte() != 0x0:
+        palette_pointer = 0
+    if rom.read_byte() != 0x0:
+        palette_pointer = 0
+
+    return palette_pointer
+
+
 def write_palette_table_end(address):
     rom.seek(address)
     rom.write_byte(0)
@@ -330,7 +347,8 @@ class PaletteManager:
     def __init__(self):
         global palette_table_address
 
-        self.table_address = palette_table_address
+        # self.table_address = palette_table_address
+        self.table_address = pointer_to_address(palette_table_pointer_address[0])
         self.palette_num = self.get_palette_num()
         self.max_size = self.get_max_size()
         self.free_slots = self.max_size - self.palette_num
@@ -338,15 +356,15 @@ class PaletteManager:
         if self.table_address == original_palette_table_address:
             self.original_palette_table_repoint()
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
-    def set_used_profiles(self):
+    def set_used_palettes(self):
 
         self.used_palettes = []
 
         working_address = self.table_address
 
-        while is_palette_table_end(working_address) == 0:
+        while is_palette_table_end(working_address) == 0 and is_palette_pointer(working_address):
             self.used_palettes.append(get_palette_id(working_address))
             working_address += 8
 
@@ -393,8 +411,9 @@ class PaletteManager:
         working_address = self.table_address
         i = 0
 
-        while is_palette_table_end(working_address) == 0:
-            i += 1
+        while is_palette_table_end(working_address) == 0 and check_pointer(working_address):
+            if check_pointer(working_address) == 1:
+                i += 1
             working_address += 8
 
         return i
@@ -486,7 +505,7 @@ class PaletteManager:
         # Change the OBJ's table_address var
         self.table_address = new_table_address
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
     def original_palette_table_repoint(self):
         num_of_palettes = original_num_of_palettes
@@ -512,7 +531,7 @@ class PaletteManager:
         # Change the OBJ's table_address var
         self.table_address = new_table_address
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
 
 class ImageManager(PaletteManager):
@@ -590,7 +609,7 @@ class ImageManager(PaletteManager):
         working_address += get_frame_size(2)
         import_frame(pokemon, working_address, 2, row, column)
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
     def import_sprites(self, sprite_image, working_table, working_ow):
         # Check if the image is indexed
@@ -623,7 +642,7 @@ class ImageManager(PaletteManager):
 
             working_address += get_frame_size(sprite_type)
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
     def import_ow(self, ow_image, working_table, working_ow):
         # Check if the image is indexed
@@ -696,7 +715,7 @@ class ImageManager(PaletteManager):
         working_address += get_frame_size(2)
         import_frame(ow_image_indexed, working_address, 2, row, column)
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
     def palette_cleanup(self):
 
@@ -716,7 +735,7 @@ class ImageManager(PaletteManager):
         for address in reversed(unused_palettes_addresses):
             remove_palette(address)
 
-        self.set_used_profiles()
+        self.set_used_palettes()
 
     def get_ow_frame(self, ow_num, table_num, frame_num):
         ow_type = root.tables_list[table_num].ow_data_pointers[ow_num].frames.get_type()

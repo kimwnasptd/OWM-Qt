@@ -39,11 +39,12 @@ class RomInfo:
             change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
                                      self.original_palette_table_address, self.free_space)
 
-        else:
-            message = "Your ROM's base name in 0xAC is [" + self.name + "]." + "\n"
-            message += "There is no Profile with such a name in the INI." + '\n'
-            message += "Please create a Custom Profile in the INI with that name and the appropriate addresses \n"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
+        '''
+        message = "Your ROM's base name in 0xAC is [" + self.name + "]." + "\n"
+        message += "There is no Profile with such a name in the INI." + '\n'
+        message += "Please create a Custom Profile in the INI with that name and the appropriate addresses \n"
+        QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
+        '''
 
     def set_name(self):
 
@@ -92,5 +93,17 @@ class RomInfo:
             message = "The OW Fix Address is set to 0x000000. To apply the fix provide \n"
             message += "the address of the OW Limiter"
             QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't load Profile from INI", message)
+
+    def load_profile_data(self, profile):
+        self.set_info(get_name_line_index(profile))
+        self.Profiler = ProfileManager(self.name)
+
+        # Initialize the OW Table Info
+        change_core_info(self.ow_table_pointer, self.original_ow_table_pointer,
+                         self.original_num_of_ows, self.original_ow_pointers_address, self.free_space, self.path)
+
+        # Initialize the palette table info
+        change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
+                                 self.original_palette_table_address, self.free_space)
 
 
