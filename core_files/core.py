@@ -265,19 +265,21 @@ def write_palette_slot(data_address, palette_slot):
 
 
 def get_animation_address(ow_data_address):
-    data_tuple = [0, 0, 0, 0]
-    data_tuple[0] = pointer_to_address(ow_data_address + 0x10)
-    data_tuple[1] = pointer_to_address(ow_data_address + 0x14)
-    data_tuple[2] = pointer_to_address(ow_data_address + 0x18)
-    data_tuple[3] = pointer_to_address(ow_data_address + 0x20)
+    data_tuple = [0, 0, 0, 0, 0]
+    data_tuple[0] = read_word(ow_data_address + 0xc)
+    data_tuple[1] = pointer_to_address(ow_data_address + 0x10)
+    data_tuple[2] = pointer_to_address(ow_data_address + 0x14)
+    data_tuple[3] = pointer_to_address(ow_data_address + 0x18)
+    data_tuple[4] = pointer_to_address(ow_data_address + 0x20)
     return data_tuple
 
 
 def write_animation_pointer(ow_data_address, data_tuple):
-    write_pointer(data_tuple[0], ow_data_address + 0x10)
-    write_pointer(data_tuple[1], ow_data_address + 0x14)
-    write_pointer(data_tuple[2], ow_data_address + 0x18)
-    write_pointer(data_tuple[3], ow_data_address + 0x20)
+    write_word(data_tuple[0], ow_data_address + 0xc)
+    write_pointer(data_tuple[1], ow_data_address + 0x10)
+    write_pointer(data_tuple[2], ow_data_address + 0x14)
+    write_pointer(data_tuple[3], ow_data_address + 0x18)
+    write_pointer(data_tuple[4], ow_data_address + 0x20)
 
 
 def get_text_color(ow_data_address):

@@ -226,6 +226,7 @@ class MyApp(base, form):
         # The new original rom contents are the edited contents
         rom.original_rom_contents = rom.rom_contents
         self.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
+        self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
     def save_rom_as(self):
         if not rom.rom_file_name:
@@ -242,10 +243,14 @@ class MyApp(base, form):
             return
 
         # fn += ".gba"
-        import shutil
+        import shutil, os
+        if os.path.exists(fn):
+            os.remove(fn)
+
         shutil.copyfile(rom.rom_file_name, fn)
         rom.rom_file_name = fn
         self.save_rom(rom.rom_file_name)
+        self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
     def create_templates(self, ow_pointers_address):
 
