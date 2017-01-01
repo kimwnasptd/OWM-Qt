@@ -195,7 +195,3 @@ def capitalized_hex(address):
     string = '0x' + string
 
     return string
-
-
-def printh(num):
-    print(capitalized_hex(num))
