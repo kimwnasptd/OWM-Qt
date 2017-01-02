@@ -449,7 +449,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
-        ui.initPaletteIdComboBox()
+
+        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+
+        from ui_functions.ui_updater import update_palette_info
+        update_palette_info(ui)
 
     def importOWSpr(self, image_obj, ow_id, table_id, ui):
 
@@ -471,7 +475,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
-        ui.initPaletteIdComboBox()
+
+        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+
+        from ui_functions.ui_updater import update_palette_info
+        update_palette_info(ui)
 
     def paletteCleanup(self, ui):
 
