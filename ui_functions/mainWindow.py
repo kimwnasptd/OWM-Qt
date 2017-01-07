@@ -223,8 +223,6 @@ class MyApp(base, form):
         with open(fn, "wb+") as rom_file:
             rom_file.write(actual_rom_contents)
 
-        # The new original rom contents are the edited contents
-        rom.original_rom_contents = rom.rom_contents
         self.statusbar.showMessage("Saved {}".format(rom.rom_file_name))
         self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
@@ -248,7 +246,10 @@ class MyApp(base, form):
             os.remove(fn)
 
         shutil.copyfile(rom.rom_file_name, fn)
+
         rom.rom_file_name = fn
+        rom.rom_path = fn
+
         self.save_rom(rom.rom_file_name)
         self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
