@@ -170,13 +170,6 @@ def get_ow_palette_id(address):
     return (byte2 * 256) + byte1
 
 
-def get_palette_slot(data_address):
-    rom.seek(data_address + 12)
-    slot_compressed = rom.read_byte()
-
-    return int(slot_compressed % 16)
-
-
 def addresses_filter(new_table, ow_data_address, frames_pointers, frames_address):
     if new_table == 0:
         new_table = find_free_space((260 * 4), free_space, 4)  # 3 more for the table's info + 1 for rounding
@@ -250,6 +243,13 @@ def check_frames_pointer(address):
     if tp != 0:
         tp = 1
     return tp * check1
+
+
+def get_palette_slot(data_address):
+    rom.seek(data_address + 12)
+    slot_compressed = rom.read_byte()
+
+    return int(slot_compressed % 16)
 
 
 def write_palette_slot(data_address, palette_slot):
@@ -618,6 +618,8 @@ class OWPointerTable:
 
         # Re-initialise the ow pointers
         self.re_initialize_ow()
+        
+        write_palette_slot(self.ow_data_pointers[-1].ow_data_address, 0xA)
 
     def remove_ow(self, ow_id):
         length = self.ow_data_pointers.__len__()
@@ -648,13 +650,16 @@ class OWPointerTable:
         self.re_initialize_ow()
 
     def resize_ow(self, pos, ow_type, num_of_frames):
-        # Get animation pointer
+        # Get info
         animation_pointer = get_animation_address(self.ow_data_pointers[pos].ow_data_address)
+        palette_slot = get_palette_slot(self.ow_data_pointers[pos].ow_data_address)
 
         self.ow_data_pointers[pos].remove()
         self.add_ow(ow_type, num_of_frames)
 
+        # Restore Info
         write_animation_pointer(self.ow_data_pointers[pos].ow_data_address, animation_pointer)
+        write_palette_slot(self.ow_data_pointers[pos].ow_data_address, palette_slot)
 
         # Re-initialise the ow pointers
         self.re_initialize_ow()

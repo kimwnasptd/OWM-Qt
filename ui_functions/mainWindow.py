@@ -39,6 +39,7 @@ class MyApp(base, form):
         self.paletteIDComboBox.currentIndexChanged.connect(self.palette_id_changed)
         self.profilesComboBox.currentIndexChanged.connect(self.profile_selected)
         self.textColorComboBox.currentIndexChanged.connect(self.text_color_changed)
+        self.paletteSlotComboBox.currentIndexChanged.connect(self.palette_slot_changed)
 
         # Buttons
         self.addOwButton.clicked.connect(lambda: menu_buttons_functions.addOWButtonFunction(self))
@@ -94,6 +95,7 @@ class MyApp(base, form):
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
+            self.initPaletteSlotComboBox()
 
     def open_analyze(self):
 
@@ -198,6 +200,7 @@ class MyApp(base, form):
             update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
+            self.initPaletteSlotComboBox()
 
     def save_rom(self, fn=rom.rom_path):
         ''' The file might have changed while we were editing, so
@@ -459,6 +462,11 @@ class MyApp(base, form):
         if self.selected_table is not None and self.selected_ow is not None:
             set_text_color(root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address, byte)
 
+    def palette_slot_changed(self, byte):
+        if self.selected_table is not None and self.selected_ow is not None:
+            ow_data_address = root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address
+            write_palette_slot(ow_data_address, byte)
+
     def initColorTextComboBox(self):
         # Text color ComboBox
         if self.rom_info.name[:3] == 'BPR' or self.rom_info.name == 'JPAN':
@@ -487,6 +495,15 @@ class MyApp(base, form):
         self.profilesComboBox.addItems(profiles)
         # +1 because the combobox has one extra item in the beginning
         self.profilesComboBox.setCurrentIndex(self.rom_info.Profiler.current_profile + 1)
+
+    def initPaletteSlotComboBox(self):
+
+        items = []
+        for i in range(11):
+            items.append(capitalized_hex(i))
+
+        self.paletteSlotComboBox.clear()
+        self.paletteSlotComboBox.addItems(items)
 
 
 

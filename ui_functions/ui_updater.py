@@ -2,7 +2,6 @@ from ui_functions.treeViewClasses import *
 
 
 def update_ow_menu_buttons(ui):
-
     if ui.selected_table is None:
         ui.addOwButton.setEnabled(False)
         ui.insertOwButton.setEnabled(False)
@@ -27,7 +26,6 @@ def update_ow_menu_buttons(ui):
 
 
 def update_ow_text_menu(ui):
-
     if ui.selected_ow is None and ui.selected_table is not None:
         # Table selected
         ui.typeLabel.setText("")
@@ -71,13 +69,13 @@ def update_tables_menu_buttons(ui):
 
 
 def update_tables_text_menu(ui):
-
     if ui.selected_ow is None and ui.selected_table is not None:
         # A Table was selected
         ui.tableAddressLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].table_pointer_address))
         ui.pointersAddressTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].table_address))
         ui.dataAddressTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].ow_data_pointers_address))
-        ui.framesPointersTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].frames_pointers_address))
+        ui.framesPointersTableLabel.setText(
+            capitalized_hex(root.tables_list[ui.selected_table].frames_pointers_address))
         ui.framesAddressTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].frames_address))
 
     if ui.selected_ow is None and ui.selected_table is None:
@@ -89,27 +87,32 @@ def update_tables_text_menu(ui):
 
 
 def update_palette_info(ui):
-
     if ui.selected_table is not None:
         ui.paletteIDComboBox.setEnabled(False)
         ui.textColorComboBox.setEnabled(False)
+        ui.paletteSlotComboBox.setEnabled(False)
 
         if ui.selected_ow is not None:
             ui.paletteIDComboBox.setEnabled(True)
             ui.textColorComboBox.setEnabled(True)
-
-            id_list = []
-            for pal_id in ui.sprite_manager.used_palettes:
-                id_list.append(capitalized_hex(pal_id))
+            ui.paletteSlotComboBox.setEnabled(True)
 
             # Sync the Text Color ComboBox
             ow_data_address = root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address
             ui.textColorComboBox.setCurrentIndex(get_text_color(ow_data_address))
 
             # Sync the Palette Id ComboBox
-            palette_id = get_ow_palette_id(root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address)
+            id_list = []
+            for pal_id in ui.sprite_manager.used_palettes:
+                id_list.append(capitalized_hex(pal_id))
+
+            palette_id = get_ow_palette_id(
+                root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address)
             index = id_list.index(capitalized_hex(palette_id))
             ui.paletteIDComboBox.setCurrentIndex(index)
+
+            # Sync the Palette Slot Combobox
+            ui.paletteSlotComboBox.setCurrentIndex(get_palette_slot(ow_data_address))
 
             ui.paletteAddressLabel.setText(capitalized_hex(ui.sprite_manager.get_palette_address(palette_id)))
         else:
@@ -154,4 +157,4 @@ def update_gui(ui):
     update_palette_info(ui)
     update_menu_actions(ui)
     ui.OWTreeView.setFocus()
-    #update_viewer(ui)
+    # update_viewer(ui)
