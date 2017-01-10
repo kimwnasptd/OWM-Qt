@@ -499,7 +499,7 @@ class MyApp(base, form):
     def initPaletteSlotComboBox(self):
 
         items = []
-        for i in range(11):
+        for i in range(16):
             items.append(capitalized_hex(i))
 
         self.paletteSlotComboBox.clear()
