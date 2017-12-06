@@ -15,3 +15,11 @@ Running from source:
 Preview
 -
 ![alt text](https://i.imgur.com/0FbRQHK.png)
+
+Features
+-
+-Easy manipulation of OWs
+-Takes care of the addresses and pointers for you
+-Adds automatically the palette of your OWs to the game
+-Handles the Palette Table 
+-Can search for offsets from the ROM making it compatible with multi-lingual ROMs
