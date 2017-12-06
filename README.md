@@ -12,4 +12,6 @@ Running from source:
 -run "python -m pip install PyQt5", "python -m pip install pillow" on cmd
 -Run the OWM-Qt.py file
 
-
+Preview
+-
+![alt text](https://imgur.com/0FbRQHK)
