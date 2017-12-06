@@ -1,6 +1,6 @@
 OWM build with Qt
 -
-A program designed for editing the OWs of Pokemon Roms. All languages supported.
+A program designed for editing the OWs of Pokemon Roms for the GBA. All languages supported.
 
 Dependencies:
 -
