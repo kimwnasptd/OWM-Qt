@@ -14,4 +14,4 @@ Running from source:
 
 Preview
 -
-![alt text](https://imgur.com/0FbRQHK)
+![alt text](https://i.imgur.com/0FbRQHK.png)
