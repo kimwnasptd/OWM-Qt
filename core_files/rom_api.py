@@ -35,11 +35,14 @@ def find_free_space(size, start_address=0, ending=0):
 
 
 def check_pointer(address):
-    rom.seek(address + 3)
-    byte = rom.read_byte()
-    if (byte == 8) or (byte == 9):
-        return 1
-    return 0
+    try:
+        rom.seek(address + 3)
+        byte = rom.read_byte()
+        if (byte == 8) or (byte == 9):
+            return 1
+        return 0
+    except IndexError:
+        return 0
 
 
 def get_bytes_bits(byte, bit, to=0):
@@ -105,35 +108,14 @@ def pointer_to_address_n(address, n):
     return address
 
 
-def fill_with_data(address, num_of_bytes, write_data):
-    # If write_data is < 0, then a random number is selected (where 0<= write_data <= 254)
-    if write_data < 0:
-        write_data = randint(0x1, 0xe)
-        write_data += write_data * 16
-
-    rom.seek(address)
-    for i in range(1, num_of_bytes + 1):
-        rom.write_byte(write_data)
-    rom.flush()
-
-
-def find_bytes_in_rom(bytes_to_find, size):
-
-    try:
-        pos = 0
-        while 1:
-            found = 1
-            rom.seek(pos)
-            for byte in range(size):
-                if rom.read_byte() != bytes_to_find[byte]:
-                    found = 0
-                    break
-
-            if found == 1:
-                return pos
-            pos += 1
-    except IndexError:
-        return -1
+def find_bytes_in_rom(bytes_to_find):
+    # https://stackoverflow.com/questions/10106901/elegant-find-sub-list-in-list
+    pattern = bytearray(bytes_to_find)
+    mylist = rom.rom_contents
+    for i in range(len(mylist)):
+        if mylist[i] == pattern[0] and mylist[i:i+len(pattern)] == pattern:
+            return i
+    return -1
 
 
 def find_pointer_in_rom(pointing_address, search_for_all=None):
@@ -153,26 +135,22 @@ def find_pointer_in_rom(pointing_address, search_for_all=None):
 
             pos += 1
     except IndexError:
-        return pointers_address
+        if search_for_all:
+            return pointers_address
+        print("\nCouldn't find Pointer for address: " + capitalized_hex(pointing_address) + '\n')
+        return pointers_address[0]
 
 
-def move_data(address_to_copy, address_to_write, num_of_bytes, write_byte=0xff):
+def fill_with_data(address, num_of_bytes, write_data):
+    # If write_data is < 0, then a random number is selected (where 0<= write_data <= 254)
+    if write_data < 0:
+        write_data = randint(0x1, 0xe)
+        write_data += write_data * 16
+
+    rom.seek(address)
     for i in range(1, num_of_bytes + 1):
-        # Read the byte to write
-        rom.seek(address_to_copy)
-        byte = rom.read_byte()
-
-        # Clear the moved byte
-        rom.seek(address_to_copy)
-        rom.write_byte(write_byte)
-
-        # Write the byte to the address to move
-        rom.seek(address_to_write)
-        rom.write_byte(byte)
-        rom.flush()
-
-        address_to_copy += 1
-        address_to_write += 1
+        rom.write_byte(write_data)
+    rom.flush()
 
 
 def copy_data(address_to_copy_from, address_to_copy_to, num_of_bytes):
@@ -185,6 +163,11 @@ def copy_data(address_to_copy_from, address_to_copy_to, num_of_bytes):
     rom.seek(address_to_copy_to)
     for i in range(0, num_of_bytes):
         rom.write_byte(copied_bytes[i])
+
+
+def move_data(address_to_copy, address_to_write, num_of_bytes, write_byte=0xff):
+    copy_data(address_to_copy, address_to_write, num_of_bytes)
+    fill_with_data(address_to_copy, num_of_bytes, write_bytee)
 
 
 def capitalized_hex(address):

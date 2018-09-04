@@ -29,8 +29,8 @@ frames_end = 2176496  # 0x2135F0
 
 
 def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, free_space_area, files_path):
-    global OW_Tables_Pointers_Address, original_table_pointer_address, original_num_of_ows, original_ow_pointers \
-        , free_space
+    global OW_Tables_Pointers_Address, original_table_pointer_address, \
+        original_num_of_ows, original_ow_pointers, free_space
     OW_Tables_Pointers_Address = address
     original_table_pointer_address = original_table_pointer
     original_num_of_ows = num_of_ows
@@ -618,7 +618,7 @@ class OWPointerTable:
 
         # Re-initialise the ow pointers
         self.re_initialize_ow()
-        
+
         write_palette_slot(self.ow_data_pointers[-1].ow_data_address, 0xA)
 
     def remove_ow(self, ow_id):
@@ -856,4 +856,3 @@ class Root:
                 check_address += 4
                 i += 1
         return i
-

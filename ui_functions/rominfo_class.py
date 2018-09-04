@@ -42,7 +42,6 @@ class RomInfo:
             self.ow_fix()
 
     def set_name(self):
-
         name_raw = get_word(0xAC)
         rom_name = capitalized_hex(name_raw)[2:]  # Removes the 0x
         self.name = hex_to_text(rom_name)
@@ -51,12 +50,8 @@ class RomInfo:
         if pointer_to_address(0x160EE0) == 0x1A2000:
             self.name = "JPAN"
 
-        # Change the name if MrDS
-        if self.name == "MrDS":
-            self.name = "BPRE"
 
     def set_info(self, start_pos):
-
         self.ow_table_pointer = get_line_offset(start_pos + 2)
         self.original_ow_table_pointer = get_line_offset(start_pos + 3)
         self.original_ow_pointers_address = get_line_offset(start_pos + 4)
@@ -72,7 +67,7 @@ class RomInfo:
         self.free_space = get_line_offset(start_pos + 13)
         self.rom_base = get_line_string(start_pos + 14).split(" = ")[1]
 
-        self.path = 'Files/' + self.rom_base + "/"
+        self.path = 'Files/' + self.name + "/"
 
     def ow_fix(self):
         # Makes sure more OWs can be added
@@ -91,5 +86,3 @@ class RomInfo:
         # Initialize the palette table info
         change_image_editor_info(self.palette_table_pointer_address, self.original_num_of_palettes,
                                  self.original_palette_table_address, self.free_space)
-
-

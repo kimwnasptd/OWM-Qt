@@ -84,23 +84,24 @@ class MyApp(base, form):
             self.statusbar.showMessage("Repointing OWs...")
             root.__init__()
             self.sprite_manager = ImageManager()
-
             self.statusbar.showMessage("Ready")
 
             self.selected_table = None
             self.selected_ow = None
             self.romNameLabel.setText(rom.rom_path.split('/')[-1])
-
+            
             update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
             self.initPaletteSlotComboBox()
+        else:
+            self.statusbar.showMessage("Couldn't find a Profile in the INI for your ROM. Open it with 'Open and Analyze ROM'.")
 
     def open_analyze(self):
 
         dlg = QtWidgets.QFileDialog()
-        fn, _ = dlg.getOpenFileName(dlg, 'Open ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
+        fn, _ = dlg.getOpenFileName(dlg, 'Open and Analyze ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
         if not fn:
             return
 
@@ -111,12 +112,12 @@ class MyApp(base, form):
 
         # If a profile with the rom base name exist, create a profile with different name
         name = self.rom_info.name
-        if check_if_name_exists(name) == 1:
+        if check_if_name_exists(name):
             i = 0
-            name += str(i)
-            while check_if_name_exists(name):
+            while check_if_name_exists(name + str(i)):
                 i += 1
-                name = name[:-1] + str(i)
+            name += str(i)
+        self.rom_info.name = name
 
         create_profile(name, *self.find_rom_offsets())
 
@@ -130,7 +131,8 @@ class MyApp(base, form):
 
     def find_rom_offsets(self):
 
-        if self.rom_info.name[:3] == "BPR" or self.rom_info.name[:3] == "BPG":
+        name = self.rom_info.name
+        if name[:3] == "BPR" or name[:3] == "BPG" or name[:4] == "JPAN" or name[:4] == 'MrDS':
             folder = "fr"
             ows_num = 152
             palettes_num = 18
@@ -155,19 +157,27 @@ class MyApp(base, form):
             pal = pal_file.read()
 
         self.statusbar.showMessage("Searching for Offsets")
-        frames_address = find_bytes_in_rom(hero, 740)
+        frames_address = find_bytes_in_rom(hero)
         frames_pointer_address = find_pointer_in_rom(frames_address)
         ow_data_address = find_pointer_in_rom(frames_pointer_address) - 0x1c
         ow_pointers_address = find_pointer_in_rom(ow_data_address)
         ow_table_address = find_pointer_in_rom(ow_pointers_address)
         # print(hex(ow_table_address))
 
-        palettes_data_address = find_bytes_in_rom(pal, 22)
+        palettes_data_address = find_bytes_in_rom(pal)
         palette_table = find_pointer_in_rom(palettes_data_address)
         palette_table_pointers = find_pointer_in_rom(palette_table, 3)
         # print(palette_table_pointers)
 
-        ow_fix = find_bytes_in_rom(ow_fix_bytes, 9)
+        ow_fix = find_bytes_in_rom(ow_fix_bytes)
+        if ow_fix == -1:
+            ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
+            ow_fix = find_bytes_in_rom(ow_fix_bytes)
+
+        # If still no ow_fix address, set it to 0x0
+        if ow_fix == -1:
+            ow_fix = 0x0
+
         self.statusbar.showMessage("Analysis Finished!")
 
         return [ow_table_address,
@@ -274,123 +284,82 @@ class MyApp(base, form):
         templates = []
         for i in range(1, 9):
             templates.append(open("Files/" + rom_base + "/Template" + str(i), "wb+"))
+            os.chmod("Files/" + rom_base + "/Template" + str(i), 0o777)
 
         # Create Template for Type 1
         rom.seek(pointer_to_address(ow_pointers_address))
-        template_bytes = []
-        for byte in range(0x24):
-            template_bytes.append(rom.read_byte())
-        template_bytes = bytearray(template_bytes)
+        template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
         templates[0].write(template_bytes)
 
         # Create Template for Type 2
         rom.seek(pointer_to_address(ow_pointers_address + 4))
-        template_bytes = []
-        for byte in range(0x24):
-            template_bytes.append(rom.read_byte())
-        template_bytes = bytearray(template_bytes)
+        template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
         templates[1].write(template_bytes)
 
         # Create Template for Type 3
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address + 16*4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[2].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address + 5 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[2].write(template_bytes)
 
         # Create Template for Type 4
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address + 108 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[3].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address + 114 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[3].write(template_bytes)
 
         # Create Template for Type 5 // FR/LG only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address + 151 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[4].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[4].write(template_bytes)
 
         # Create Template for Type 6 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[5].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address + 94 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[5].write(template_bytes)
 
         # Create Template for Type 7 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[6].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address + 141 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[6].write(template_bytes)
 
         # Create Template for Type 8 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "LEAF GREEN":
+        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
             rom.seek(pointer_to_address(ow_pointers_address))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[7].write(template_bytes)
         else:
             rom.seek(pointer_to_address(ow_pointers_address + 140 * 4))
-            template_bytes = []
-            for byte in range(0x24):
-                template_bytes.append(rom.read_byte())
-            template_bytes = bytearray(template_bytes)
+            template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[7].write(template_bytes)
 
     def paint_graphics_view(self, image):
@@ -469,7 +438,8 @@ class MyApp(base, form):
 
     def initColorTextComboBox(self):
         # Text color ComboBox
-        if self.rom_info.name[:3] == 'BPR' or self.rom_info.name == 'JPAN':
+        name = self.rom_info.name
+        if name[:3] == 'BPR' or name[:4] == 'JPAN' or name[:4] == 'MrDS' or name[:3] == 'BPG':
             self.textColorComboBox.clear()
             self.textColorComboBox.setEnabled(True)
             colors_list = ['Blue', 'Red', 'Black']
@@ -504,6 +474,3 @@ class MyApp(base, form):
 
         self.paletteSlotComboBox.clear()
         self.paletteSlotComboBox.addItems(items)
-
-
-

@@ -135,20 +135,22 @@ class ProfileManager:
             for sub in subfix:
                 self.rom_names.append(main + sub)
 
-        self.rom_names.append('JPAN')
+        # self.rom_names.append('JPAN')
 
     def __init__(self, rom_name):
         self.default_profiles = []
         self.current_profile = 0
         self.init_rom_names()
 
-        self.default_profiles.append(rom_name)
+        # self.default_profiles.append(rom_name)
         # Initialize the profiles
-        if rom_name == 'JPAN':
-            self.current_profile = 1
-            self.default_profiles.append(rom_name)
-            rom_name = "BPRE"
-            self.default_profiles[0] = rom_name
+        if rom_name[:3] == "BPR":
+            self.default_profiles.append("JPAN")
+        # if rom_name == 'JPAN':
+        #     self.current_profile = 1
+        #     self.default_profiles.append(rom_name)
+        #     rom_name = "BPRE"
+        #     self.default_profiles[0] = rom_name
 
         # Add the user profiles
         ini.seek(0)
@@ -158,7 +160,7 @@ class ProfileManager:
                 if not (get_name_from_line(i) in self.rom_names):
 
                     check_name = get_line_string(i + 14).split(" = ")[1]
-                    if check_name == rom_name:
+                    if check_name[:4] == rom_name[:4]:
                         self.default_profiles.append(get_name_from_line(i))
 
         ini.seek(0)

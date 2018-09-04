@@ -7,7 +7,8 @@ addTableBase, addTableForm = uic.loadUiType("ui/addtable.ui")
 
 def check_type_availability(ow_type, ui):
 
-    if ui.rom_info.name[:3] == 'BPR' or ui.rom_info.name == 'JPAN' or ui.rom_info.name[:3] == 'BPG':
+    base = ui.rom_info.name
+    if base[:3] == 'BPR' or base[:4] == 'JPAN' or base[:3] == 'BPG' or base[:4] == 'MrDS':
         if (ow_type >= 1) and (ow_type <= 5):
             return 1
         return 0

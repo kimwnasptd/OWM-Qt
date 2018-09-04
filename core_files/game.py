@@ -14,6 +14,7 @@ class Game:
         self.name = None
         self.is_rom_open = 0
         self.rom_path = ""
+        self.rom_size = 0
 
         self.pos = 0
 
@@ -26,10 +27,13 @@ class Game:
         self.original_rom_contents = bytes(self.rom_contents)
 
         self.rom_contents = bytearray(self.rom_contents)
+        self.rom_size = len(self.rom_contents)
         self.rom_file_name = fn
         self.rom_code = self.rom_contents[0xAC:0xAC+4]
 
     def seek(self, pos):
+        if pos > self.rom_size:
+            raise IndexError
         self.pos = pos
 
     def read_byte(self):
@@ -46,5 +50,3 @@ class Game:
 
     def pos(self):
         return self.pos
-        
-
