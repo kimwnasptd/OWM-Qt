@@ -89,7 +89,7 @@ class MyApp(base, form):
             self.selected_table = None
             self.selected_ow = None
             self.romNameLabel.setText(rom.rom_path.split('/')[-1])
-            
+
             update_gui(self)
             self.initColorTextComboBox()
             self.initPaletteIdComboBox()
@@ -132,47 +132,69 @@ class MyApp(base, form):
     def find_rom_offsets(self):
 
         name = self.rom_info.name
-        if name[:3] == "BPR" or name[:3] == "BPG" or name[:4] == "JPAN" or name[:4] == 'MrDS':
-            folder = "fr"
-            ows_num = 152
-            palettes_num = 18
-            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
-            free_spc = 0x0800000
-        elif self.rom_info.name[:3] == "AXV" or self.rom_info.name[:3] == "AXP":
-            folder = "ruby"
-            ows_num = 217
-            palettes_num = 27
-            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-            free_spc = 0x6B0E00
-        else:
-            folder = "emerald"
-            ows_num = 246
-            palettes_num = 35
+        if name[:3] == "BPE":
             ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-            free_spc = 0xE41DF0
+        elif name[:3] == "AXV" or name[:3] == "AXP":
+            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
+        else:
+            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
 
-        with open("Files/Analysis/" + folder + "/hero", "rb") as hero_file:
-            hero = hero_file.read()
-        with open("Files/Analysis/" + folder + "/pal", "rb") as pal_file:
-            pal = pal_file.read()
+        # Find OW Offsets
+        self.statusbar.showMessage("Searching for OW Offsets")
+        for addr in range(0, rom.rom_size, 4):
+            # Search for the first OW Data Pointer
+            cond1 = check_pointer(addr)
+            cond1 = cond1 and is_ow_data(pointer_to_address(addr))
+            cond1 = cond1 and check_pointer(pointer_to_address(addr) + 0x1C)
 
-        self.statusbar.showMessage("Searching for Offsets")
-        frames_address = find_bytes_in_rom(hero)
-        frames_pointer_address = find_pointer_in_rom(frames_address)
-        ow_data_address = find_pointer_in_rom(frames_pointer_address) - 0x1c
-        ow_pointers_address = find_pointer_in_rom(ow_data_address)
-        ow_table_address = find_pointer_in_rom(ow_pointers_address)
-        # print(hex(ow_table_address))
+            cond2 = check_pointer(addr + 4)
+            cond2 = cond2 and is_ow_data(pointer_to_address(addr))
+            cond2 = cond2 and check_pointer(pointer_to_address(addr) + 0x1C)
+            if cond1 and cond2:
+                ow_pointers_address = addr
+                table_ptrs = find_pointer_in_rom(addr, True)
+                ow_table_address = table_ptrs[-1]
+                orig_ow_table_ptr = table_ptrs[0]
+                ow_data_address = pointer_to_address(addr)
+                frames_pointers_address = pointer_to_address(ow_data_address + 0x1C)
+                frames_address = pointer_to_address(frames_pointers_address)
+                break
 
-        palettes_data_address = find_bytes_in_rom(pal)
-        palette_table = find_pointer_in_rom(palettes_data_address)
-        palette_table_pointers = find_pointer_in_rom(palette_table, 3)
-        # print(palette_table_pointers)
+        # Calculate number of OWs
+        ows_num = 0
+        addr = ow_pointers_address
+        while check_pointer(addr) and is_ow_data(pointer_to_address(addr)):
+            ows_num += 1
+            addr += 4
+            # print(capitalized_hex(addr))
+        print("ows_num: "+str(ows_num))
+
+        self.statusbar.showMessage("Searching for Palette Offsets")
+        for addr in range(0, rom.rom_size, 4):
+            # Search for the first Palette Pointer
+            if (check_pointer(addr) and is_palette_pointer(pointer_to_address(addr))):
+                palette_table = pointer_to_address(addr)
+                palettes_data_address = pointer_to_address(palette_table)
+                palette_table_pointers = find_pointer_in_rom(palette_table, 3)
+                break
+
+        # Calculate number of Palettes
+        palettes_num = 0
+        addr = palette_table
+        while is_palette_pointer(addr):
+            palettes_num += 1
+            addr += 8
+        print("palettes_num: "+str(palettes_num))
 
         ow_fix = find_bytes_in_rom(ow_fix_bytes)
         if ow_fix == -1:
             ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
             ow_fix = find_bytes_in_rom(ow_fix_bytes)
+
+        # Find ROM's Free Space
+        self.statusbar.showMessage("Searching for Free Space")
+        free_spc = search_for_free_space(0x100000)
+        print('free space: '+capitalized_hex(free_spc))
 
         # If still no ow_fix address, set it to 0x0
         if ow_fix == -1:
@@ -181,7 +203,7 @@ class MyApp(base, form):
         self.statusbar.showMessage("Analysis Finished!")
 
         return [ow_table_address,
-                ow_table_address,
+                orig_ow_table_ptr,
                 ow_pointers_address,
                 ows_num,
                 palette_table_pointers,
@@ -189,7 +211,7 @@ class MyApp(base, form):
                 palettes_num,
                 ow_fix,
                 free_spc,
-                self.rom_info.name]
+                name]
 
     def load_from_profile(self, profile):
 

@@ -45,6 +45,19 @@ class Game:
             self.rom_contents[self.pos] = val
             self.pos += 1
 
+    def check_byte(self, addr, val):
+        try:
+            self.seek(addr)
+            if self.read_byte() == val:
+                return 1
+            return 0
+        except IndexError:
+            return 0
+
+    def get(self, addr):
+        self.seek(addr)
+        return rom.read_byte()
+
     def flush(self):
         pass
 

@@ -604,7 +604,7 @@
      <x>0</x>
      <y>0</y>
      <width>912</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -759,6 +759,9 @@
   <action name="actionOpen_and_Analyze_ROM">
    <property name="text">
     <string>Open and Analyze ...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+O</string>
    </property>
   </action>
  </widget>

@@ -146,11 +146,6 @@ class ProfileManager:
         # Initialize the profiles
         if rom_name[:3] == "BPR":
             self.default_profiles.append("JPAN")
-        # if rom_name == 'JPAN':
-        #     self.current_profile = 1
-        #     self.default_profiles.append(rom_name)
-        #     rom_name = "BPRE"
-        #     self.default_profiles[0] = rom_name
 
         # Add the user profiles
         ini.seek(0)

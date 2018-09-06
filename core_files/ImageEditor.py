@@ -101,23 +101,28 @@ def is_palette_table_end(address):
     if test == 0:
         if rom.read_byte() == 255:
             return 1
+
+    if not is_palette_pointer(address):
+        return 1
     return 0
 
 
 def is_palette_pointer(address):
 
     palette_pointer = 1
-    if check_pointer(address) != 1:
-        palette_pointer = 0
+    try:
+        if check_pointer(address) != 1:
+            palette_pointer = 0
 
-    rom.seek(address + 5)
-    if rom.read_byte() != 0x11:
-        palette_pointer = 0
-    if rom.read_byte() != 0x0:
-        palette_pointer = 0
-    if rom.read_byte() != 0x0:
-        palette_pointer = 0
-
+        rom.seek(address + 5)
+        if rom.read_byte() != 0x11:
+            palette_pointer = 0
+        if rom.read_byte() != 0x0:
+            palette_pointer = 0
+        if rom.read_byte() != 0x0:
+            palette_pointer = 0
+    except IndexError:
+        return 0
     return palette_pointer
 
 

@@ -6,14 +6,14 @@ TemplateList = ['Template1', 'Template2', 'Template3', 'Template4', 'Template5',
 
 Templates = []
 
-frametype1 = [0x0, 0x1, 0x0, 0x0]
-frametype2 = [0x0, 0x2, 0x0, 0x0]
-frametype3 = [0x80, 0x0, 0x0, 0x0]
-frametype4 = [0x0, 0x8, 0x0, 0x0]
-frametype5 = [0x0, 0x10, 0x0, 0x0]  # FR only
-frametype6 = [0x80, 0x4, 0x0, 0x0]  # Emerald only
-frametype7 = [0x80, 0x5, 0x0, 0x0]  # Emerald only
-frametype8 = [0x80, 0x7, 0x0, 0x0]  # Emerald only
+frametype1 = [0x0, 0x1]
+frametype2 = [0x0, 0x2]
+frametype3 = [0x80, 0x0]
+frametype4 = [0x0, 0x8]
+frametype5 = [0x0, 0x10]  # FR only
+frametype6 = [0x80, 0x4]  # Emerald only
+frametype7 = [0x80, 0x5]  # Emerald only
+frametype8 = [0x80, 0x7]  # Emerald only
 
 # DEFINES
 OW_Tables_Pointers_Address = 0x0
@@ -22,7 +22,7 @@ original_ow_pointers = 0x0
 original_ow_data_pointers = 0x0
 original_num_of_ows = 0
 free_space = 0x0
-frames_end = 2176496  # 0x2135F0
+frames_end = 0x2135F0
 
 
 # ----------------------Functions------------------------------
@@ -48,34 +48,39 @@ def change_core_info(address, original_table_pointer, num_of_ows, ow_pointers, f
             template = mmap.mmap(temp.fileno(), 0)
             Templates.append(template)
 
-
 def is_ow_data(address):
     # Checks various bytes to see if they are the same with the templates
-    rom.seek(address)
-    if rom.read_byte() != 0xFF:
-        return 0
-    if rom.read_byte() != 0xFF:
-        return 0
+    try:
+        rom.seek(address)
 
-    if check_pointer(address + 0x10) != 1:
-        return 0
-    if check_pointer(address + 0x14) != 1:
-        return 0
-    if check_pointer(address + 0x18) != 1:
-        return 0
-    if check_pointer(address + 0x1c) != 1:
-        return 0
-    if check_pointer(address + 0x20) != 1:
-        return 0
+        if rom.read_byte() != 0xFF:
+            return 0
+        if rom.read_byte() != 0xFF:
+            return 0
 
+        # if not rom.check_byte(address + 0xE, 0x00):
+        #     return 0
+        # if not rom.check_byte(address + 0xF, 0x00):
+            return 0
+
+        if check_pointer(address + 0x10) != 1:
+            return 0
+        # if check_pointer(address + 0x14) != 1:
+            return 0
+        if check_pointer(address + 0x18) != 1:
+            return 0
+        if check_pointer(address + 0x1c) != 1:
+            return 0
+        if check_pointer(address + 0x20) != 1:
+            return 0
+    except IndexError:
+        return 0
     return 1
-
 
 def update_frames_address(num, address, ow_type):
     for i in range(1, num + 1):
         address += get_frame_size(ow_type)
     return address
-
 
 def get_frame_size(ow_type):
     if ow_type == 1:
@@ -95,7 +100,6 @@ def get_frame_size(ow_type):
     if ow_type == 8:
         return 1920  # 0x780
 
-
 def clear_frames(address, frames, size):
     rom.seek(address)
 
@@ -105,7 +109,6 @@ def clear_frames(address, frames, size):
     for i in range(0, 4):
         rom.write_byte(0xff)
 
-
 def available_frames_pointer_address(address, num_of_frames):
     rom.seek(address)
 
@@ -113,7 +116,6 @@ def available_frames_pointer_address(address, num_of_frames):
         if rom.read_byte() != 0x33:
             return 0
     return 1
-
 
 def check_frames_end(address):
     global frames_end
@@ -123,11 +125,9 @@ def check_frames_end(address):
     else:
         return 0
 
-
 def write_frames_end(address):
     global frames_end
     write_pointer(frames_end, address)
-
 
 def get_frame_dimensions(ow_type):
     if ow_type == 1:
@@ -157,10 +157,8 @@ def get_frame_dimensions(ow_type):
 
     return width, height
 
-
 def get_template(ow_type):
     return Templates[ow_type - 1]
-
 
 def get_ow_palette_id(address):
     rom.seek(address + 2)
@@ -168,7 +166,6 @@ def get_ow_palette_id(address):
     byte2 = rom.read_byte()
 
     return (byte2 * 256) + byte1
-
 
 def addresses_filter(new_table, ow_data_address, frames_pointers, frames_address):
     if new_table == 0:
@@ -193,7 +190,6 @@ def addresses_filter(new_table, ow_data_address, frames_pointers, frames_address
 
     return new_table, ow_data_address, frames_pointers, frames_address
 
-
 def write_ow_palette_id(address, palette_id):
     rom.seek(address + 2)
     byte1 = int(palette_id / 256)
@@ -203,14 +199,6 @@ def write_ow_palette_id(address, palette_id):
     rom.write_byte(byte1)
     rom.flush()
 
-
-def item_in_list(item, my_list):
-    for it in my_list:
-        if it == item:
-            return 1
-    return 0
-
-
 def check_frames_pointer(address):
     check1 = check_pointer(address)
 
@@ -218,8 +206,7 @@ def check_frames_pointer(address):
     frame = []
 
     rom.seek(address + 4)
-    for i in range(0, 4):
-        frame.append(rom.read_byte())
+    frame = [rom.read_byte(), rom.read_byte()]
 
     if frame == frametype1:
         tp = 1
@@ -244,13 +231,11 @@ def check_frames_pointer(address):
         tp = 1
     return tp * check1
 
-
 def get_palette_slot(data_address):
     rom.seek(data_address + 12)
     slot_compressed = rom.read_byte()
 
     return int(slot_compressed % 16)
-
 
 def write_palette_slot(data_address, palette_slot):
     rom.seek(data_address + 12)
@@ -262,28 +247,23 @@ def write_palette_slot(data_address, palette_slot):
     rom.write_byte(slot)
     rom.flush()
 
-
 def get_animation_address(ow_data_address):
     data_tuple = [0, 0]
     data_tuple[0] = pointer_to_address(ow_data_address + 0x18)
     data_tuple[1] = pointer_to_address(ow_data_address + 0x20)
     return data_tuple
 
-
 def write_animation_pointer(ow_data_address, data_tuple):
     write_pointer(data_tuple[0], ow_data_address + 0x18)
     write_pointer(data_tuple[1], ow_data_address + 0x20)
-
 
 def get_text_color(ow_data_address):
     rom.seek(ow_data_address + 0xE)
     return rom.read_byte()
 
-
 def set_text_color(ow_data_address, val):
     rom.seek(ow_data_address + 0xE)
     rom.write_byte(val)
-
 
 # -----------------Classes--------------------
 
@@ -304,7 +284,7 @@ class FramesPointers:
 
         frames_address = self.find_frames_free_space(ow_type, num_of_frames)
         frames_pointers_address = self.find_available_frames_pointers_address(num_of_frames)
-
+        print("frames address: " + capitalized_hex(frames_address))
         # Write changes to the class' variables
         self.frames_pointers_address = frames_pointers_address
         self.frames_address = frames_address
@@ -323,8 +303,9 @@ class FramesPointers:
             working_address = address
 
         frame_size = get_frame_size(ow_type)
-
         working_address = find_free_space(frame_size * frames_num + 4, working_address, 2)
+        if not working_address:
+            working_address = find_free_space(frame_size * frames_num + 4, 0x0, 2)
 
         return working_address
 
@@ -385,8 +366,7 @@ class FramesPointers:
         frame = []
 
         rom.seek(self.frames_pointers_address + 4)
-        for i in range(0, 4):
-            frame.append(rom.read_byte())
+        frame = [rom.read_byte(), rom.read_byte()]
 
         tp = -1
         if frame == frametype1:
@@ -406,6 +386,8 @@ class FramesPointers:
         elif frame == frametype8:
             tp = 8
 
+        if tp == -1:
+            print("get_type: Cant find type for " + str(frame))
         return tp
 
     def get_num(self):
@@ -418,10 +400,9 @@ class FramesPointers:
         i = 0
         while check_frames_end(address) != 1:
             i += 1
-            address += 1
+            address += size
 
-        # Then it divides that number with the size to get the num of frames
-        return int(i / size)
+        return i
 
     def clear(self):
         ow_type = self.get_type()
@@ -557,7 +538,7 @@ class OWPointerTable:
 
             # Fill with bytes the Frames Pointers Table
             rom.seek(self.frames_pointers_address)
-            for i in range(0, 256 * 8 * 10):
+            for i in range(0, 256 * 8 * 20):
                 rom.write_byte(0x33)  # 0x33
 
     def ow_initializer(self, ow_pointer):
@@ -768,22 +749,25 @@ class Root:
 
         # Find the Frames Pointers for each OW
         original_frames_pointers = []
-        for pointer in range(original_ow_pointers, original_ow_pointers + (4 * original_num_of_ows), 4):
-            data_pointer = pointer_to_address(pointer)
-            original_frames_pointers.append(pointer_to_address(data_pointer + 28))
+        for ow_pointer in range(original_ow_pointers, original_ow_pointers + (4 * original_num_of_ows), 4):
+            data_pointer = pointer_to_address(ow_pointer)
+            original_frames_pointers.append(pointer_to_address(data_pointer + 0x1C))
 
         # Create a list with the num of frames for each OW
         frames = []
-        for i in range(0, original_num_of_ows):
-            check_address = original_frames_pointers[i] + 8
+        for ow in range(original_num_of_ows):
+            check_address = original_frames_pointers[ow] + 8
             frames_num = 1
 
-            while 1:
-                if (item_in_list(check_address, original_frames_pointers) == 1) or (check_frames_pointer(check_address) == 0):
-                    break
+            # Check if current has different palette with the next one
+            basic_cond = (check_address not in original_frames_pointers) and check_frames_pointer(check_address)
+            size_cond = read_word(check_address + 0x4) == read_word(check_address - 0x8 + 0x4)
 
+            while basic_cond and size_cond:
                 frames_num += 1
                 check_address += 8
+                basic_cond = (check_address not in original_frames_pointers) and check_frames_pointer(check_address)
+                size_cond = read_word(check_address + 0x4) == read_word(check_address - 0x8 + 0x4)
 
             frames.append(frames_num)
 
@@ -795,6 +779,10 @@ class Root:
 
         # Restore the Data
         for i in range(0, original_num_of_ows):
+            print("\nAdding OW: " + str(i))
+            print("Frames: " + str(frames[i]))
+            print("OW Data Pointer: "+capitalized_hex(original_ow_pointers+4*i))
+            print("Type: "+str(types[i]))
             repointed_table.add_ow(types[i], frames[i])
             new_frames_pointer = read_word(repointed_table.ow_data_pointers[-1].ow_data_address + 0x1C)
             copy_data(pointer_to_address(original_ow_pointers + i * 4),
@@ -810,7 +798,7 @@ class Root:
 
         # 'Fix' for the Emerald/Ruby
         if frames.__len__() >= 200:
-            for i in range(0, 256 - frames.__len__()):
+            for i in range(0, 256 - len(frames)):
                 repointed_table.add_ow(1, 9)
 
         # Clean the data of the original table
