@@ -110,43 +110,43 @@ class addTableWindow(addTableBase, addTableForm):
     def checked(self, state):
 
         if state:
-            self.pointersAddressLineEdit.setEnabled(False)
+            self.ptrsAddressLineEdit.setEnabled(False)
             self.dataAddressLineEdit.setEnabled(False)
             self.framesPointersAddressLineEdit.setEnabled(False)
             self.framesAddressLineEdit.setEnabled(False)
         else:
-            self.pointersAddressLineEdit.setEnabled(True)
+            self.ptrsAddressLineEdit.setEnabled(True)
             self.dataAddressLineEdit.setEnabled(True)
             self.framesPointersAddressLineEdit.setEnabled(True)
             self.framesAddressLineEdit.setEnabled(True)
 
     def addTable(self, ui):
-        ow_pointers = self.pointersAddressLineEdit.text()
-        data_pointers = self.dataAddressLineEdit.text()
-        frames_pointers = self.framesPointersAddressLineEdit.text()
-        frames_address = self.framesAddressLineEdit.text()
+        ow_ptrs = self.ptrsAddressLineEdit.text()
+        data_ptrs = self.dataAddressLineEdit.text()
+        frames_ptrs = self.framesPointersAddressLineEdit.text()
+        frames_addr = self.framesAddressLineEdit.text()
 
-        if ow_pointers == "":
-            ow_pointers = 0
+        if ow_ptrs == "":
+            ow_ptrs = 0
         else:
-            ow_pointers = int(ow_pointers, 16)
+            ow_ptrs = int(ow_ptrs, 16)
 
-        if data_pointers == "":
-            data_pointers = 0
+        if data_ptrs == "":
+            data_ptrs = 0
         else:
-            data_pointers = int(data_pointers, 16)
+            data_ptrs = int(data_ptrs, 16)
 
-        if frames_pointers == "":
-            frames_pointers = 0
+        if frames_ptrs == "":
+            frames_ptrs = 0
         else:
-            frames_pointers = int(frames_pointers, 16)
+            frames_ptrs = int(frames_ptrs, 16)
 
-        if frames_address == "":
-            frames_address = 0
+        if frames_addr == "":
+            frames_addr = 0
         else:
-            frames_address = int(frames_address, 16)
+            frames_addr = int(frames_addr, 16)
 
-        ui.tree_model.insertTable(ow_pointers, data_pointers, frames_pointers, frames_address, ui)
+        ui.tree_model.insertTable(ow_ptrs, data_ptrs, frames_ptrs, frames_addr, ui)
 
         from ui_functions.ui_updater import update_gui
         update_gui(ui)

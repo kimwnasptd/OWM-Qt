@@ -1,13 +1,11 @@
-from core_files.game import *
+# from core_files.game import *
+from game import *
 from random import randint
 
-# The functions may throw IndexError
+# Functions may throw IndexError
 
-rom = Game()
-
-
-def get_word(address):
-    rom.seek(address)
+def get_word(addr):
+    rom.seek(addr)
     byte1 = rom.read_byte() << 24
     byte2 = rom.read_byte() << 16
     byte3 = rom.read_byte() << 8
@@ -41,28 +39,28 @@ def search_for_free_space(size, start_addr=0):
     error()
     return None # Force an error
 
-def find_free_space(size, start_address=0, ending=0):
-    working_address = start_address
-    target_addr = start_address
+def find_free_space(size, start_addr=0, ending=0):
+    working_addr = start_addr
+    target_addr = start_addr
     ffs = 0
     while ffs < size + ending:
-        if rom.check_byte(working_address, 0xFF):
+        if rom.check_byte(working_addr, 0xFF):
             ffs += 1
         else:
             ffs = 0
-            target_addr = working_address + 1
-        working_address += 1
+            target_addr = working_addr + 1
+        working_addr += 1
 
-        if working_address > rom.rom_size:
+        if working_addr > rom.rom_size:
             return None
 
     if (ending != 0) and (target_addr % ending != 0):
         target_addr += target_addr % ending
     return target_addr
 
-def check_pointer(address):
+def is_ptr(addr):
     try:
-        rom.seek(address + 3)
+        rom.seek(addr + 3)
         byte = rom.read_byte()
         if (byte == 8) or (byte == 9):
             return 1
@@ -84,19 +82,19 @@ def get_bytes_bits(byte, bit, to=0):
 
     return result
 
-def write_word(value, address):
-    rom.seek(address)
+def write_word(value, addr):
+    rom.seek(addr)
 
     for i in range(0, 4):
         byte = get_bytes_bits(value, 1, 8)
         rom.write_byte(byte)
         value >>= 8
 
-def write_pointer(pointer_address, address_to_write):
-    write_word(pointer_address + 0x08000000, address_to_write)
+def write_ptr(ptr_addr, addr_to_write):
+    write_word(ptr_addr + 0x08000000, addr_to_write)
 
-def read_word(address):
-    rom.seek(address)
+def read_word(addr):
+    rom.seek(addr)
     byte1 = rom.read_byte()
 
     byte2 = rom.read_byte()
@@ -110,12 +108,21 @@ def read_word(address):
 
     return byte1 + byte2 + byte3 + byte4
 
-def read_half(address):
-    rom.seek(address)
+def read_half(addr):
+    rom.seek(addr)
     return rom.read_byte() + (rom.read_byte() << 8)
 
-def pointer_to_address(address):
-    rom.seek(address)
+def read_bytes(addr, num):
+    rom.seek(addr)
+    return [rom.read_byte() for _ in range(num)]
+
+def write_bytes(addr, bytes):
+    rom.seek(addr)
+    for byte in bytes:
+        rom.write_byte(byte)
+
+def ptr_to_addr(addr):
+    rom.seek(addr)
     byte1 = rom.read_byte()
     byte2 = rom.read_byte() << 8
     byte3 = rom.read_byte() << 16
@@ -126,10 +133,10 @@ def pointer_to_address(address):
     else:
         return byte3 + byte2 + byte1
 
-def pointer_to_address_n(address, n):
+def ptr_to_addr_n(addr, n):
     for i in range(1, n + 1):
-        address = pointer_to_address(address)
-    return address
+        addr = ptr_to_addr(addr)
+    return addr
 
 def find_bytes_in_rom(bytes_to_find):
     # https://stackoverflow.com/questions/10106901/elegant-find-sub-list-in-list
@@ -140,52 +147,58 @@ def find_bytes_in_rom(bytes_to_find):
             return i
     return -1
 
-def find_pointer_in_rom(pointing_address, search_for_all=None):
+def find_ptr_in_rom(pointing_addr, search_for_all=None):
 
-    pointers_address = []
+    ptrs_addr = []
     for addr in range(0, rom.rom_size, 4):
-        if check_pointer(addr) and pointer_to_address(addr) == pointing_address:
+        if is_ptr(addr) and ptr_to_addr(addr) == pointing_addr:
             if search_for_all is None:
                 return addr
             else:
-                pointers_address += [addr]
+                ptrs_addr += [addr]
 
     if search_for_all:
-        return pointers_address
+        return ptrs_addr
     else:
         return 0
 
-def fill_with_data(address, num_of_bytes, write_data):
+def fill_with_data(addr, num_of_bytes, write_data):
     # If write_data is < 0, then a random number is selected (where 0<= write_data <= 254)
     if write_data < 0:
         write_data = randint(0x1, 0xe)
         write_data += write_data * 16
 
-    rom.seek(address)
+    rom.seek(addr)
     for i in range(1, num_of_bytes + 1):
         rom.write_byte(write_data)
     rom.flush()
 
-def copy_data(address_to_copy_from, address_to_copy_to, num_of_bytes):
+def copy_data(addr_to_copy_from, addr_to_copy_to, num_of_bytes):
     copied_bytes = []
-    rom.seek(address_to_copy_from)
+    rom.seek(addr_to_copy_from)
     for i in range(0, num_of_bytes):
         # Read the byte to write
         copied_bytes.append(rom.read_byte())
 
-    rom.seek(address_to_copy_to)
+    rom.seek(addr_to_copy_to)
     for i in range(0, num_of_bytes):
         rom.write_byte(copied_bytes[i])
 
-def move_data(address_to_copy, address_to_write, num_of_bytes, write_byte=0xff):
-    copy_data(address_to_copy, address_to_write, num_of_bytes)
-    fill_with_data(address_to_copy, num_of_bytes, write_bytee)
+def move_data(addr_to_copy, addr_to_write, num_of_bytes, write_byte=0xff):
+    copy_data(addr_to_copy, addr_to_write, num_of_bytes)
+    fill_with_data(addr_to_copy, num_of_bytes, write_bytee)
 
-def capitalized_hex(address):
-    string = hex(address)
+def capitalized_hex(addr):
+    string = hex(addr)
     string = string.upper()
 
     string = string[2:]
     string = '0x' + string
 
     return string
+
+def HEX(addr):
+    return capitalized_hex(addr)
+
+def HEX_LST(bytes):
+    return str([HEX(byte) for byte in bytes])

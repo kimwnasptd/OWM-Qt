@@ -13,9 +13,9 @@ def export_ow_image(ui):
     image = make_image_from_rom(ui.selected_ow, ui.selected_table)
 
     # For the Palette
-    palette_id = get_ow_palette_id(root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].ow_data_address)
-    palette_address = ui.sprite_manager.get_palette_address(palette_id)
-    sprite_palette = create_palette_from_gba(pointer_to_address(palette_address))
+    palette_id = get_ow_palette_id(root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].ow_data_addr)
+    palette_addr = ui.sprite_manager.get_palette_addr(palette_id)
+    sprite_palette = create_palette_from_gba(ptr_to_addr(palette_addr))
 
     image.putpalette(sprite_palette)
 
@@ -44,9 +44,9 @@ def import_frames_sheet(ui):
     sprite = Image.open(image_loc)
 
     # Safety measures
-    ow_type = root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].frames.get_type()
+    ow_type = root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].frames.get_type()
     width, height = get_frame_dimensions(ow_type)
-    frames_num = root.tables_list[ui.selected_table].ow_data_pointers[ui.selected_ow].frames.get_num()
+    frames_num = root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].frames.get_num()
 
     recom_width = width * frames_num
 

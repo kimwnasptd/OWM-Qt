@@ -113,7 +113,8 @@ class OWNode(Node):
         ow_id = self._id
 
         self.image = ImageManager().get_ow_frame(ow_id, table_id, 0)
-        self.frames = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
+        # print("OW: "+str(ow_id))
+        self.frames = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_num()
 
 
 class TreeViewModel(QtCore.QAbstractItemModel):
@@ -127,7 +128,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
 
-            for ow in range(len(root.tables_list[table].ow_data_pointers)):
+            for ow in range(len(root.tables_list[table].ow_data_ptrs)):
                 # add the ow nodes
                 newOWNode = OWNode(ow, newTableNode)
 
@@ -327,7 +328,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
 
-            for ow in range(len(root.tables_list[table].ow_data_pointers)):
+            for ow in range(len(root.tables_list[table].ow_data_ptrs)):
                 # add the ow nodes
                 newOWNode = OWNode(ow, newTableNode)
 
@@ -369,11 +370,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-    def insertTable(self, ow_pointers, data_pointers, frames_pointers, frames_address, ui):
+    def insertTable(self, ow_ptrs, data_ptrs, frames_ptrs, frames_addr, ui):
         parent = QtCore.QModelIndex()
         parentNode = self.getNode(parent)
 
-        root.custom_table_import(ow_pointers, data_pointers, frames_pointers, frames_address)
+        root.custom_table_import(ow_ptrs, data_ptrs, frames_ptrs, frames_addr)
         self.insertRows(-1, 1, parent)
 
         ui.selected_table = self.tablesCount() - 1
@@ -414,7 +415,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         free_slots = ui.sprite_manager.get_free_slots()
         if free_slots == 0:
             ui.sprite_manager.repoint_palette_table()
-            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+            ui.rom_info.palette_table_addr = ui.sprite_manager.table_addr
 
         ui.sprite_manager.import_sprites(image_obj, table_id, ow_id)
 
@@ -434,10 +435,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         free_slots = ui.sprite_manager.get_free_slots()
         if free_slots == 0:
             ui.sprite_manager.repoint_palette_table()
-            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+            ui.rom_info.palette_table_addr = ui.sprite_manager.table_addr
 
-        ow_type = root.tables_list[ui.selected_table].ow_data_pointers[ow_id].frames.get_type()
-        frames_num = root.tables_list[ui.selected_table].ow_data_pointers[ow_id].frames.get_num()
+        ow_type = root.tables_list[ui.selected_table].ow_data_ptrs[ow_id].frames.get_type()
+        frames_num = root.tables_list[ui.selected_table].ow_data_ptrs[ow_id].frames.get_num()
 
         if (ow_type != 2) or (frames_num != 9):
             root.tables_list[ui.selected_table].resize_ow(ow_id, 2, 9)
@@ -460,10 +461,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         free_slots = ui.sprite_manager.get_free_slots()
         if free_slots == 0:
             ui.sprite_manager.repoint_palette_table()
-            ui.rom_info.palette_table_address = ui.sprite_manager.table_address
+            ui.rom_info.palette_table_addr = ui.sprite_manager.table_addr
 
-        ow_type = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_type()
-        frames_num = root.tables_list[table_id].ow_data_pointers[ow_id].frames.get_num()
+        ow_type = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_type()
+        frames_num = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_num()
 
         if (ow_type != 2) or (frames_num != 9):
             root.tables_list[table_id].resize_ow(ow_id, 2, 9)

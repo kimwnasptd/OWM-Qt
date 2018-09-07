@@ -3,38 +3,35 @@ from core_files.core import *
 
 root = Root()
 
-palette_table_pointer_address = []
-palette_table_address = 0
+palette_table_ptr_addr = []
+palette_table_addr = 0
 original_num_of_palettes = 0
-original_palette_table_address = 0
+original_palette_table_addr = 0
 free_space = 0
 
 
-def change_image_editor_info(pointers_list, num_of_palettes, original_table, free_space_area):
-    global palette_table_address, palette_table_pointer_address, original_num_of_palettes, original_palette_table_address, free_space
-    palette_table_pointer_address = pointers_list
-    palette_table_address = pointer_to_address(palette_table_pointer_address[0])
+def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_space_area):
+    global palette_table_addr, palette_table_ptr_addr, original_num_of_palettes, original_palette_table_addr, free_space
+    palette_table_ptr_addr = ptrs_list
+    palette_table_addr = ptr_to_addr(palette_table_ptr_addr[0])
     original_num_of_palettes = num_of_palettes
-    original_palette_table_address = original_table
+    original_palette_table_addr = original_table
     free_space = free_space_area
-
 
 def resetRoot():
     global root
     root.__init__()
 
-
-def write_two_pixels(index1, index2, address):
+def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
 
     index2 *= 16
 
-    rom.seek(address)
+    rom.seek(addr)
     rom.write_byte(index1 + index2)
     rom.flush()
 
-
-def import_frame(im, address, ow_type, row_grid=0, column_grid=0):
+def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
     if ow_type == 1:
         row = 4
         col = 2
@@ -69,23 +66,21 @@ def import_frame(im, address, ow_type, row_grid=0, column_grid=0):
                     byte1 = im.getpixel(((c * 8) + j + column_grid, (r * 8) + i + row_grid))
                     byte2 = im.getpixel(((c * 8) + j + 1 + column_grid, (r * 8) + i + row_grid))
 
-                    write_two_pixels(byte1, byte2, address)
-                    address += 1
+                    write_two_pixels(byte1, byte2, addr)
+                    addr += 1
 
 
 # === ============== ===
-
 # Palette Functions
 
-def get_palette_id(address):
-    rom.seek(address + 4)
+def get_palette_id(addr):
+    rom.seek(addr + 4)
     byte1 = rom.read_byte()
     byte2 = rom.read_byte()
     return (byte2 * 256) + byte1
 
-
-def write_palette_id(address, palette_id):
-    rom.seek(address + 4)
+def write_palette_id(addr, palette_id):
+    rom.seek(addr + 4)
     byte1 = int(palette_id / 256)
     byte2 = int(palette_id % 256)
 
@@ -93,51 +88,47 @@ def write_palette_id(address, palette_id):
     rom.write_byte(byte1)
     rom.flush()
 
-
-def is_palette_table_end(address):
-    rom.seek(address)
+def is_palette_table_end(addr):
+    rom.seek(addr)
 
     test = rom.read_byte() + rom.read_byte() + rom.read_byte() + rom.read_byte()
     if test == 0:
         if rom.read_byte() == 255:
             return 1
 
-    if not is_palette_pointer(address):
+    if not is_palette_ptr(addr):
         return 1
     return 0
 
+def is_palette_ptr(addr):
 
-def is_palette_pointer(address):
-
-    palette_pointer = 1
+    palette_ptr = 1
     try:
-        if check_pointer(address) != 1:
-            palette_pointer = 0
+        if is_ptr(addr) != 1:
+            palette_ptr = 0
 
-        rom.seek(address + 5)
+        rom.seek(addr + 5)
         if rom.read_byte() != 0x11:
-            palette_pointer = 0
+            palette_ptr = 0
         if rom.read_byte() != 0x0:
-            palette_pointer = 0
+            palette_ptr = 0
         if rom.read_byte() != 0x0:
-            palette_pointer = 0
+            palette_ptr = 0
     except IndexError:
         return 0
-    return palette_pointer
+    return palette_ptr
 
-
-def write_palette_table_end(address):
-    rom.seek(address)
+def write_palette_table_end(addr):
+    rom.seek(addr)
     rom.write_byte(0)
     rom.write_byte(0)
     rom.write_byte(0)
     rom.write_byte(0)
-    rom.write_byte(255)  # 0xFF
-    rom.write_byte(17)  # 0x11
+    rom.write_byte(0xFF)
+    rom.write_byte(0x11)
     rom.write_byte(0)
     rom.write_byte(0)
     rom.flush()
-
 
 def replace_palette_id_in_ows(old_palette_id, new_palette_id):
     # Replaces the old palette with the new palette number in all the OWs
@@ -145,35 +136,33 @@ def replace_palette_id_in_ows(old_palette_id, new_palette_id):
     for ow_table in root.tables_list:
         # Browse through all the Tables
 
-        for ow in ow_table.ow_data_pointers:
+        for ow in ow_table.ow_data_ptrs:
             # Browse through all the OWs
 
-            if get_ow_palette_id(ow.ow_data_address) == old_palette_id:
+            if get_ow_palette_id(ow.ow_data_addr) == old_palette_id:
                 # The OW has the specific Palette ID
 
-                write_ow_palette_id(ow.ow_data_address, new_palette_id)
+                write_ow_palette_id(ow.ow_data_addr, new_palette_id)
 
-
-def remove_palette(palette_address):
+def remove_palette(palette_addr):
     # Remove the color data
-    fill_with_data(pointer_to_address(palette_address), 32, 255)
+    fill_with_data(ptr_to_addr(palette_addr), 32, 255)
 
     # Move all the other palettes left (the palette to be removed will be just be replaced
-    working_address = palette_address + 8
+    working_addr = palette_addr + 8
     done = 0
 
     while done == 0:
 
         # Move the palette data left
-        move_data(working_address, working_address - 8, 8, 0)
+        move_data(working_addr, working_addr - 8, 8, 0)
 
         # If the palette that moved left is the end of the table, break the loop
-        if is_palette_table_end(working_address - 8) == 1:
+        if is_palette_table_end(working_addr - 8) == 1:
             done = 1
 
-        # Set the working_address to the address of the next table
-        working_address += 8
-
+        # Set the working_addr to the addr of the next table
+        working_addr += 8
 
 def get_background_color(image):
     im_palette = image.getpalette()
@@ -188,7 +177,6 @@ def get_background_color(image):
 
     return color
 
-
 def rgb_to_gba(red, green, blue):
     gba_color = (((red >> 3) & 31) | (((green >> 3) & 31) << 5) | (((blue >> 3) & 31) << 10))
 
@@ -196,7 +184,6 @@ def rgb_to_gba(red, green, blue):
     byte2 = int(gba_color / 256)
 
     return byte1, byte2
-
 
 def gba_to_rgb(gba_color):
     # Switch the two bytes (gba logic :p)
@@ -210,7 +197,6 @@ def gba_to_rgb(gba_color):
 
     rgb_color = (red, green, blue)
     return rgb_color
-
 
 def swap_colors(id1, id2, palette, image):
     t1 = palette[id1 * 3]
@@ -235,7 +221,6 @@ def swap_colors(id1, id2, palette, image):
             elif image.getpixel((i, j)) == id2:
                 image.putpixel((i, j), id1)
 
-
 def make_bg_color_first(image):
     bg_color = get_background_color(image)
     palette = image.getpalette()
@@ -249,13 +234,11 @@ def make_bg_color_first(image):
     bg_index = int(k / 3)
     swap_colors(0, bg_index, palette, image)
 
-
-def write_color(color, address):
-    rom.seek(address)
+def write_color(color, addr):
+    rom.seek(addr)
     rom.write_byte(color[0])
     rom.write_byte(color[1])
     rom.flush()
-
 
 def byte_to_pixels(byte):
     pixel1 = int(byte / 16)
@@ -263,15 +246,14 @@ def byte_to_pixels(byte):
 
     return pixel2, pixel1
 
-
-def create_image_from_address(im_address, width, height):
+def create_image_from_addr(im_addr, width, height):
     row = int(height / 8)
     column = int(width / 8)
 
     obj = Image.new("P", (width, height))
 
     global rom
-    rom.seek(im_address)
+    rom.seek(im_addr)
     for r in range(0, row):
         # Number of horizontal 8X8 squares
 
@@ -291,28 +273,26 @@ def create_image_from_address(im_address, width, height):
 
     return obj
 
-
 def make_image_from_rom(working_ow, working_table):
-    frames = root.tables_list[working_table].ow_data_pointers[working_ow].frames.get_num()
-    ow_type = root.tables_list[working_table].ow_data_pointers[working_ow].frames.get_type()
+    frames = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.get_num()
+    ow_type = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.get_type()
     width, height = get_frame_dimensions(ow_type)
 
     final = Image.new('P', (width * frames, height))
 
     for i in range(0, frames):
-        frames_address = root.tables_list[working_table].ow_data_pointers[working_ow].frames.frames_address
-        im_address = (i * get_frame_size(ow_type)) + frames_address
+        frames_addr = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.frames_addr
+        im_addr = (i * get_frame_size(ow_type)) + frames_addr
 
-        im = create_image_from_address(im_address, width, height)
+        im = create_image_from_addr(im_addr, width, height)
 
         final.paste(im, (width * i, 0))
 
     return final
 
-
-def create_palette_from_gba(palette_address):
+def create_palette_from_gba(palette_addr):
     global rom
-    rom.seek(palette_address)
+    rom.seek(palette_addr)
     palette = []
 
     for i in range(0, 16):
@@ -328,38 +308,38 @@ def create_palette_from_gba(palette_address):
 
     return palette
 
-
 def is_palette_used(palette_id):
     global root
     # Search all the tables
     for table in root.tables_list:
         # Search all the ows
-        for ow in table.ow_data_pointers:
-            if get_ow_palette_id(ow.ow_data_address) == palette_id:
+        for ow in table.ow_data_ptrs:
+            if get_ow_palette_id(ow.ow_data_addr) == palette_id:
                 return 1
     return 0
 
 
 # === Classes ===
-
 class PaletteManager:
-    table_address = 0x0
+    table_addr = 0x0
     palette_num = 0
     max_size = 0
     free_slots = 0
     used_palettes = []
 
     def __init__(self):
-        global palette_table_address
+        global palette_table_addr
 
-        # self.table_address = palette_table_address
-        self.table_address = pointer_to_address(palette_table_pointer_address[0])
+        # self.table_addr = palette_table_addr
+        self.table_addr = ptr_to_addr(palette_table_ptr_addr[0])
         self.palette_num = self.get_palette_num()
         self.max_size = self.get_max_size()
         self.free_slots = self.max_size - self.palette_num
 
-        if self.table_address == original_palette_table_address:
+        if self.table_addr == original_palette_table_addr:
+            print("Repointing the Palette Table")
             self.original_palette_table_repoint()
+            print("Num of Palettes: " + str(len(self.used_palettes)))
 
         self.set_used_palettes()
 
@@ -367,26 +347,26 @@ class PaletteManager:
 
         self.used_palettes = []
 
-        working_address = self.table_address
+        working_addr = self.table_addr
 
-        while is_palette_table_end(working_address) == 0 and is_palette_pointer(working_address):
-            self.used_palettes.append(get_palette_id(working_address))
-            working_address += 8
+        while is_palette_table_end(working_addr) == 0 and is_palette_ptr(working_addr):
+            self.used_palettes.append(get_palette_id(working_addr))
+            working_addr += 8
 
     def get_table_end(self):
-        working_address = self.table_address
+        working_addr = self.table_addr
 
-        while is_palette_table_end(working_address) == 0:
-            working_address += 8
+        while is_palette_table_end(working_addr) == 0:
+            working_addr += 8
 
-        return working_address
+        return working_addr
 
     def get_max_size(self):
         # Go to the end of the table
-        working_address = self.table_address
-        while is_palette_table_end(working_address) == 0:
-            working_address += 8
-        working_address += 8
+        working_addr = self.table_addr
+        while is_palette_table_end(working_addr) == 0:
+            working_addr += 8
+        working_addr += 8
         # Now we are after the end of the palette table
 
         i = self.get_free_slots()
@@ -395,31 +375,31 @@ class PaletteManager:
 
     def get_free_slots(self):
 
-        address = self.table_address + self.get_palette_num() * 8 + 8
+        addr = self.table_addr + self.get_palette_num() * 8 + 8
 
         i = 0
         done = 0
         while done == 0:
             adder = 0
-            rom.seek(address)
+            rom.seek(addr)
             for j in range(0, 8):
                 adder += rom.read_byte()
 
             if adder != 0:
                 done = 1
             else:
-                address += 8
+                addr += 8
                 i += 1
         return i
 
     def get_palette_num(self):
-        working_address = self.table_address
+        working_addr = self.table_addr
         i = 0
 
-        while is_palette_table_end(working_address) == 0 and check_pointer(working_address):
-            if check_pointer(working_address) == 1:
+        while is_palette_table_end(working_addr) == 0 and is_ptr(working_addr):
+            if is_ptr(working_addr) == 1:
                 i += 1
-            working_address += 8
+            working_addr += 8
 
         return i
 
@@ -427,49 +407,49 @@ class PaletteManager:
 
         max_id = -1
 
-        working_address = self.table_address
-        while is_palette_table_end(working_address) == 0:
+        working_addr = self.table_addr
+        while is_palette_table_end(working_addr) == 0:
 
-            if get_palette_id(working_address) > max_id:
+            if get_palette_id(working_addr) > max_id:
                 # Found new max
 
-                max_id = get_palette_id(working_address)
+                max_id = get_palette_id(working_addr)
 
-            working_address += 8
+            working_addr += 8
 
         return max_id
 
-    def get_palette_address(self, palette_id):
+    def get_palette_addr(self, palette_id):
 
-        working_address = self.table_address
+        working_addr = self.table_addr
 
-        while is_palette_table_end(working_address) == 0:
+        while is_palette_table_end(working_addr) == 0:
 
-            if get_palette_id(working_address) == palette_id:
-                return working_address
+            if get_palette_id(working_addr) == palette_id:
+                return working_addr
 
-            working_address += 8
+            working_addr += 8
 
         return 0
 
     def insert_rgb_to_gba_palette(self, palette):
 
         # Write the palette to the ROM
-        palette_address = find_free_space(16 * 4, free_space, 2)
+        palette_addr = find_free_space(16 * 4, free_space, 2)
 
-        working_address = palette_address
+        working_addr = palette_addr
         for i in range(0, 48, 3):
             color = rgb_to_gba(palette[i], palette[i + 1], palette[i + 2])
 
-            write_color(color, working_address)
-            working_address += 2
+            write_color(color, working_addr)
+            working_addr += 2
 
-        return palette_address
+        return palette_addr
 
     def import_palette(self, palette):
 
         # Import the palette in the ROM
-        colors_address = self.insert_rgb_to_gba_palette(palette)
+        colors_addr = self.insert_rgb_to_gba_palette(palette)
 
         # Import the palette in the palette table
         table_end = self.get_table_end()
@@ -480,11 +460,11 @@ class PaletteManager:
         if palette_id == 0x11FF:
             palette_id += 1
 
-        write_pointer(colors_address, table_end)
+        write_ptr(colors_addr, table_end)
 
         write_palette_id(table_end, palette_id)
-        working_address = table_end + 6
-        rom.seek(working_address)
+        working_addr = table_end + 6
+        rom.seek(working_addr)
         rom.write_byte(0)
         rom.write_byte(0)
         rom.flush()
@@ -494,21 +474,21 @@ class PaletteManager:
         num_of_palettes = self.get_palette_num()
         space_needed = (num_of_palettes * 8) + (256 * 8) + 9  # 9 = 8[palette end] + 1[table end]
 
-        new_table_address = find_free_space(space_needed, free_space, 4)
+        new_table_addr = find_free_space(space_needed, free_space, 4)
 
-        # Insert 00s in the new table address
-        fill_with_data(new_table_address, space_needed + 2, 0)
+        # Insert 00s in the new table addr
+        fill_with_data(new_table_addr, space_needed + 2, 0)
 
         # Move the table's data
-        move_data(self.table_address, new_table_address, (num_of_palettes * 8) + 8)
+        move_data(self.table_addr, new_table_addr, (num_of_palettes * 8) + 8)
 
-        # Change the pointers pointing the table
-        global palette_table_pointer_address
-        for pointer_address in palette_table_pointer_address:
-            write_pointer(new_table_address, pointer_address)
+        # Change the ptrs pointing the table
+        global palette_table_ptr_addr
+        for ptr_addr in palette_table_ptr_addr:
+            write_ptr(new_table_addr, ptr_addr)
 
-        # Change the OBJ's table_address var
-        self.table_address = new_table_address
+        # Change the OBJ's table_addr var
+        self.table_addr = new_table_addr
 
         self.set_used_palettes()
 
@@ -516,25 +496,25 @@ class PaletteManager:
         num_of_palettes = original_num_of_palettes
         space_needed = (num_of_palettes * 8) + (256 * 8) + 9  # 9 = 8[palette end] + 1[table end]
 
-        new_table_address = find_free_space(space_needed, free_space, 4)
+        new_table_addr = find_free_space(space_needed, free_space, 4)
 
-        # Insert 00s in the new table address
-        fill_with_data(new_table_address, space_needed + 2, 0)
+        # Insert 00s in the new table addr
+        fill_with_data(new_table_addr, space_needed + 2, 0)
 
         # Move the table's data
-        copy_data(self.table_address, new_table_address, (num_of_palettes * 8) + 8)
+        copy_data(self.table_addr, new_table_addr, (num_of_palettes * 8) + 8)
 
         # Write the end of table
-        rom.seek(new_table_address + (num_of_palettes * 8) + 4)
+        rom.seek(new_table_addr + (num_of_palettes * 8) + 4)
         rom.write_byte(255)  # 0xff
         rom.write_byte(17)  # 0x11
 
         # Change the Palette Table Pointers
-        for pointer_address in palette_table_pointer_address:
-            write_pointer(new_table_address, pointer_address)
+        for ptr_addr in palette_table_ptr_addr:
+            write_ptr(new_table_addr, ptr_addr)
 
-        # Change the OBJ's table_address var
-        self.table_address = new_table_address
+        # Change the OBJ's table_addr var
+        self.table_addr = new_table_addr
 
         self.set_used_palettes()
 
@@ -557,62 +537,62 @@ class ImageManager(PaletteManager):
         # Insert the palette
         self.import_palette(palette)
         palette_id = self.get_max_palette_id()
-        write_ow_palette_id(root.tables_list[working_table].ow_data_pointers[working_ow].ow_data_address, palette_id)
+        write_ow_palette_id(root.tables_list[working_table].ow_data_ptrs[working_ow].ow_data_addr, palette_id)
 
-        working_address = root.tables_list[working_table].ow_data_pointers[working_ow].frames.frames_address
+        working_addr = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.frames_addr
         row = 3 * 32
         column = 0 * 32
 
         # Insert the frames
-        import_frame(pokemon, working_address, 2, row, column)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 2nd Frame
         row = 0 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 3d Frame
         row = 1 * 32
         column = 1 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 4th Frame
         row = 3 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 5th Frame
         row = 2 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 6th Frame
         row = 1 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 7th Frame
         row = 0 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 8th Frame
         row = 1 * 32
         column = 1 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         # 9th Frame
         row = 0 * 32
         column = 1 * 32
-        working_address += get_frame_size(2)
-        import_frame(pokemon, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(pokemon, working_addr, 2, row, column)
 
         self.set_used_palettes()
 
@@ -630,22 +610,22 @@ class ImageManager(PaletteManager):
         # Insert the palette
         self.import_palette(palette)
         palette_id = self.get_max_palette_id()
-        write_ow_palette_id(root.tables_list[working_table].ow_data_pointers[working_ow].ow_data_address, palette_id)
+        write_ow_palette_id(root.tables_list[working_table].ow_data_ptrs[working_ow].ow_data_addr, palette_id)
 
         # Import the frames
-        working_address = root.tables_list[working_table].ow_data_pointers[working_ow].frames.frames_address
+        working_addr = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.frames_addr
 
-        num_of_frames = root.tables_list[working_table].ow_data_pointers[working_ow].frames.get_num()
-        sprite_type = root.tables_list[working_table].ow_data_pointers[working_ow].frames.get_type()
+        num_of_frames = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.get_num()
+        sprite_type = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.get_type()
         dimensions = get_frame_dimensions(sprite_type)
         frame_width = dimensions[0]
 
         row = 0
         for i in range(0, num_of_frames):
             column = i * frame_width
-            import_frame(sprite, working_address, sprite_type, row, column)
+            import_frame(sprite, working_addr, sprite_type, row, column)
 
-            working_address += get_frame_size(sprite_type)
+            working_addr += get_frame_size(sprite_type)
 
         self.set_used_palettes()
 
@@ -663,62 +643,62 @@ class ImageManager(PaletteManager):
         # Insert the palette
         self.import_palette(palette)
         palette_id = self.get_max_palette_id()
-        write_ow_palette_id(root.tables_list[working_table].ow_data_pointers[working_ow].ow_data_address, palette_id)
+        write_ow_palette_id(root.tables_list[working_table].ow_data_ptrs[working_ow].ow_data_addr, palette_id)
 
-        working_address = root.tables_list[working_table].ow_data_pointers[working_ow].frames.frames_address
+        working_addr = root.tables_list[working_table].ow_data_ptrs[working_ow].frames.frames_addr
         row = 1 * 32
         column = 2 * 32
 
         # Insert the frames
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 2nd Frame
         row = 0 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 3d Frame
         row = 2 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 4th Frame
         row = 3 * 32
         column = 2 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 5th Frame
         row = 2 * 32
         column = 2 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 6th Frame
         row = 0 * 32
         column = 2 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 7th Frame
         row = 3 * 32
         column = 1 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 8th Frame
         row = 1 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         # 9th Frame
         row = 3 * 32
         column = 0 * 32
-        working_address += get_frame_size(2)
-        import_frame(ow_image_indexed, working_address, 2, row, column)
+        working_addr += get_frame_size(2)
+        import_frame(ow_image_indexed, working_addr, 2, row, column)
 
         self.set_used_palettes()
 
@@ -727,33 +707,33 @@ class ImageManager(PaletteManager):
         palette_num = self.get_palette_num()
         users_palettes = palette_num - original_num_of_palettes  # The game's original palettes are 18 total
 
-        # Get the addresses of the non-used palettes
-        unused_palettes_addresses = []
-        working_address = self.table_address + (original_num_of_palettes * 8)
+        # Get the addres of the non-used palettes
+        unused_palettes_addres = []
+        working_addr = self.table_addr + (original_num_of_palettes * 8)
         for i in range(0, users_palettes):
-            palette_id = get_palette_id(working_address + (i * 8))
+            palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
             if is_palette_used(palette_id) == 0:
-                unused_palettes_addresses.append(working_address + (i * 8))
+                unused_palettes_addres.append(working_addr + (i * 8))
 
         # Delete all the unused palettes
-        for address in reversed(unused_palettes_addresses):
-            remove_palette(address)
+        for addr in reversed(unused_palettes_addres):
+            remove_palette(addr)
 
         self.set_used_palettes()
 
     def get_ow_frame(self, ow_num, table_num, frame_num):
-        ow_type = root.tables_list[table_num].ow_data_pointers[ow_num].frames.get_type()
-        frames_address = root.tables_list[table_num].ow_data_pointers[ow_num].frames.frames_address
+        ow_type = root.tables_list[table_num].ow_data_ptrs[ow_num].frames.get_type()
+        frames_addr = root.tables_list[table_num].ow_data_ptrs[ow_num].frames.frames_addr
         width, height = get_frame_dimensions(ow_type)
 
         # For the palette
-        palette_id = get_ow_palette_id(root.tables_list[table_num].ow_data_pointers[ow_num].ow_data_address)
-        palette_address = self.get_palette_address(palette_id)
-        sprite_palette = create_palette_from_gba(pointer_to_address(palette_address))
+        palette_id = get_ow_palette_id(root.tables_list[table_num].ow_data_ptrs[ow_num].ow_data_addr)
+        palette_addr = self.get_palette_addr(palette_id)
+        sprite_palette = create_palette_from_gba(ptr_to_addr(palette_addr))
         frame_size = get_frame_size(ow_type)
 
-        image = create_image_from_address((frame_num * frame_size) + frames_address, width, height)
+        image = create_image_from_addr((frame_num * frame_size) + frames_addr, width, height)
         image.putpalette(sprite_palette)
 
         return image

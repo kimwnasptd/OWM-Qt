@@ -1,6 +1,5 @@
 ini = open('settings.ini', 'r')
 
-
 def check_if_name_exists(name):
     ini.seek(0)
 
@@ -10,7 +9,6 @@ def check_if_name_exists(name):
             return 1
 
     return 0
-
 
 def hex_to_text(convert):
     with open('Files/Table.txt') as f:
@@ -29,14 +27,12 @@ def hex_to_text(convert):
                 result += (element[1])
     return result
 
-
 def get_line_string(pos):
     ini.seek(0)
     for i, line in enumerate(ini):
         if i == pos:
             line = line[:-1]
             return line
-
 
 def get_line_offset(pos, profile=-1):
     # If profile != 1 return a decimal and not a hex
@@ -49,7 +45,6 @@ def get_line_offset(pos, profile=-1):
                 return int(offset)
             return int(offset, 16)
 
-
 def get_name_line_index(name):
     ini.seek(0)
 
@@ -58,20 +53,18 @@ def get_name_line_index(name):
         if line == search_name:
             return i
 
-
-def get_palette_pointers(pos):
+def get_palette_ptrs(pos):
     ini.seek(0)
 
     for i, line in enumerate(ini):
         if i == pos:
             line = line[:-1]
             offset = line.split(' = ')[1]
-            pointers = offset.split(", ")
-            pointers[0] = int(pointers[0], 16)
-            pointers[1] = int(pointers[1], 16)
-            pointers[2] = int(pointers[2], 16)
-            return pointers
-
+            ptrs = offset.split(", ")
+            ptrs[0] = int(ptrs[0], 16)
+            ptrs[1] = int(ptrs[1], 16)
+            ptrs[2] = int(ptrs[2], 16)
+            return ptrs
 
 def check_if_name(pos):
     ini.seek(0)
@@ -82,14 +75,12 @@ def check_if_name(pos):
                 return 1
             return 0
 
-
 def get_name_from_line(pos):
     ini.seek(0)
 
     for i, line in enumerate(ini):
         if i == pos:
             return line[1:-2]
-
 
 def write_text_end(data):
     with open('settings.ini', 'a+') as current_ini:
@@ -98,23 +89,22 @@ def write_text_end(data):
     global ini
     ini = open('settings.ini', 'r')
 
-
-def create_profile(profile_name, ow_table_pointers, original_table_pointers, original_ow_pointers, ow_num,
-                   palette_table_pointers, original_pal_table, pal_num, limiter_address, free_space, rom_base):
+def create_profile(profile_name, ow_table_ptrs, original_table_ptrs, original_ow_ptrs, ow_num,
+                   palette_table_ptrs, original_pal_table, pal_num, limiter_addr, free_space, rom_base):
     from core_files.core import capitalized_hex
 
     text = "\n" + "\n"
     text += '[' + profile_name + ']' + '\n' + '\n'
-    text += "OW Table Pointers = " + capitalized_hex(ow_table_pointers) + "\n"
-    text += "Original OW Table Pointers = " + capitalized_hex(original_table_pointers) + "\n"
-    text += "Original OW Pointers Address = " + capitalized_hex(original_ow_pointers) + "\n"
+    text += "OW Table Pointers = " + capitalized_hex(ow_table_ptrs) + "\n"
+    text += "Original OW Table Pointers = " + capitalized_hex(original_table_ptrs) + "\n"
+    text += "Original OW Pointers Address = " + capitalized_hex(original_ow_ptrs) + "\n"
     text += "Original Num of OWs = " + str(ow_num) + "\n" + "\n"
     text += "Palette Table Pointers Address = " + capitalized_hex(
-        palette_table_pointers[0]) + ", " + capitalized_hex(palette_table_pointers[1]) + ", " + capitalized_hex(
-        palette_table_pointers[2]) + "\n"
+        palette_table_ptrs[0]) + ", " + capitalized_hex(palette_table_ptrs[1]) + ", " + capitalized_hex(
+        palette_table_ptrs[2]) + "\n"
     text += "Original Palette Table Address = " + capitalized_hex(original_pal_table) + "\n"
     text += "Original Num of Palettes = " + str(pal_num) + "\n" + "\n"
-    text += "OW Limiter Address = " + capitalized_hex(limiter_address) + "\n" + "\n"
+    text += "OW Limiter Address = " + capitalized_hex(limiter_addr) + "\n" + "\n"
     text += "Free Space Start = " + capitalized_hex(free_space) + "\n"
     text += "Rom Base = " + rom_base + "\n" + "    "
 

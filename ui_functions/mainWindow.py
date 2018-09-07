@@ -10,7 +10,6 @@ from ui_functions.ui_updater import *
 
 base, form = uic.loadUiType("ui/mainwindow.ui")
 
-
 class MyApp(base, form):
     def __init__(self, parent=None):
         super(base, self).__init__(parent)
@@ -74,6 +73,9 @@ class MyApp(base, form):
         if not fn:
             return
 
+        print("----------------------------")
+        print("Opened a new ROM: " + fn)
+
         rom.load_rom(fn)
 
         self.rom_info = RomInfo()
@@ -105,6 +107,9 @@ class MyApp(base, form):
         if not fn:
             return
 
+        print("----------------------------")
+        print("Opened a new ROM: " + fn)
+
         rom.load_rom(fn)
 
         self.rom_info = RomInfo()
@@ -122,7 +127,7 @@ class MyApp(base, form):
         create_profile(name, *self.find_rom_offsets())
 
         self.rom_info.set_info(get_name_line_index(name))
-        self.create_templates(pointer_to_address(self.rom_info.ow_table_pointer))
+        self.create_templates(ptr_to_addr(self.rom_info.ow_table_ptr))
 
         self.load_from_profile(name)
         self.initProfileComboBox()
@@ -143,27 +148,27 @@ class MyApp(base, form):
         self.statusbar.showMessage("Searching for OW Offsets")
         for addr in range(0, rom.rom_size, 4):
             # Search for the first OW Data Pointer
-            cond1 = check_pointer(addr)
-            cond1 = cond1 and is_ow_data(pointer_to_address(addr))
-            cond1 = cond1 and check_pointer(pointer_to_address(addr) + 0x1C)
+            cond1 = is_ptr(addr)
+            cond1 = cond1 and is_ow_data(ptr_to_addr(addr))
+            cond1 = cond1 and is_ptr(ptr_to_addr(addr) + 0x1C)
 
-            cond2 = check_pointer(addr + 4)
-            cond2 = cond2 and is_ow_data(pointer_to_address(addr))
-            cond2 = cond2 and check_pointer(pointer_to_address(addr) + 0x1C)
+            cond2 = is_ptr(addr + 4)
+            cond2 = cond2 and is_ow_data(ptr_to_addr(addr))
+            cond2 = cond2 and is_ptr(ptr_to_addr(addr) + 0x1C)
             if cond1 and cond2:
-                ow_pointers_address = addr
-                table_ptrs = find_pointer_in_rom(addr, True)
-                ow_table_address = table_ptrs[-1]
+                ow_ptrs_addr = addr
+                table_ptrs = find_ptr_in_rom(addr, True)
+                ow_table_addr = table_ptrs[-1]
                 orig_ow_table_ptr = table_ptrs[0]
-                ow_data_address = pointer_to_address(addr)
-                frames_pointers_address = pointer_to_address(ow_data_address + 0x1C)
-                frames_address = pointer_to_address(frames_pointers_address)
+                ow_data_addr = ptr_to_addr(addr)
+                frames_ptrs_addr = ptr_to_addr(ow_data_addr + 0x1C)
+                frames_addr = ptr_to_addr(frames_ptrs_addr)
                 break
 
         # Calculate number of OWs
         ows_num = 0
-        addr = ow_pointers_address
-        while check_pointer(addr) and is_ow_data(pointer_to_address(addr)):
+        addr = ow_ptrs_addr
+        while is_ptr(addr) and is_ow_data(ptr_to_addr(addr)):
             ows_num += 1
             addr += 4
             # print(capitalized_hex(addr))
@@ -172,16 +177,16 @@ class MyApp(base, form):
         self.statusbar.showMessage("Searching for Palette Offsets")
         for addr in range(0, rom.rom_size, 4):
             # Search for the first Palette Pointer
-            if (check_pointer(addr) and is_palette_pointer(pointer_to_address(addr))):
-                palette_table = pointer_to_address(addr)
-                palettes_data_address = pointer_to_address(palette_table)
-                palette_table_pointers = find_pointer_in_rom(palette_table, 3)
+            if (is_ptr(addr) and is_palette_ptr(ptr_to_addr(addr))):
+                palette_table = ptr_to_addr(addr)
+                palettes_data_addr = ptr_to_addr(palette_table)
+                palette_table_ptrs = find_ptr_in_rom(palette_table, 3)
                 break
 
         # Calculate number of Palettes
         palettes_num = 0
         addr = palette_table
-        while is_palette_pointer(addr):
+        while is_palette_ptr(addr):
             palettes_num += 1
             addr += 8
         print("palettes_num: "+str(palettes_num))
@@ -196,17 +201,17 @@ class MyApp(base, form):
         free_spc = search_for_free_space(0x100000)
         print('free space: '+capitalized_hex(free_spc))
 
-        # If still no ow_fix address, set it to 0x0
+        # If still no ow_fix addr, set it to 0x0
         if ow_fix == -1:
             ow_fix = 0x0
 
         self.statusbar.showMessage("Analysis Finished!")
 
-        return [ow_table_address,
+        return [ow_table_addr,
                 orig_ow_table_ptr,
-                ow_pointers_address,
+                ow_ptrs_addr,
                 ows_num,
-                palette_table_pointers,
+                palette_table_ptrs,
                 palette_table,
                 palettes_num,
                 ow_fix,
@@ -288,7 +293,7 @@ class MyApp(base, form):
         self.save_rom(rom.rom_file_name)
         self.romNameLabel.setText(rom.rom_file_name.split('/')[-1])
 
-    def create_templates(self, ow_pointers_address):
+    def create_templates(self, ow_ptrs_addr):
 
         rom_base = self.rom_info.name
 
@@ -309,78 +314,78 @@ class MyApp(base, form):
             os.chmod("Files/" + rom_base + "/Template" + str(i), 0o777)
 
         # Create Template for Type 1
-        rom.seek(pointer_to_address(ow_pointers_address))
+        rom.seek(ptr_to_addr(ow_ptrs_addr))
         template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
         templates[0].write(template_bytes)
 
         # Create Template for Type 2
-        rom.seek(pointer_to_address(ow_pointers_address + 4))
+        rom.seek(ptr_to_addr(ow_ptrs_addr + 4))
         template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
         templates[1].write(template_bytes)
 
         # Create Template for Type 3
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address + 16*4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 16*4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[2].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address + 5 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 5 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[2].write(template_bytes)
 
         # Create Template for Type 4
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address + 108 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 108 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[3].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address + 114 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 114 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[3].write(template_bytes)
 
         # Create Template for Type 5 // FR/LG only
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address + 151 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 151 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[4].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address))
+            rom.seek(ptr_to_addr(ow_ptrs_addr))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[4].write(template_bytes)
 
         # Create Template for Type 6 // EM/Rby/Sap only
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address))
+            rom.seek(ptr_to_addr(ow_ptrs_addr))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[5].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address + 94 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 94 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[5].write(template_bytes)
 
         # Create Template for Type 7 // EM/Rby/Sap only
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address))
+            rom.seek(ptr_to_addr(ow_ptrs_addr))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[6].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address + 141 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 141 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[6].write(template_bytes)
 
         # Create Template for Type 8 // EM/Rby/Sap only
         if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
 
-            rom.seek(pointer_to_address(ow_pointers_address))
+            rom.seek(ptr_to_addr(ow_ptrs_addr))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[7].write(template_bytes)
         else:
-            rom.seek(pointer_to_address(ow_pointers_address + 140 * 4))
+            rom.seek(ptr_to_addr(ow_ptrs_addr + 140 * 4))
             template_bytes = bytearray([rom.read_byte() for i in range(0x24)])
             templates[7].write(template_bytes)
 
@@ -413,8 +418,8 @@ class MyApp(base, form):
                 and self.selected_table is not None \
                 and not combobox_gets_initialized:
             palette_id = int(palette_id, 16)
-            ow_data_address = root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address
-            write_ow_palette_id(ow_data_address, palette_id)
+            ow_data_addr = root.tables_list[self.selected_table].ow_data_ptrs[self.selected_ow].ow_data_addr
+            write_ow_palette_id(ow_data_addr, palette_id)
             self.tree_model.initOW(self.selected_table, self.selected_ow)
 
         update_viewer(self)
@@ -451,12 +456,12 @@ class MyApp(base, form):
 
     def text_color_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
-            set_text_color(root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address, byte)
+            set_text_color(root.tables_list[self.selected_table].ow_data_ptrs[self.selected_ow].ow_data_addr, byte)
 
     def palette_slot_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
-            ow_data_address = root.tables_list[self.selected_table].ow_data_pointers[self.selected_ow].ow_data_address
-            write_palette_slot(ow_data_address, byte)
+            ow_data_addr = root.tables_list[self.selected_table].ow_data_ptrs[self.selected_ow].ow_data_addr
+            write_palette_slot(ow_data_addr, byte)
 
     def initColorTextComboBox(self):
         # Text color ComboBox

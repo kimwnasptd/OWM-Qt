@@ -180,7 +180,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="pointersAddressTableLabel">
+       <widget class="QLabel" name="ptrsAddressTableLabel">
         <property name="text">
          <string/>
         </property>
@@ -347,7 +347,7 @@
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QLabel" name="pointerAddressLabel">
+       <widget class="QLabel" name="ptrAddressLabel">
         <property name="text">
          <string/>
         </property>
