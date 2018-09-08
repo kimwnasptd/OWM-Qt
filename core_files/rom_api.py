@@ -10,6 +10,7 @@ def initRom(fn):
 
 # Functions may throw IndexError
 def get_word(addr):
+    # Big endian
     rom.seek(addr)
     byte1 = rom.read_byte() << 24
     byte2 = rom.read_byte() << 16
@@ -17,7 +18,8 @@ def get_word(addr):
     byte4 = rom.read_byte()
     return byte4 | byte3 | byte2 | byte1
 
-def search_for_free_space(size, start_addr=0):
+def search_for_free_space(size, start_addr=0, ending=0):
+    size += ending
     free_spc = [0xFF for i in range(size)]
 
     for addr in range(start_addr, rom.rom_size, size):
@@ -34,6 +36,8 @@ def search_for_free_space(size, start_addr=0):
         candidate_addr = addr
         for i in range(addr, addr + 2*size):
             if ffs == size:
+                if (ending != 0) and (candidate_addr % ending != 0):
+                    candidate_addr += candidate_addr % ending
                 return candidate_addr
 
             if not rom.check_byte(i, 0xFF):
@@ -87,7 +91,7 @@ def get_bytes_bits(byte, bit, to=0):
 
     return result
 
-def write_word(value, addr):
+def write_word(addr, value):
     rom.seek(addr)
 
     for i in range(0, 4):
@@ -96,7 +100,7 @@ def write_word(value, addr):
         value >>= 8
 
 def write_ptr(ptr_addr, addr_to_write):
-    write_word(ptr_addr + 0x08000000, addr_to_write)
+    write_word(addr_to_write, ptr_addr + 0x08000000)
 
 def read_word(addr):
     rom.seek(addr)
@@ -116,6 +120,14 @@ def read_word(addr):
 def read_half(addr):
     rom.seek(addr)
     return rom.read_byte() + (rom.read_byte() << 8)
+
+def read_byte(addr):
+    rom.seek(addr)
+    return rom.read_byte()
+
+def write_byte(addr, val):
+    rom.seek(addr)
+    rom.write_byte(val)
 
 def read_bytes(addr, num):
     rom.seek(addr)
@@ -170,7 +182,7 @@ def find_ptr_in_rom(pointing_addr, search_for_all=None):
 def fill_with_data(addr, num_of_bytes, write_data):
     # If write_data is < 0, then a random number is selected (where 0<= write_data <= 254)
     if write_data < 0:
-        write_data = randint(0x1, 0xe)
+        write_data = randint(0x1, 0xE)
         write_data += write_data * 16
 
     rom.seek(addr)
@@ -191,7 +203,7 @@ def copy_data(addr_to_copy_from, addr_to_copy_to, num_of_bytes):
 
 def move_data(addr_to_copy, addr_to_write, num_of_bytes, write_byte=0xff):
     copy_data(addr_to_copy, addr_to_write, num_of_bytes)
-    fill_with_data(addr_to_copy, num_of_bytes, write_bytee)
+    fill_with_data(addr_to_copy, num_of_bytes, write_byte)
 
 def capitalized_hex(addr):
     string = hex(addr)
@@ -207,3 +219,20 @@ def HEX(addr):
 
 def HEX_LST(bytes):
     return str([HEX(byte) for byte in bytes])
+
+def hex_to_text(convert):
+    with open('Files/Table.txt') as f:
+        lines = f.read().splitlines()
+    for i in range(0, len(lines)):
+        lines[i] = lines[i].split('=')
+
+    result = ""
+
+    while convert != '':
+        char = convert[:2]
+        convert = convert[2:]
+
+        for element in lines:
+            if element[0] == char:
+                result += (element[1])
+    return result

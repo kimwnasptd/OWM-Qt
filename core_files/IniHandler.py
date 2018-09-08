@@ -10,23 +10,6 @@ def check_if_name_exists(name):
 
     return 0
 
-def hex_to_text(convert):
-    with open('Files/Table.txt') as f:
-        lines = f.read().splitlines()
-    for i in range(0, len(lines)):
-        lines[i] = lines[i].split('=')
-
-    result = ""
-
-    while convert != '':
-        char = convert[:2]
-        convert = convert[2:]
-
-        for element in lines:
-            if element[0] == char:
-                result += (element[1])
-    return result
-
 def get_line_string(pos):
     ini.seek(0)
     for i, line in enumerate(ini):

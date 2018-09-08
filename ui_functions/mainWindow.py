@@ -79,7 +79,7 @@ class MyApp(base, form):
         print("Opened a new ROM: " + fn)
         # rom.load_rom(fn)
         initRom(fn)
-
+        
         self.rom_info = RomInfo()
         rom.rom_path = fn
 

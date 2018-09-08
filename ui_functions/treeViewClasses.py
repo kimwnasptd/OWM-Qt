@@ -324,7 +324,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         self.removeRows(0, self.tablesCount())
 
-        for table in range(root.get_table_num()):
+        for table in range(root.tables_num()):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
 
@@ -392,7 +392,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.statusbar.showMessage("Removing Table...")
         self.removeRows(table_id, 1, QtCore.QModelIndex())
         ui.statusbar.showMessage("Ready")
-        n = root.get_table_num()
+        n = root.tables_num()
 
         if n == 0:
             ui.selected_table = None

@@ -7,7 +7,7 @@ palette_table_ptr_addr = []
 palette_table_addr = 0
 original_num_of_palettes = 0
 original_palette_table_addr = 0
-free_space = 0
+FREE_SPC = 0
 
 global root
 root = Root()
@@ -21,19 +21,17 @@ def resetRoot():
     root.__init__()
 
 def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_space_area):
-    global palette_table_addr, palette_table_ptr_addr, original_num_of_palettes, original_palette_table_addr, free_space
+    global palette_table_addr, palette_table_ptr_addr, original_num_of_palettes, original_palette_table_addr, FREE_SPACE
     palette_table_ptr_addr = ptrs_list
     palette_table_addr = ptr_to_addr(palette_table_ptr_addr[0])
-    original_num_of_palettes = num_of_palettes
+    original_num_of_palettes = get_orig_palette_num()
     original_palette_table_addr = original_table
-    free_space = free_space_area
+    FREE_SPACE = free_space_area
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
     index2 *= 16
-
-    rom.seek(addr)
-    rom.write_byte(index1 + index2)
+    write_byte(addr, index1 + index2)
 
 def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
     if ow_type == 1:
@@ -76,6 +74,20 @@ def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
 
 # === ============== ===
 # Palette Functions
+def get_orig_palette_num():
+    name_raw = get_word(0xA8)
+    rom_name = capitalized_hex(name_raw)[2:]  # Removes the 0x
+    name = hex_to_text(rom_name)
+    print("NAME: "+name)
+
+    if name in ["FIRE", "LEAF"]:
+        return 18
+    elif name in ["RUBY", "SAPP"]:
+        return 27
+    elif name == "EMER":
+        return 35
+    else:
+        return None
 
 def get_palette_id(addr):
     return read_half(addr + 4)
@@ -91,7 +103,7 @@ def is_palette_table_end(addr):
     # test = rom.read_byte() + rom.read_byte() + rom.read_byte() + rom.read_byte()
     test = sum(read_bytes(addr, 4))
     if test == 0:
-        if rom.read_byte() == 255:
+        if rom.read_byte() == 0xFF:
             return 1
 
     if not is_palette_ptr(addr):
@@ -316,16 +328,15 @@ class PaletteManager:
     def __init__(self):
         global palette_table_addr
 
-        # self.table_addr = palette_table_addr
         self.table_addr = ptr_to_addr(palette_table_ptr_addr[0])
         self.palette_num = self.get_palette_num()
         self.max_size = self.get_max_size()
         self.free_slots = self.max_size - self.palette_num
 
-        if self.table_addr == original_palette_table_addr:
+        # if self.table_addr == original_palette_table_addr:
+        if self.free_slots == 0:
             print("Repointing the Palette Table")
-            self.original_palette_table_repoint()
-            print("Num of Palettes: " + str(len(self.used_palettes)))
+            self.repoint_palette_table()
 
         self.set_used_palettes()
 
@@ -360,7 +371,6 @@ class PaletteManager:
         return self.palette_num + i
 
     def get_free_slots(self):
-
         addr = self.table_addr + self.get_palette_num() * 8 + 8
 
         i = 0
@@ -418,7 +428,7 @@ class PaletteManager:
     def insert_rgb_to_gba_palette(self, palette):
 
         # Write the palette to the ROM
-        palette_addr = find_free_space(16 * 4, free_space, 2)
+        palette_addr = find_free_space(16 * 4, FREE_SPACE, 2)
 
         working_addr = palette_addr
         for i in range(0, 48, 3):
@@ -456,14 +466,14 @@ class PaletteManager:
 
         num_of_palettes = self.get_palette_num()
         space_needed = (num_of_palettes * 8) + (256 * 8) + 9  # 9 = 8[palette end] + 1[table end]
-
-        new_table_addr = find_free_space(space_needed, free_space, 4)
+        new_table_addr = find_free_space(space_needed, FREE_SPACE, 4)
 
         # Insert 00s in the new table addr
         fill_with_data(new_table_addr, space_needed + 2, 0)
-
         # Move the table's data
         move_data(self.table_addr, new_table_addr, (num_of_palettes * 8) + 8)
+        # Write the end of table
+        write_bytes(new_table_addr + (num_of_palettes * 8) + 4, [0xFF, 0x11])
 
         # Change the ptrs pointing the table
         global palette_table_ptr_addr
@@ -472,33 +482,6 @@ class PaletteManager:
 
         # Change the OBJ's table_addr var
         self.table_addr = new_table_addr
-
-        self.set_used_palettes()
-
-    def original_palette_table_repoint(self):
-        num_of_palettes = original_num_of_palettes
-        space_needed = (num_of_palettes * 8) + (256 * 8) + 9  # 9 = 8[palette end] + 1[table end]
-
-        new_table_addr = find_free_space(space_needed, free_space, 4)
-
-        # Insert 00s in the new table addr
-        fill_with_data(new_table_addr, space_needed + 2, 0)
-
-        # Move the table's data
-        copy_data(self.table_addr, new_table_addr, (num_of_palettes * 8) + 8)
-
-        # Write the end of table
-        rom.seek(new_table_addr + (num_of_palettes * 8) + 4)
-        rom.write_byte(0xFF)  # 0xff
-        rom.write_byte(0x11)  # 0x11
-
-        # Change the Palette Table Pointers
-        for ptr_addr in palette_table_ptr_addr:
-            write_ptr(new_table_addr, ptr_addr)
-
-        # Change the OBJ's table_addr var
-        self.table_addr = new_table_addr
-
         self.set_used_palettes()
 
 
