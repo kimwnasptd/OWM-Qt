@@ -30,12 +30,10 @@ def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_sp
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
-
     index2 *= 16
 
     rom.seek(addr)
     rom.write_byte(index1 + index2)
-    rom.flush()
 
 def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
     if ow_type == 1:
@@ -80,24 +78,18 @@ def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
 # Palette Functions
 
 def get_palette_id(addr):
-    rom.seek(addr + 4)
-    byte1 = rom.read_byte()
-    byte2 = rom.read_byte()
-    return (byte2 * 256) + byte1
+    return read_half(addr + 4)
 
 def write_palette_id(addr, palette_id):
-    rom.seek(addr + 4)
     byte1 = int(palette_id / 256)
     byte2 = int(palette_id % 256)
-
-    rom.write_byte(byte2)
-    rom.write_byte(byte1)
-    rom.flush()
+    write_bytes(addr + 4, [byte2, byte1])
 
 def is_palette_table_end(addr):
     rom.seek(addr)
 
-    test = rom.read_byte() + rom.read_byte() + rom.read_byte() + rom.read_byte()
+    # test = rom.read_byte() + rom.read_byte() + rom.read_byte() + rom.read_byte()
+    test = sum(read_bytes(addr, 4))
     if test == 0:
         if rom.read_byte() == 255:
             return 1
@@ -125,16 +117,7 @@ def is_palette_ptr(addr):
     return palette_ptr
 
 def write_palette_table_end(addr):
-    rom.seek(addr)
-    rom.write_byte(0)
-    rom.write_byte(0)
-    rom.write_byte(0)
-    rom.write_byte(0)
-    rom.write_byte(0xFF)
-    rom.write_byte(0x11)
-    rom.write_byte(0)
-    rom.write_byte(0)
-    rom.flush()
+    write_bytes(addr, [0x0, 0x0, 0x0, 0x0, 0xFF, 0xFF, 0x0, 0x0])
 
 def replace_palette_id_in_ows(old_palette_id, new_palette_id):
     # Replaces the old palette with the new palette number in all the OWs
@@ -152,7 +135,7 @@ def replace_palette_id_in_ows(old_palette_id, new_palette_id):
 
 def remove_palette(palette_addr):
     # Remove the color data
-    fill_with_data(ptr_to_addr(palette_addr), 32, 255)
+    fill_with_data(ptr_to_addr(palette_addr), 32, 0xFF)
 
     # Move all the other palettes left (the palette to be removed will be just be replaced
     working_addr = palette_addr + 8
@@ -241,10 +224,7 @@ def make_bg_color_first(image):
     swap_colors(0, bg_index, palette, image)
 
 def write_color(color, addr):
-    rom.seek(addr)
-    rom.write_byte(color[0])
-    rom.write_byte(color[1])
-    rom.flush()
+    write_bytes(addr, color)
 
 def byte_to_pixels(byte):
     pixel1 = int(byte / 16)
@@ -410,15 +390,12 @@ class PaletteManager:
         return i
 
     def get_max_palette_id(self):
-
         max_id = -1
-
         working_addr = self.table_addr
-        while is_palette_table_end(working_addr) == 0:
 
+        while is_palette_table_end(working_addr) == 0:
             if get_palette_id(working_addr) > max_id:
                 # Found new max
-
                 max_id = get_palette_id(working_addr)
 
             working_addr += 8
@@ -512,8 +489,8 @@ class PaletteManager:
 
         # Write the end of table
         rom.seek(new_table_addr + (num_of_palettes * 8) + 4)
-        rom.write_byte(255)  # 0xff
-        rom.write_byte(17)  # 0x11
+        rom.write_byte(0xFF)  # 0xff
+        rom.write_byte(0x11)  # 0x11
 
         # Change the Palette Table Pointers
         for ptr_addr in palette_table_ptr_addr:

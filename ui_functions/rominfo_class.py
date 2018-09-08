@@ -32,8 +32,7 @@ class RomInfo:
             self.Profiler = ProfileManager(self.name)
 
             # Initialize the OW Table Info
-            change_core_info(self.ow_table_ptr, self.original_ow_table_ptr,
-                             self.original_num_of_ows, self.original_ow_ptrs_addr, self.free_space, self.path)
+            change_core_info(self.ow_table_ptr, self.free_space, self.path)
 
             # Initialize the palette table info
             change_image_editor_info(self.palette_table_ptr_addr, self.original_num_of_palettes,
@@ -79,8 +78,7 @@ class RomInfo:
         self.Profiler = ProfileManager(self.name)
 
         # Initialize the OW Table Info
-        change_core_info(self.ow_table_ptr, self.original_ow_table_ptr,
-                         self.original_num_of_ows, self.original_ow_ptrs_addr, self.free_space, self.path)
+        change_core_info(self.ow_table_ptr, self.free_space, self.path)
 
         # Initialize the palette table info
         change_image_editor_info(self.palette_table_ptr_addr, self.original_num_of_palettes,

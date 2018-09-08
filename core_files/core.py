@@ -15,25 +15,18 @@ frametype7 = [0x80, 0x5]    # [88x32] Emerald only
 frametype8 = [0x80, 0x7]    # [96x40] Emerald only
 
 # DEFINES
-OW_Tables_Pointers_Address = 0x0
-original_table_ptr_addr = 0x0
-original_ow_ptrs = 0x0
-original_ow_data_ptrs = 0x0
-original_num_of_ows = 0
-free_space = 0x0
-frames_end = 0x2135F0
+TBL_0 = 0x0
+FREE_SPC = 0x0
+FRAMES_PER_OW = 15
+FRAMES_END = 0x2135F0
 
 
 # ----------------------Functions------------------------------
 
-def change_core_info(addr, original_table_ptr, num_of_ows, ow_ptrs, free_space_area, files_path):
-    global OW_Tables_Pointers_Address, original_table_ptr_addr, \
-        original_num_of_ows, original_ow_ptrs, free_space
-    OW_Tables_Pointers_Address = addr
-    original_table_ptr_addr = original_table_ptr
-    original_num_of_ows = num_of_ows
-    original_ow_ptrs = ow_ptrs
-    free_space = free_space_area
+def change_core_info(ow_tbls_ptrs_tbl, free_space_area, files_path):
+    global TBL_0, FREE_SPC
+    TBL_0 = ow_tbls_ptrs_tbl
+    FREE_SPC = free_space_area
 
     import os
     if os.path.exists(files_path):
@@ -85,6 +78,9 @@ def is_table_ptr(addr):
         return 0
 
     return 1
+
+def is_ow_data_ptr(addr):
+    return is_ptr(addr) and is_ow_data(ptr_to_addr(addr))
 
 def table_needs_repoint(addr):
     ow_ptr = ptr_to_addr(addr)
@@ -148,16 +144,16 @@ def available_frames_ptr_addr(addr, num_of_frames):
     return 1
 
 def is_frames_end(addr):
-    global frames_end
+    global FRAMES_END
 
-    if ptr_to_addr(addr) == frames_end:
+    if ptr_to_addr(addr) == FRAMES_END:
         return 1
     else:
         return 0
 
 def write_frames_end(addr):
-    global frames_end
-    write_ptr(frames_end, addr)
+    global FRAMES_END
+    write_ptr(FRAMES_END, addr)
 
 def get_frame_dimensions(ow_type):
     if ow_type == 1:
@@ -199,7 +195,7 @@ def get_ow_palette_id(addr):
 
 def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
     if new_table == 0:
-        new_table = find_free_space((260 * 4), free_space, 4)  # 3 more for the table's info + 1 for rounding
+        new_table = find_free_space((260 * 4), FREE_SPC, 4)  # 3 more for the table's info + 1 for rounding
     else:
         new_table = find_free_space((260 * 4), new_table, 4)
 
@@ -322,7 +318,7 @@ class FramesPointers:
         # Initialize the actual data of the frames
         fill_with_data(frames_addr, num_of_frames * get_frame_size(ow_type), -1)
         # Write the frame_end prefix
-        write_ptr(frames_end, frames_addr + num_of_frames * get_frame_size(ow_type))
+        write_ptr(FRAMES_END, frames_addr + num_of_frames * get_frame_size(ow_type))
 
         self.write_frames_ptrs(ow_type, num_of_frames)
 
@@ -534,7 +530,7 @@ class OWPointerTable:
             # OW Data Table and Frames Pointers Table(~20 frames/ow)
             fill_with_data(self.table_addr, 256 * 4, 0x11)
             fill_with_data(self.ow_data_addr, 256 * 36, 0x22)
-            fill_with_data(self.frames_ptrs_addr, 256 * 8 * 20, 0x33)
+            fill_with_data(self.frames_ptrs_addr, 256 * 8 * FRAMES_PER_OW, 0x33)
 
             # Write the table's info
             print("\ntbl_init: OW Pointers(WR): "+HEX(self.table_addr))
@@ -658,8 +654,7 @@ class OWPointerTable:
 
 class Root:
     ow_tables_addr = 0x0    # Talbe 0
-    ow_tables_addrs = []    # [ptr:Table 2]
-    frst_ow_ptrs = 0x0      # Table 1
+    ow_tables_addrs = []    # [ptr:Table 2] or Table 1's entries
     tables_list = []
 
     def __init__(self):
@@ -668,12 +663,11 @@ class Root:
             return
 
         self.tables_list = []
-        self.ow_tables_addr = OW_Tables_Pointers_Address
-        self.frst_ow_ptrs = ptr_to_addr(self.ow_tables_addr)
-        addr = self.ow_tables_addr
+        self.ow_tables_addr = TBL_0
 
         # Get addresses of OW Data Pointers Tables (Table 1)
-        ow_tbls_addrs = []  #[ptr:Table 1]
+        addr = self.ow_tables_addr
+        ow_tbls_addrs = []  #[ptr:Table 1] or Table 0's entries
         while is_table_ptr(addr):
             ow_tbls_addrs.append(addr)
             self.ow_tables_addrs.append(ptr_to_addr(addr))
@@ -713,7 +707,7 @@ class Root:
 
         self.import_OW_Table(*addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr))
 
-    def clear_OW_Tables(self, ow_table_addr=OW_Tables_Pointers_Address):
+    def clear_OW_Tables(self, ow_table_addr=TBL_0):
         # Clear all the table entries after the original OW Table
         ow_table_addr += 4
         for i in range(ow_table_addr, ow_table_addr + 25):
@@ -739,15 +733,14 @@ class Root:
                                *addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr)))
 
     def remove_table(self, i):
-        n = self.tables_list[i].ow_data_ptrs.__len__()
-
-        for j in range(0, n):
+        n = len(self.tables_list[i].ow_data_ptrs)
+        for j in range(n):
             self.tables_list[i].ow_data_ptrs[j].remove()
 
         # Clear all of the godam data
-        fill_with_data(self.tables_list[i].frames_ptrs_addr, 256 * 8 * 10, 255)
-        fill_with_data(self.tables_list[i].ow_data_ptrs_addr, 256 * 36, 255)
-        fill_with_data(self.tables_list[i].table_addr, 259 * 4, 255)
+        fill_with_data(self.tables_list[i].frames_ptrs_addr, 256 * 8 * FRAMES_PER_OW, 0xFF)
+        fill_with_data(self.tables_list[i].ow_data_ptrs_addr, 256 * 36, 0xFF)
+        fill_with_data(self.tables_list[i].table_addr, 259 * 4, 0xFF)
 
         # Move all the table ptrs to the left
         addr = self.ow_tables_addr + (i * 4)
@@ -761,7 +754,7 @@ class Root:
         self.__init__()
 
     def get_table_num(self):
-        return self.tables_list.__len__()
+        return len(self.tables_list)
 
     def repoint_table(self, table_ptrs_addr):
 
@@ -769,7 +762,7 @@ class Root:
         ow_ptrs_addr = ptr_to_addr(table_ptrs_addr)
         ows_num = 0
         addr = ow_ptrs_addr
-        while is_ptr(addr) and is_ow_data(ptr_to_addr(addr)) and ows_num <= 256:
+        while is_ow_data_ptr(addr) and ows_num <= 256:
             # Don't continue if OW is part of another Table
             if ows_num > 1 and addr in self.ow_tables_addrs:
                 break
@@ -777,10 +770,7 @@ class Root:
             addr += 4
 
         # Create the new table and fix the previous ptrs
-        repointed_table = OWPointerTable(OW_Tables_Pointers_Address, *addrs_filter(0, 0, 0, 0))
-        if ow_ptrs_addr == self.frst_ow_ptrs:
-            write_ptr(repointed_table.table_addr, OW_Tables_Pointers_Address)
-            write_ptr(repointed_table.table_addr, original_table_ptr_addr)
+        repointed_table = OWPointerTable(TBL_0, *addrs_filter(0, 0, 0, 0))
         print("root: rewriting ptr: "+HEX(table_ptrs_addr))
         write_ptr(repointed_table.table_addr, table_ptrs_addr)
         self.tables_list.append(repointed_table)
@@ -834,9 +824,7 @@ class Root:
                           repointed_table.ow_data_ptrs[-1].frames.frames_addr + (j * get_frame_size(types[i])),
                           get_frame_size(types[i]))
 
-        # print("root: "+HEX_LST(read_bytes(0x71CAAC, 8)))
-        # 'Fix' for the Emerald/Ruby
-        if frames.__len__() >= 200:
+        if len(frames) >= 218:
             for i in range(0, 256 - len(frames)):
                 repointed_table.add_ow(1, 9)
 
