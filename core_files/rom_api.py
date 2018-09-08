@@ -1,9 +1,14 @@
-# from core_files.game import *
-from game import *
+from core_files.game import *
 from random import randint
 
-# Functions may throw IndexError
+global rom
+rom = Game()
 
+def initRom(fn):
+    global rom
+    rom.load_rom(fn)
+
+# Functions may throw IndexError
 def get_word(addr):
     rom.seek(addr)
     byte1 = rom.read_byte() << 24

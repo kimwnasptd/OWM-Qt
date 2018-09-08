@@ -1,5 +1,6 @@
 from core_files.ImageEditor import *
 from core_files.IniHandler import *
+from core_files.rom_api import *
 from PyQt5 import QtWidgets
 
 class RomInfo:
@@ -48,7 +49,6 @@ class RomInfo:
         # Checks if Rom uses JPAN's Engine
         if ptr_to_addr(0x160EE0) == 0x1A2000:
             self.name = "JPAN"
-
 
     def set_info(self, start_pos):
         self.ow_table_ptr = get_line_offset(start_pos + 2)

@@ -4,6 +4,8 @@ from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
+# from core_files.ImageEditor import root, resetRoot, initRoot
+# from core_files.rom_api import rom, initRom
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -75,8 +77,8 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
-
-        rom.load_rom(fn)
+        # rom.load_rom(fn)
+        initRom(fn)
 
         self.rom_info = RomInfo()
         rom.rom_path = fn
@@ -84,7 +86,9 @@ class MyApp(base, form):
         if self.rom_info.rom_successfully_loaded == 1:
 
             self.statusbar.showMessage("Repointing OWs...")
-            root.__init__()
+            resetRoot()
+            # root.__init__()
+
             self.sprite_manager = ImageManager()
             self.statusbar.showMessage("Ready")
 
@@ -101,7 +105,6 @@ class MyApp(base, form):
             self.statusbar.showMessage("Couldn't find a Profile in the INI for your ROM. Open it with 'Open and Analyze ROM'.")
 
     def open_analyze(self):
-
         dlg = QtWidgets.QFileDialog()
         fn, _ = dlg.getOpenFileName(dlg, 'Open and Analyze ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
         if not fn:
@@ -109,8 +112,8 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
-
-        rom.load_rom(fn)
+        # rom.load_rom(fn)
+        initRom(fn)
 
         self.rom_info = RomInfo()
         rom.rom_path = fn
@@ -168,7 +171,7 @@ class MyApp(base, form):
         # Calculate number of OWs
         ows_num = 0
         addr = ow_ptrs_addr
-        while is_ptr(addr) and is_ow_data(ptr_to_addr(addr)):
+        while is_ptr(addr) and is_ow_data(ptr_to_addr(addr)) and ows_num <= 256:
             ows_num += 1
             addr += 4
             # print(capitalized_hex(addr))
@@ -225,7 +228,8 @@ class MyApp(base, form):
 
             # self.rom_info = RomInfo()
             self.statusbar.showMessage("Reloading ROM...")
-            root.__init__()
+            resetRoot()
+
             self.statusbar.showMessage("Done")
             self.sprite_manager = ImageManager()
 

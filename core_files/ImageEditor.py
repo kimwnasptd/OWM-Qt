@@ -1,7 +1,7 @@
 from PIL import Image
 from core_files.core import *
+from core_files.rom_api import *
 
-root = Root()
 
 palette_table_ptr_addr = []
 palette_table_addr = 0
@@ -9,6 +9,16 @@ original_num_of_palettes = 0
 original_palette_table_addr = 0
 free_space = 0
 
+global root
+root = Root()
+
+def initRoot(new_root):
+    global root
+    root = new_root
+
+def resetRoot():
+    global root
+    root.__init__()
 
 def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_space_area):
     global palette_table_addr, palette_table_ptr_addr, original_num_of_palettes, original_palette_table_addr, free_space
@@ -17,10 +27,6 @@ def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_sp
     original_num_of_palettes = num_of_palettes
     original_palette_table_addr = original_table
     free_space = free_space_area
-
-def resetRoot():
-    global root
-    root.__init__()
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
