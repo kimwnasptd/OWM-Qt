@@ -4,8 +4,6 @@ from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
-# from core_files.ImageEditor import root, resetRoot, initRoot
-# from core_files.rom_api import rom, initRom
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -66,6 +64,7 @@ class MyApp(base, form):
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
         self.OWTreeView.resizeColumnToContents(2)
+        initBar(self.statusbar)
 
     def open_rom(self, fn=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
@@ -77,16 +76,12 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
-        # rom.load_rom(fn)
         initRom(fn)
 
-        self.statusbar.showMessage("Searching for Free Space...")
         self.rom_info = RomInfo()
         rom.rom_path = fn
 
         if self.rom_info.rom_successfully_loaded == 1:
-
-            self.statusbar.showMessage("Repointing OWs...")
             resetRoot()
 
             self.sprite_manager = ImageManager()
@@ -112,7 +107,6 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
-        # rom.load_rom(fn)
         initRom(fn)
 
         self.rom_info = RomInfo()

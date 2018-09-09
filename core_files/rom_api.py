@@ -3,10 +3,21 @@ from random import randint
 
 global rom
 rom = Game()
+global prntbar
+prntbar = ""
 
 def initRom(fn):
     global rom
     rom.load_rom(fn)
+
+# The StatusBar in QtApplication
+def initBar(bar):
+    global prntbar
+    prntbar = bar
+
+def SHOW(msg):
+    global prntbar
+    prntbar.showMessage(msg)
 
 # Functions may throw IndexError
 def get_word(addr):
@@ -31,7 +42,7 @@ def search_for_free_space(size, start_addr=0, ending=0):
             continue
 
         # Search that spectrum for the FFs
-        addr = addr - size
+        addr = max(addr - size, start_addr)
         ffs = 0
         candidate_addr = addr
         for i in range(addr, addr + 2*size):

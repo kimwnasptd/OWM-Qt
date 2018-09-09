@@ -88,6 +88,14 @@ def is_table_ptr(addr):
 def is_ow_data_ptr(addr):
     return is_ptr(addr) and is_ow_data(ptr_to_addr(addr))
 
+def is_frames_end(addr):
+    global FRAMES_END
+
+    if ptr_to_addr(addr) == FRAMES_END:
+        return 1
+    else:
+        return 0
+
 def sublist(pattern, mylist):
     matches = []
     for i in range(len(mylist)):
@@ -158,14 +166,6 @@ def available_frames_ptr_addr(addr, num_of_frames):
             return 0
     return 1
 
-def is_frames_end(addr):
-    global FRAMES_END
-
-    if ptr_to_addr(addr) == FRAMES_END:
-        return 1
-    else:
-        return 0
-
 def write_frames_end(addr):
     global FRAMES_END
     write_ptr(FRAMES_END, addr)
@@ -210,25 +210,26 @@ def get_ow_palette_id(addr):
 
 def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
     if new_table == 0:
-        new_table = find_free_space((260 * 4), FREE_SPC, 4)  # 3 more for the table's info + 1 for rounding
+        new_table = search_for_free_space((260 * 4), FREE_SPC, 4)  # 3 more for the table's info + 1 for rounding
     else:
-        new_table = find_free_space((260 * 4), new_table, 4)
+        new_table = search_for_free_space((260 * 4), new_table, 4)
 
     if ow_data_addr == 0:
-        ow_data_addr = find_free_space((256 * 36) + 4, new_table + 259 * 4, 4)
+        ow_data_addr = search_for_free_space((256 * 36) + 4, new_table + 259 * 4, 4)
     else:
-        ow_data_addr = find_free_space((256 * 36) + 4, ow_data_addr, 4)
+        ow_data_addr = search_for_free_space((256 * 36) + 4, ow_data_addr, 4)
 
     if frames_ptrs == 0:
-        frames_ptrs = find_free_space((9 * 8 * 256) + 4, ow_data_addr + (256 * 36) + 4, 4)
+        frames_ptrs = search_for_free_space((9 * 8 * 256) + 4, ow_data_addr + (256 * 36) + 4, 4)
     else:
-        frames_ptrs = find_free_space((9 * 8 * 256) + 4, frames_addr, 4)
+        frames_ptrs = search_for_free_space((9 * 8 * 256) + 4, frames_addr, 4)
 
     if frames_addr == 0:
-        frames_addr = find_free_space(10000, frames_ptrs + (9 * 8 * 256) + 4, 2)
+        frames_addr = search_for_free_space(10000, frames_ptrs + (9 * 8 * 256) + 4, 2)
     else:
-        frames_addr = find_free_space(10000, frames_addr, 2)
+        frames_addr = search_for_free_space(10000, frames_addr, 2)
 
+    print("Found Addresses: {} {} {} {}".format(HEX(new_table),HEX(ow_data_addr),HEX(frames_ptrs),HEX(frames_addr)))
     return new_table, ow_data_addr, frames_ptrs, frames_addr
 
 def write_ow_palette_id(addr, palette_id):
@@ -693,6 +694,7 @@ class Root:
                 break
             elif table_needs_repoint(addr):
                 print("root: Repointing Table: "+HEX(addr))
+                SHOW("Repointing OW Table ("+HEX(addr)+")")
                 self.repoint_table(addr)
                 print("root: Finished Repointing!")
             else:
@@ -702,6 +704,7 @@ class Root:
                 ow_data_addr = ptr_to_addr(end_of_table)
                 frames_ptrs = ptr_to_addr(end_of_table + 4)
                 frames_addr = ptr_to_addr(end_of_table + 8)
+                SHOW("Loading Table ("+HEX(table_addr)+")")
                 print("root: Tables Table: "+HEX(table_ptr_addr))
                 print("root: Table: " + HEX(ptr_to_addr(self.ow_tables_addr)))
                 print("root: OW Data: "+HEX(ow_data_addr))
@@ -785,6 +788,7 @@ class Root:
             addr += 4
 
         # Create the new table and fix the previous ptrs
+        SHOW("Searching Free Space for the New Table")
         repointed_table = OWPointerTable(TBL_0, *addrs_filter(0, 0, 0, 0))
         print("root: rewriting ptr: "+HEX(table_ptrs_addr))
         print("root: repointing: OW Data Pointers: "+HEX(repointed_table.ow_data_addr))
@@ -828,6 +832,7 @@ class Root:
             # print("root: Frames: " + str(frames[i]))
             # print("OW Data Pointer: "+HEX(ow_ptrs_addr+4*i))
             # print("Type: "+str(types[i]))
+            SHOW("Repoining OW {}".format(i))
             repointed_table.add_ow(types[i], frames[i])
             new_frames_ptr = read_word(repointed_table.ow_data_ptrs[-1].ow_data_addr + 0x1C)
             copy_data(ptr_to_addr(ow_ptrs_addr + i * 4),

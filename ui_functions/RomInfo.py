@@ -45,6 +45,7 @@ class RomInfo:
         self.ow_table_ptr = get_line_offset(start_pos + 1)
         self.palette_table_ptr_addr = get_palette_ptrs(start_pos + 2)
         # Find ROM's Free Space
+        SHOW("Searching for Free Space")
         self.free_spc = search_for_free_space(0x100000)
         print('free space: '+HEX(self.free_spc))
         self.path = 'Files/' + self.name + "/"

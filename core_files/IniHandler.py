@@ -75,7 +75,7 @@ def write_text_end(data):
     ini = open('settings.ini', 'r')
 
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
-    text += '\n[' + profile_name + ']' + '\n'
+    text = '\n[' + profile_name + ']' + '\n'
     text += "OW Table Pointers = " + HEX(ow_table_ptrs) + "\n"
     text += "Palette Table Pointers Address = "
     text += HEX(palette_table_ptrs[0]) + ", "
@@ -89,23 +89,10 @@ class ProfileManager:
     default_profiles = []
     current_profile = 0
 
-    def init_rom_names(self):
-        subfix = ['E', 'I', 'S', 'F', 'D', 'J']
-        body = ['BPR', 'BPE', 'AXV', 'AXP', "BPG"]
-        self.rom_names = []
-
-        for main in body:
-            for sub in subfix:
-                self.rom_names.append(main + sub)
-
-        # self.rom_names.append('JPAN')
-
     def __init__(self, rom_name):
         self.default_profiles = []
         self.current_profile = 0
-        self.init_rom_names()
 
-        # self.default_profiles.append(rom_name)
         # Initialize the profiles
         if rom_name[:3] == "BPR":
             self.default_profiles.append("JPAN")
