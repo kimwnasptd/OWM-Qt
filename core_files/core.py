@@ -23,10 +23,9 @@ FRAMES_END = 0x2135F0
 
 # ----------------------Functions------------------------------
 
-def change_core_info(ow_tbls_ptrs_tbl, free_space_area, files_path):
+def change_core_info(ow_tbls_ptrs_tbl, files_path):
     global TBL_0, FREE_SPC
     TBL_0 = ow_tbls_ptrs_tbl
-    FREE_SPC = free_space_area
 
     import os
     if os.path.exists(files_path):
@@ -39,9 +38,16 @@ def change_core_info(ow_tbls_ptrs_tbl, free_space_area, files_path):
             template = mmap.mmap(temp.fileno(), 0)
             Templates.append(template)
 
-def update_free_space():
+def update_free_space(size, start_addr=FREE_SPC):
     global FREE_SPC
-    FREE_SPC = search_for_free_space(0x20000, FREE_SPC)
+    FREE_SPC = find_free_space(size, start_addr, 2)
+
+def find_free_space_update(size, start_addr=0, ending=0):
+    addr = find_free_space(size, start_addr, ending)
+    # Update the Free Space addr
+    global FREE_SPC
+    FREE_SPC = addr + size
+    return addr
 
 def is_ow_data(addr):
     # Checks various bytes to see if they are the same with the templates
@@ -209,25 +215,26 @@ def get_ow_palette_id(addr):
     return (byte2 * 256) + byte1
 
 def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
+    # 0xA000 is ~ 256 * (4 + 36 + FRAMES_PER_OW * 8)
     if new_table == 0:
-        new_table = search_for_free_space((260 * 4), FREE_SPC, 4)  # 3 more for the table's info + 1 for rounding
+        new_table = find_free_space_update((260 * 4), FREE_SPC, 4)  # 3 more for the table's info + 1 for rounding
     else:
-        new_table = search_for_free_space((260 * 4), new_table, 4)
+        new_table = find_free_space((260 * 4), new_table, 4)
 
     if ow_data_addr == 0:
-        ow_data_addr = search_for_free_space((256 * 36) + 4, new_table + 259 * 4, 4)
+        ow_data_addr = find_free_space_update((256 * 36) + 4, new_table + 259 * 4, 4)
     else:
-        ow_data_addr = search_for_free_space((256 * 36) + 4, ow_data_addr, 4)
+        ow_data_addr = find_free_space((256 * 36) + 4, ow_data_addr, 4)
 
     if frames_ptrs == 0:
-        frames_ptrs = search_for_free_space((9 * 8 * 256) + 4, ow_data_addr + (256 * 36) + 4, 4)
+        frames_ptrs = find_free_space_update((9 * 8 * 256) + 4, ow_data_addr + (256 * 36) + 4, 4)
     else:
-        frames_ptrs = search_for_free_space((9 * 8 * 256) + 4, frames_addr, 4)
+        frames_ptrs = find_free_space((9 * 8 * 256) + 4, frames_addr, 4)
 
     if frames_addr == 0:
-        frames_addr = search_for_free_space(10000, frames_ptrs + (9 * 8 * 256) + 4, 2)
+        frames_addr = find_free_space_update(10000, frames_ptrs + (9 * 8 * 256) + 4, 2)
     else:
-        frames_addr = search_for_free_space(10000, frames_addr, 2)
+        frames_addr = find_free_space(10000, frames_addr, 2)
 
     print("Found Addresses: {} {} {} {}".format(HEX(new_table),HEX(ow_data_addr),HEX(frames_ptrs),HEX(frames_addr)))
     return new_table, ow_data_addr, frames_ptrs, frames_addr
@@ -346,7 +353,7 @@ class FramesPointers:
         frame_size = get_frame_size(ow_type)
         size = frame_size * frames_num
         # working_addr = find_free_space(size + 4, working_addr, 2)
-        working_addr = search_for_free_space(size + 4, working_addr, 2)
+        working_addr = find_free_space(size + 4, working_addr, 2)
 
         return working_addr
 
@@ -651,15 +658,18 @@ class OWPointerTable:
 
     def resize_ow(self, pos, ow_type, num_of_frames):
         # Get info
-        animation_ptr = get_animation_addr(self.ow_data_ptrs[pos].ow_data_addr)
-        palette_slot = get_palette_slot(self.ow_data_ptrs[pos].ow_data_addr)
+        ow_data_addr = self.ow_data_ptrs[pos].ow_data_addr
+        animation_ptr = get_animation_addr(ow_data_addr)
+        palette_slot = get_palette_slot(ow_data_addr)
+        magic_byte = read_byte(ow_data_addr + 13)
 
         self.ow_data_ptrs[pos].remove()
         self.add_ow(ow_type, num_of_frames)
 
         # Restore Info
-        write_animation_ptr(self.ow_data_ptrs[pos].ow_data_addr, animation_ptr)
-        write_palette_slot(self.ow_data_ptrs[pos].ow_data_addr, palette_slot)
+        write_animation_ptr(ow_data_addr, animation_ptr)
+        write_palette_slot(ow_data_addr, palette_slot)
+        write_byte(ow_data_addr + 13, magic_byte)
 
         # Re-initialise the ow ptrs
         self.re_initialize_ow()
@@ -694,7 +704,6 @@ class Root:
                 break
             elif table_needs_repoint(addr):
                 print("root: Repointing Table: "+HEX(addr))
-                SHOW("Repointing OW Table ("+HEX(addr)+")")
                 self.repoint_table(addr)
                 print("root: Finished Repointing!")
             else:
@@ -715,13 +724,36 @@ class Root:
                     ow_data_addr, frames_ptrs, frames_addr)
                 self.tables_list.append(ptr_tbl_obj)
 
-            addr += 4
             print("\nroot: About to check: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
         print("\nroot: Not a ptr: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
-        update_free_space()
+
+    def reload():
+        self.tables_list = []
+        self.ow_tables_addr = TBL_0
+
+        # Get addresses of OW Data Pointers Tables (Table 1)
+        addr = self.ow_tables_addr
+        ow_tbls_addrs = []  #[ptr:Table 1] or Table 0's entries
+        while is_table_ptr(addr):
+            ow_tbls_addrs.append(addr)
+            self.ow_tables_addrs.append(ptr_to_addr(addr))
+            addr += 4
+
+        for addr in ow_tbls_addrs:
+            table_ptr_addr = addr
+            table_addr = ptr_to_addr(addr)
+            end_of_table = table_addr + (256 * 4)
+            ow_data_addr = ptr_to_addr(end_of_table)
+            frames_ptrs = ptr_to_addr(end_of_table + 4)
+            frames_addr = ptr_to_addr(end_of_table + 8)
+            SHOW("Loading Table ("+HEX(table_addr)+")")
+
+            # Create the Table Object
+            ptr_tbl_obj = OWPointerTable(table_ptr_addr, table_addr,
+                ow_data_addr, frames_ptrs, frames_addr)
+            self.tables_list.append(ptr_tbl_obj)
 
     def custom_table_import(self, new_table, ow_data_addr, frames_ptrs, frames_addr):
-
         self.import_OW_Table(*addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr))
 
     def clear_OW_Tables(self, ow_table_addr=TBL_0):
@@ -768,8 +800,7 @@ class Root:
             addr += 4
 
         # Re-initialise the entire root
-        self.__init__()
-        print("remove_table: There are {} Tables left".format(self.tables_num()))
+        self.reload()
 
     def tables_num(self):
         return len(self.tables_list)
@@ -777,6 +808,7 @@ class Root:
     def repoint_table(self, table_ptrs_addr):
 
         # Find number of OWs
+        SHOW("Determining number of OWs for Table: "+HEX(table_ptrs_addr))
         ow_ptrs_addr = ptr_to_addr(table_ptrs_addr)
         ows_num = 0
         addr = ow_ptrs_addr
@@ -790,9 +822,6 @@ class Root:
         # Create the new table and fix the previous ptrs
         SHOW("Searching Free Space for the New Table")
         repointed_table = OWPointerTable(TBL_0, *addrs_filter(0, 0, 0, 0))
-        print("root: rewriting ptr: "+HEX(table_ptrs_addr))
-        print("root: repointing: OW Data Pointers: "+HEX(repointed_table.ow_data_addr))
-        print("root: repointing: OW Frames Pointers: "+HEX(repointed_table.frames_ptrs_addr))
         write_ptr(repointed_table.table_addr, table_ptrs_addr)
         self.tables_list.append(repointed_table)
 
@@ -847,10 +876,12 @@ class Root:
                           get_frame_size(types[i]))
 
         if len(frames) >= 218:
+            SHOW("Paddding the extra OWs")
             for i in range(0, 256 - len(frames)):
                 repointed_table.add_ow(1, 9)
 
         # Clean the data of the original table
+        SHOW("Cleaning up...")
         i = 0
         for ow_ptr in range(ow_ptrs_addr, ow_ptrs_addr + (4 * ows_num), 4):
 

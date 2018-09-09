@@ -51,12 +51,18 @@
         <property name="text">
          <string/>
         </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+        </property>
        </widget>
       </item>
       <item row="4" column="1">
        <widget class="QLabel" name="paletteTableAddressLabel">
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -65,12 +71,18 @@
         <property name="text">
          <string/>
         </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+        </property>
        </widget>
       </item>
       <item row="6" column="1">
        <widget class="QLabel" name="availablePalettesLabel">
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -196,8 +208,14 @@
       </item>
       <item row="1" column="1">
        <widget class="QLabel" name="tableAddressLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -224,29 +242,53 @@
       </item>
       <item row="2" column="1">
        <widget class="QLabel" name="ptrsAddressTableLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QLabel" name="dataAddressTableLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
        <widget class="QLabel" name="framesPointersTableLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="5" column="1">
        <widget class="QLabel" name="framesAddressTableLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -331,15 +373,27 @@
       </item>
       <item row="5" column="1">
        <widget class="QLabel" name="dataAddressLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QLabel" name="framesLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -352,8 +406,14 @@
       </item>
       <item row="6" column="1">
        <widget class="QLabel" name="framesPointersLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -373,8 +433,14 @@
       </item>
       <item row="7" column="1">
        <widget class="QLabel" name="framesAddressLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -394,22 +460,49 @@
       </item>
       <item row="4" column="1">
        <widget class="QLabel" name="ptrAddressLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
        <widget class="QLabel" name="typeLabel">
+        <property name="cursor">
+         <cursorShape>IBeamCursor</cursorShape>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label">
+        <property name="cursor">
+         <cursorShape>ArrowCursor</cursorShape>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="text">
          <string>Type: </string>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse</set>
         </property>
        </widget>
       </item>

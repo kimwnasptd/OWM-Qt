@@ -25,10 +25,10 @@ class RomInfo:
             self.Profiler = ProfileManager(self.name)
 
             # Initialize the OW Table Info
-            change_core_info(self.ow_table_ptr, self.free_space, self.path)
+            change_core_info(self.ow_table_ptr, self.path)
 
             # Initialize the palette table info
-            change_image_editor_info(self.palette_table_ptr_addr, self.free_space)
+            change_image_editor_info(self.palette_table_ptr_addr)
 
             self.ow_fix()
 
@@ -44,10 +44,6 @@ class RomInfo:
     def set_info(self, start_pos):
         self.ow_table_ptr = get_line_offset(start_pos + 1)
         self.palette_table_ptr_addr = get_palette_ptrs(start_pos + 2)
-        # Find ROM's Free Space
-        SHOW("Searching for Free Space")
-        self.free_spc = search_for_free_space(0x100000)
-        print('free space: '+HEX(self.free_spc))
         self.path = 'Files/' + self.name + "/"
 
     def ow_fix(self):
@@ -78,6 +74,6 @@ class RomInfo:
         self.Profiler = ProfileManager(self.name)
 
         # Initialize the OW Table Info
-        change_core_info(self.ow_table_ptr, self.free_space, self.path)
+        change_core_info(self.ow_table_ptr, self.path)
         # Initialize the palette table info
-        change_image_editor_info(self.palette_table_ptr_addr, self.free_space)
+        change_image_editor_info(self.palette_table_ptr_addr)

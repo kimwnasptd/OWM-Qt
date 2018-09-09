@@ -29,10 +29,14 @@ def get_word(addr):
     byte4 = rom.read_byte()
     return byte4 | byte3 | byte2 | byte1
 
-def search_for_free_space(size, start_addr=0, ending=0):
+# Free Space Searching
+def aggressive_search(size, start_addr=0, ending=0):
+    # Searches really fast, but may not be able to find
+    # the free space, even if it exists in the ROM
     size += ending
     free_spc = [0xFF for i in range(size)]
 
+    # Search by Blocks
     for addr in range(start_addr, rom.rom_size, size):
         if not rom.check_byte(addr, 0xFF):
             continue
@@ -56,10 +60,12 @@ def search_for_free_space(size, start_addr=0, ending=0):
                 ffs = 0
             else:
                 ffs += 1
-    error()
-    return None # Force an error
 
-def find_free_space(size, start_addr=0, ending=0):
+    return None
+
+def slow_search(size, start_addr=0, ending=0):
+    # Linear search for free space. If the needed space exists after the
+    # start_addr it will always find it. Significantly slower but reliable
     working_addr = start_addr
     target_addr = start_addr
     ffs = 0
@@ -77,6 +83,24 @@ def find_free_space(size, start_addr=0, ending=0):
     if (ending != 0) and (target_addr % ending != 0):
         target_addr += target_addr % ending
     return target_addr
+
+def find_free_space(size, start_addr=0, ending=0):
+    # First try the fast search and if that fails, use the slow one
+    addr = aggressive_search(size, start_addr, ending)
+    if addr: return addr
+    if not start_addr: addr = aggressive_search(size, 0, ending)
+    if not start_addr and addr: return addr
+
+    addr = slow_search(size, start_addr, ending)
+    if addr: return addr
+    if not start_addr: addr = slow_search(size, 0, ending)
+    if not start_addr and addr: return addr
+
+    # The ROM is seriously running out of space
+    SHOW("ERROR: No Free Space available. Closing")
+    from time import sleep
+    sleep(2)
+    exit()
 
 def is_ptr(addr):
     try:

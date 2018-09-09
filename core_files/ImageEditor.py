@@ -18,11 +18,14 @@ def resetRoot():
     global root
     root.__init__()
 
-def change_image_editor_info(ptrs_list, free_space_area):
-    global PAL_TBL_PTRS, FREE_SPACE
+def change_image_editor_info(ptrs_list):
+    global PAL_TBL_PTRS
     PAL_TBL_PTRS = ptrs_list
-    FREE_SPACE = free_space_area
     ORIG_PALS_NUM = get_orig_palette_num()
+
+def update_free_space(size, start_addr=FREE_SPC):
+    global FREE_SPC
+    FREE_SPC = find_free_space(size, start_addr, 2)
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
@@ -329,6 +332,8 @@ class PaletteManager:
 
         if self.free_slots == 0:
             print("Repointing the Palette Table")
+            SHOW("Updating the Free Space Address")
+            update_free_space(self.palette_num*10)
             self.repoint_palette_table()
 
         self.set_used_palettes()
@@ -447,19 +452,14 @@ class PaletteManager:
             palette_id += 1
 
         write_ptr(colors_addr, table_end)
-
         write_palette_id(table_end, palette_id)
-        working_addr = table_end + 6
-        rom.seek(working_addr)
-        rom.write_byte(0)
-        rom.write_byte(0)
-        rom.flush()
+        write_bytes(table_end + 6, [0x0, 0x0])
 
     def repoint_palette_table(self):
 
         num_of_palettes = self.get_palette_num()
         space_needed = (num_of_palettes * 8) + (256 * 8) + 9  # 9 = 8[palette end] + 1[table end]
-        new_table_addr = find_free_space(space_needed, FREE_SPACE, 4)
+        new_table_addr = find_free_space(space_needed, FREE_SPC, 4)
 
         # Insert 00s in the new table addr
         fill_with_data(new_table_addr, space_needed + 2, 0)
