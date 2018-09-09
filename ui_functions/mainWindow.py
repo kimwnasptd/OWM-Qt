@@ -79,7 +79,8 @@ class MyApp(base, form):
         print("Opened a new ROM: " + fn)
         # rom.load_rom(fn)
         initRom(fn)
-        
+
+        self.statusbar.showMessage("Searching for Free Space...")
         self.rom_info = RomInfo()
         rom.rom_path = fn
 
@@ -87,7 +88,6 @@ class MyApp(base, form):
 
             self.statusbar.showMessage("Repointing OWs...")
             resetRoot()
-            # root.__init__()
 
             self.sprite_manager = ImageManager()
             self.statusbar.showMessage("Ready")
@@ -131,6 +131,7 @@ class MyApp(base, form):
 
         self.rom_info.set_info(get_name_line_index(name))
         self.create_templates(ptr_to_addr(self.rom_info.ow_table_ptr))
+        self.statusbar.showMessage("Analysis Finished!")
 
         self.load_from_profile(name)
         self.initProfileComboBox()
@@ -138,15 +139,6 @@ class MyApp(base, form):
         self.romNameLabel.setText(rom.rom_path.split('/')[-1])
 
     def find_rom_offsets(self):
-
-        name = self.rom_info.name
-        if name[:3] == "BPE":
-            ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        elif name[:3] == "AXV" or name[:3] == "AXP":
-            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        else:
-            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
-
         # Find OW Offsets
         self.statusbar.showMessage("Searching for OW Offsets")
         for addr in range(0, rom.rom_size, 4):
@@ -168,15 +160,6 @@ class MyApp(base, form):
                 frames_addr = ptr_to_addr(frames_ptrs_addr)
                 break
 
-        # Calculate number of OWs
-        ows_num = 0
-        addr = ow_ptrs_addr
-        while is_ptr(addr) and is_ow_data(ptr_to_addr(addr)) and ows_num <= 256:
-            ows_num += 1
-            addr += 4
-            # print(capitalized_hex(addr))
-        print("ows_num: "+str(ows_num))
-
         self.statusbar.showMessage("Searching for Palette Offsets")
         for addr in range(0, rom.rom_size, 4):
             # Search for the first Palette Pointer
@@ -186,40 +169,7 @@ class MyApp(base, form):
                 palette_table_ptrs = find_ptr_in_rom(palette_table, 3)
                 break
 
-        # Calculate number of Palettes
-        palettes_num = 0
-        addr = palette_table
-        while is_palette_ptr(addr):
-            palettes_num += 1
-            addr += 8
-        print("palettes_num: "+str(palettes_num))
-
-        ow_fix = find_bytes_in_rom(ow_fix_bytes)
-        if ow_fix == -1:
-            ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
-            ow_fix = find_bytes_in_rom(ow_fix_bytes)
-
-        # Find ROM's Free Space
-        self.statusbar.showMessage("Searching for Free Space")
-        free_spc = search_for_free_space(0x100000)
-        print('free space: '+capitalized_hex(free_spc))
-
-        # If still no ow_fix addr, set it to 0x0
-        if ow_fix == -1:
-            ow_fix = 0x0
-
-        self.statusbar.showMessage("Analysis Finished!")
-
-        return [ow_table_addr,
-                orig_ow_table_ptr,
-                ow_ptrs_addr,
-                ows_num,
-                palette_table_ptrs,
-                palette_table,
-                palettes_num,
-                ow_fix,
-                free_spc,
-                name]
+        return [ow_table_addr, palette_table_ptrs]
 
     def load_from_profile(self, profile):
 

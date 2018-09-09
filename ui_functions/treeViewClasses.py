@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui
-from ui_functions.rominfo_class import *
+from ui_functions.RomInfo import *
 from PIL.ImageQt import ImageQt
 
 # the root is defined in ImageEditor.py

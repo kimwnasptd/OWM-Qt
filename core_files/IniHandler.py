@@ -1,3 +1,5 @@
+from core_files.rom_api import HEX, HEX_LST
+
 ini = open('settings.ini', 'r')
 
 def check_if_name_exists(name):
@@ -72,25 +74,13 @@ def write_text_end(data):
     global ini
     ini = open('settings.ini', 'r')
 
-def create_profile(profile_name, ow_table_ptrs, original_table_ptrs, original_ow_ptrs, ow_num,
-                   palette_table_ptrs, original_pal_table, pal_num, limiter_addr, free_space, rom_base):
-    from core_files.core import capitalized_hex
-
-    text = "\n" + "\n"
-    text += '[' + profile_name + ']' + '\n' + '\n'
-    text += "OW Table Pointers = " + capitalized_hex(ow_table_ptrs) + "\n"
-    text += "Original OW Table Pointers = " + capitalized_hex(original_table_ptrs) + "\n"
-    text += "Original OW Pointers Address = " + capitalized_hex(original_ow_ptrs) + "\n"
-    text += "Original Num of OWs = " + str(ow_num) + "\n" + "\n"
-    text += "Palette Table Pointers Address = " + capitalized_hex(
-        palette_table_ptrs[0]) + ", " + capitalized_hex(palette_table_ptrs[1]) + ", " + capitalized_hex(
-        palette_table_ptrs[2]) + "\n"
-    text += "Original Palette Table Address = " + capitalized_hex(original_pal_table) + "\n"
-    text += "Original Num of Palettes = " + str(pal_num) + "\n" + "\n"
-    text += "OW Limiter Address = " + capitalized_hex(limiter_addr) + "\n" + "\n"
-    text += "Free Space Start = " + capitalized_hex(free_space) + "\n"
-    text += "Rom Base = " + rom_base + "\n" + "    "
-
+def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
+    text += '\n[' + profile_name + ']' + '\n'
+    text += "OW Table Pointers = " + HEX(ow_table_ptrs) + "\n"
+    text += "Palette Table Pointers Address = "
+    text += HEX(palette_table_ptrs[0]) + ", "
+    text += HEX(palette_table_ptrs[1]) + ", "
+    text += HEX(palette_table_ptrs[2]) + "\n"
     write_text_end(text)
 
 
@@ -123,12 +113,9 @@ class ProfileManager:
         # Add the user profiles
         ini.seek(0)
         for i, lines in enumerate(ini):
-
-            if check_if_name(i) == 1:
-                if not (get_name_from_line(i) in self.rom_names):
-
-                    check_name = get_line_string(i + 14).split(" = ")[1]
-                    if check_name[:4] == rom_name[:4]:
-                        self.default_profiles.append(get_name_from_line(i))
+            if check_if_name(i):
+                check_name = get_name_from_line(i)
+                if check_name[:4] == rom_name[:4]:
+                    self.default_profiles.append(get_name_from_line(i))
 
         ini.seek(0)

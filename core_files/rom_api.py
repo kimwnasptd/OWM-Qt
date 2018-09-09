@@ -43,8 +43,8 @@ def search_for_free_space(size, start_addr=0, ending=0):
             if not rom.check_byte(i, 0xFF):
                 candidate_addr = i + 1
                 ffs = 0
-                continue
-            ffs += 1
+            else:
+                ffs += 1
     error()
     return None # Force an error
 

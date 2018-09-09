@@ -39,6 +39,10 @@ def change_core_info(ow_tbls_ptrs_tbl, free_space_area, files_path):
             template = mmap.mmap(temp.fileno(), 0)
             Templates.append(template)
 
+def update_free_space():
+    global FREE_SPC
+    FREE_SPC = search_for_free_space(0x20000, FREE_SPC)
+
 def is_ow_data(addr):
     # Checks various bytes to see if they are the same with the templates
     try:
@@ -139,7 +143,7 @@ def clear_frames(addr, frames, size):
     # first check if FRAMES_END is inside the data (overlay: happens with 0xFFs)
     if sublist([0xF0, 0x35, 0x21, 0x08], read_bytes(addr, frames*size)):
         write_word(addr + frames*size, 0xFFFFFFFF)
-        print("WARNING: Found a colission")
+        print("WARNING: Found a colision")
         return
 
     fill_with_data(addr, frames * size, 0xFF)
@@ -711,6 +715,7 @@ class Root:
             addr += 4
             print("\nroot: About to check: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
         print("\nroot: Not a ptr: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
+        update_free_space()
 
     def custom_table_import(self, new_table, ow_data_addr, frames_ptrs, frames_addr):
 
@@ -750,12 +755,14 @@ class Root:
 
         # Move all the table ptrs to the left
         addr = self.ow_tables_addr + (i * 4)
+        print("remove_table: about to remove: "+HEX(addr))
         fill_with_data(addr, 4, 0)
 
         addr += 4
         while is_table_ptr(addr):
             print("remove_table: Moving left ptr: "+HEX(addr))
             move_data(addr, addr - 4, 4, 0)
+            addr += 4
 
         # Re-initialise the entire root
         self.__init__()

@@ -3,10 +3,8 @@ from core_files.core import *
 from core_files.rom_api import *
 
 
-palette_table_ptr_addr = []
-palette_table_addr = 0
-original_num_of_palettes = 0
-original_palette_table_addr = 0
+PAL_TBL_PTRS = []
+ORIG_PALS_NUM = 0
 FREE_SPC = 0
 
 global root
@@ -20,13 +18,11 @@ def resetRoot():
     global root
     root.__init__()
 
-def change_image_editor_info(ptrs_list, num_of_palettes, original_table, free_space_area):
-    global palette_table_addr, palette_table_ptr_addr, original_num_of_palettes, original_palette_table_addr, FREE_SPACE
-    palette_table_ptr_addr = ptrs_list
-    palette_table_addr = ptr_to_addr(palette_table_ptr_addr[0])
-    original_num_of_palettes = get_orig_palette_num()
-    original_palette_table_addr = original_table
+def change_image_editor_info(ptrs_list, free_space_area):
+    global PAL_TBL_PTRS, FREE_SPACE
+    PAL_TBL_PTRS = ptrs_list
     FREE_SPACE = free_space_area
+    ORIG_PALS_NUM = get_orig_palette_num()
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
@@ -326,14 +322,11 @@ class PaletteManager:
     used_palettes = []
 
     def __init__(self):
-        global palette_table_addr
-
-        self.table_addr = ptr_to_addr(palette_table_ptr_addr[0])
+        self.table_addr = ptr_to_addr(PAL_TBL_PTRS[0])
         self.palette_num = self.get_palette_num()
         self.max_size = self.get_max_size()
         self.free_slots = self.max_size - self.palette_num
 
-        # if self.table_addr == original_palette_table_addr:
         if self.free_slots == 0:
             print("Repointing the Palette Table")
             self.repoint_palette_table()
@@ -476,8 +469,8 @@ class PaletteManager:
         write_bytes(new_table_addr + (num_of_palettes * 8) + 4, [0xFF, 0x11])
 
         # Change the ptrs pointing the table
-        global palette_table_ptr_addr
-        for ptr_addr in palette_table_ptr_addr:
+        global PAL_TBL_PTRS
+        for ptr_addr in PAL_TBL_PTRS:
             write_ptr(new_table_addr, ptr_addr)
 
         # Change the OBJ's table_addr var
@@ -671,11 +664,11 @@ class ImageManager(PaletteManager):
     def palette_cleanup(self):
 
         palette_num = self.get_palette_num()
-        users_palettes = palette_num - original_num_of_palettes  # The game's original palettes are 18 total
+        users_palettes = palette_num - ORIG_PALS_NUM  # The game's original palettes are 18 total
 
         # Get the addres of the non-used palettes
         unused_palettes_addres = []
-        working_addr = self.table_addr + (original_num_of_palettes * 8)
+        working_addr = self.table_addr + (ORIG_PALS_NUM * 8)
         for i in range(0, users_palettes):
             palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
