@@ -356,10 +356,14 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         # Manually reset the selected Item in the View, removeRows
         # removeRows deletes the currentIndex in the selectionModel, so the next one becomes current
+        if not self.owsCount(table_id):
+            return
+
         if ow_id == self.owsCount(table_id):
             ow_id -= 1
 
-        ui.OWTreeView.selectionModel().setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
+        model = ui.OWTreeView.selectionModel()
+        model.setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
     def resizeOW(self, ow_id, table_id, ow_type, num_of_frames, ui):

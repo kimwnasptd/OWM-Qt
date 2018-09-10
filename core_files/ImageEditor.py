@@ -432,7 +432,7 @@ class PaletteManager:
     def insert_rgb_to_gba_palette(self, palette):
 
         # Write the palette to the ROM
-        palette_addr = find_free_space(16 * 4, FREE_SPACE, 2)
+        palette_addr = find_free_space(16 * 4, FREE_SPC, 2)
 
         working_addr = palette_addr
         for i in range(0, 48, 3):

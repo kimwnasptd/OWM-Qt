@@ -31,7 +31,11 @@ def export_ow_image(ui):
     if not fn:
         return
     # fn += ext.split(" ")[2][2:-1]
-    image.save(fn)
+    try:
+        image.save(fn)
+        SHOW("Saved "+fn)
+    except ValueError:
+        SHOW("Please write the file extension at the end of the file's name")
 
 def import_frames_sheet(ui):
     dlg = QtWidgets.QFileDialog()
@@ -58,8 +62,8 @@ def import_frames_sheet(ui):
         message += "1) Check if the type of the OW is correct.\n2) Check how many frames are in your image"
         QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Different number of Frames detected", message)
     else:
-
         ui.tree_model.importOWFrames(sprite, ui.selected_ow, ui.selected_table, ui)
+        SHOW("Imported {} for Table[{}] : OW[{}]".format(image_loc, ui.selected_table, ui.selected_ow))
 
 def import_ow_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
@@ -76,6 +80,7 @@ def import_ow_sprsrc(ui):
         QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "File has wrong size", message)
     else:
         ui.tree_model.importOWSpr(sprite, ui.selected_ow, ui.selected_table, ui)
+        SHOW("Imported {} for Table[{}] : OW[{}]".format(image_loc, ui.selected_table, ui.selected_ow))
 
 def import_pokemon_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
@@ -92,6 +97,7 @@ def import_pokemon_sprsrc(ui):
         QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "File has wrong size", message)
     else:
         ui.tree_model.importPokeSpr(sprite, ui.selected_ow, ui.selected_table, ui)
+        SHOW("Imported {} for Table[{}] : OW[{}]".format(image_loc, ui.selected_table, ui.selected_ow))
 
 def palette_cleanup(ui):
     ui.tree_model.paletteCleanup(ui)
