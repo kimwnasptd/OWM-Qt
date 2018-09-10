@@ -4,6 +4,7 @@ from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
+from pprint import pprint
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -136,24 +137,16 @@ class MyApp(base, form):
         # Find OW Offsets
         self.statusbar.showMessage("Searching for OW Offsets")
         for addr in range(0, rom.rom_size, 4):
-            # Search for the first OW Data Pointer
-            cond1 = is_ptr(addr)
-            cond1 = cond1 and is_ow_data(ptr_to_addr(addr))
-            cond1 = cond1 and is_ptr(ptr_to_addr(addr) + 0x1C)
-
-            cond2 = is_ptr(addr + 4)
-            cond2 = cond2 and is_ow_data(ptr_to_addr(addr))
-            cond2 = cond2 and is_ptr(ptr_to_addr(addr) + 0x1C)
-            if cond1 and cond2:
-                ow_ptrs_addr = addr
-                table_ptrs = find_ptr_in_rom(addr, True)
-                ow_table_addr = table_ptrs[-1]
-                orig_ow_table_ptr = table_ptrs[0]
-                ow_data_addr = ptr_to_addr(addr)
-                frames_ptrs_addr = ptr_to_addr(ow_data_addr + 0x1C)
-                frames_addr = ptr_to_addr(frames_ptrs_addr)
+            if is_jpan_ptr(addr):
+                table_ptrs = ptr_to_addr(addr)
                 break
+            elif is_orig_table_ptr(addr):
+                table_ptrs = addr
 
+        print(HEX(table_ptrs))
+        ow_ptrs_addr = ptr_to_addr(table_ptrs)
+
+        # Find Palette Offsets
         self.statusbar.showMessage("Searching for Palette Offsets")
         for addr in range(0, rom.rom_size, 4):
             # Search for the first Palette Pointer
@@ -163,7 +156,29 @@ class MyApp(base, form):
                 palette_table_ptrs = find_ptr_in_rom(palette_table, 3)
                 break
 
-        return [ow_table_addr, palette_table_ptrs]
+        # Check for the OW Fix Address
+        SHOW("Searching for OW Fix Address")
+        name = self.rom_info.name
+        if name[:3] == "BPE":
+            ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
+        elif name[:3] == "AXV" or name[:3] == "AXP":
+            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
+        else:
+            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
+
+        ow_fix = find_bytes_in_rom(ow_fix_bytes)
+        if ow_fix == -1:
+            ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
+            ow_fix = find_bytes_in_rom(ow_fix_bytes)
+        # If still no ow_fix addr, set it to 0x0
+        if ow_fix == -1:
+            ow_fix = 0x0
+
+        if ow_fix != 0:
+            rom.seek(self.ow_fix_addr)
+            rom.write_byte(0xff)
+
+        return [table_ptrs, palette_table_ptrs]
 
     def load_from_profile(self, profile):
 
@@ -425,11 +440,9 @@ class MyApp(base, form):
 
         self.paletteIDComboBox.setEnabled(True)
         # Create the list with the palette IDs
-        id_list = []
         self.paletteIDComboBox.clear()
         for pal_id in self.sprite_manager.used_palettes:
-            id_list.append(capitalized_hex(pal_id))
-            self.paletteIDComboBox.addItem(id_list[-1])
+            self.paletteIDComboBox.addItem(HEX(pal_id))
 
     def initProfileComboBox(self):
 

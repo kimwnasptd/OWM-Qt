@@ -18,6 +18,12 @@ def resetRoot():
     global root
     root.__init__()
 
+def OW(table_id, ow_id):
+    return root.tables_list[table_id].ow_data_ptrs[ow_id]
+
+def TABLE(table_id):
+    return root.tables_list[table_id]
+
 def change_image_editor_info(ptrs_list):
     global PAL_TBL_PTRS
     PAL_TBL_PTRS = ptrs_list
@@ -332,7 +338,7 @@ class PaletteManager:
 
         if self.free_slots == 0:
             print("Repointing the Palette Table")
-            SHOW("Updating the Free Space Address")
+            SHOW("Updating the Free Space Address for Palettes")
             update_free_space(self.palette_num*10)
             self.repoint_palette_table()
 

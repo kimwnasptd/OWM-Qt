@@ -99,13 +99,10 @@ def update_palette_info(ui):
             ui.textColorComboBox.setCurrentIndex(get_text_color(ow_data_addr))
 
             # Sync the Palette Id ComboBox
-            id_list = []
-            for pal_id in ui.sprite_manager.used_palettes:
-                id_list.append(capitalized_hex(pal_id))
+            id_list = [HEX(pal_id) for pal_id in ui.sprite_manager.used_palettes]
+            palette_id = get_ow_palette_id(OW(ui.selected_table, ui.selected_ow).ow_data_addr)
 
-            palette_id = get_ow_palette_id(
-                root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].ow_data_addr)
-            index = id_list.index(capitalized_hex(palette_id))
+            index = id_list.index(HEX(palette_id))
             ui.paletteIDComboBox.setCurrentIndex(index)
 
             # Sync the Palette Slot Combobox

@@ -485,16 +485,15 @@ class TreeViewModel(QtCore.QAbstractItemModel):
     def paletteCleanup(self, ui):
 
         ui.sprite_manager.palette_cleanup()
-        from ui_functions.ui_updater import update_gui
+        ui.initPaletteIdComboBox()
 
         if ui.selected_ow is not None and ui.selected_table is not None:
             tableNode = self.index(ui.selected_table, 0, QtCore.QModelIndex())
             owNode = self.index(ui.selected_ow, 0, tableNode)
             self.setData(owNode, None)
             ui.item_selected(self.index(ui.selected_ow, 0, tableNode))
-            ui.initPaletteIdComboBox()
-            # Used to set the currentIndex in the selected palette
 
+        from ui_functions.ui_updater import update_gui
         update_gui(ui)
 
     def initOW(self, table_id, ow_id):

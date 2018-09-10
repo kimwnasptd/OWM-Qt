@@ -93,10 +93,6 @@ class ProfileManager:
         self.default_profiles = []
         self.current_profile = 0
 
-        # Initialize the profiles
-        if rom_name[:3] == "BPR":
-            self.default_profiles.append("JPAN")
-
         # Add the user profiles
         ini.seek(0)
         for i, lines in enumerate(ini):

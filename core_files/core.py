@@ -20,6 +20,9 @@ FREE_SPC = 0x0
 FRAMES_PER_OW = 15
 FRAMES_END = 0x2135F0
 
+# This will be used to determin number of frames
+# When repointing a table. Used in ow_initializer, repoint_table
+FRAMES_PTRS_PTRS = set()
 
 # ----------------------Functions------------------------------
 
@@ -78,18 +81,53 @@ def is_ow_data(addr):
         return 0
     return 1
 
+def is_orig_table_ptr(addr):
+    # Check if it is a Vanilla Table 1 (OW Data Pointers)
+    if not is_ptr(addr): return 0
+
+    ow_data_ptr = ptr_to_addr(addr)
+    if not is_ptr(ow_data_ptr): return 0
+
+    ow_data = ptr_to_addr(ow_data_ptr)
+    if not is_ow_data(ow_data): return 0
+
+    frames_ptrs = ptr_to_addr(ow_data + 0x1C)
+    if not is_frames_ptr(frames_ptrs): return 0
+    return 1
+
+def is_owm_table_ptr(addr):
+    # Check if it is a Vanilla Table 1 (OW Data Pointers)
+    if not is_ptr(addr): return 0
+    ow_data_ptr = ptr_to_addr(addr)
+    end_of_table = ow_data_ptr + 256 * 4
+
+    # Check for OWM's signature
+    if not is_ptr(end_of_table): return 0
+    if not is_ptr(end_of_table + 4): return 0
+    if not is_ptr(end_of_table + 8): return 0
+
+    # Check if the pointers are valid
+    if read_word(ow_data_ptr) == 0x11111111: return 1
+    if not is_ow_data_ptr(ow_data_ptr):
+        return 0
+    else:
+        return 1
+
 def is_table_ptr(addr):
     # Used to check if addr is a ptr to OW Data Pointers Table
-    if not is_ptr(addr):
-        return 0
+    return is_orig_table_ptr(addr) or is_owm_table_ptr(addr)
 
-    if read_half(ptr_to_addr(addr)) == 0x1111:
-        return 1
-    ow_data_ptr = ptr_to_addr(addr)
-    if is_ow_data(ptr_to_addr(ow_data_ptr)) == 0:
-        return 0
+def is_jpan_ptr(addr):
+    # If JPAN's patch was applied, then there should be a pointer in a
+    # routine somewhere that points to the new Table 0 (0x1A2000 default addr)
+    if not is_ptr(addr): return 0
+    maybe_tbl = ptr_to_addr(addr)
+    if not is_table_ptr(maybe_tbl): return 0
 
-    return 1
+    # Finally in Table 0 it should either have pointers to Table 1 or 0x00
+    if read_word(maybe_tbl + 4) == 0x0: return 1
+    if is_table_ptr(maybe_tbl + 4): return 1
+    return 0
 
 def is_ow_data_ptr(addr):
     return is_ptr(addr) and is_ow_data(ptr_to_addr(addr))
@@ -232,9 +270,9 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
         frames_ptrs = find_free_space((9 * 8 * 256) + 4, frames_addr, 4)
 
     if frames_addr == 0:
-        frames_addr = find_free_space_update(10000, frames_ptrs + (9 * 8 * 256) + 4, 2)
+        frames_addr = find_free_space_update(0x40000, frames_ptrs + (9 * 8 * 256) + 4, 2)
     else:
-        frames_addr = find_free_space(10000, frames_addr, 2)
+        frames_addr = find_free_space(0x40000, frames_addr, 2)
 
     print("Found Addresses: {} {} {} {}".format(HEX(new_table),HEX(ow_data_addr),HEX(frames_ptrs),HEX(frames_addr)))
     return new_table, ow_data_addr, frames_ptrs, frames_addr
@@ -571,6 +609,7 @@ class OWPointerTable:
         ow_data_addr = ptr_to_addr(ow_ptr)
         frames_ptrs_addr = ptr_to_addr(ow_data_addr + 0x1C)
         frames_addr = ptr_to_addr(frames_ptrs_addr)
+        FRAMES_PTRS_PTRS.add(frames_ptrs_addr)
 
         # Create the Frames OBJ
         FramesOBJ = FramesPointers(frames_ptrs_addr, frames_addr,
@@ -687,6 +726,7 @@ class Root:
 
         self.tables_list = []
         self.ow_tables_addr = TBL_0
+        FRAMES_PTRS_PTRS = set()
 
         # Get addresses of OW Data Pointers Tables (Table 1)
         addr = self.ow_tables_addr
@@ -703,9 +743,16 @@ class Root:
                 fill_with_data(addr, 4, 0)
                 break
             elif table_needs_repoint(addr):
-                print("root: Repointing Table: "+HEX(addr))
-                self.repoint_table(addr)
-                print("root: Finished Repointing!")
+                # If it was the first table, change any pointer in the
+                # ROM that might be pointing to it
+                if addr == self.ow_tables_addr:
+                    SHOW("Searching for Pointers for the Default OW Table")
+                    ptrs = find_ptr_in_rom(ptr_to_addr(addr), True)
+                    self.repoint_table(addr)
+                    for ptr in ptrs:
+                        write_ptr(ptr_to_addr(addr), ptr)
+                else:
+                    self.repoint_table(addr)
             else:
                 table_ptr_addr = addr
                 table_addr = ptr_to_addr(addr)
@@ -727,7 +774,7 @@ class Root:
             print("\nroot: About to check: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
         print("\nroot: Not a ptr: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
 
-    def reload():
+    def reload(self):
         self.tables_list = []
         self.ow_tables_addr = TBL_0
 
@@ -830,6 +877,7 @@ class Root:
         for ow_ptr in range(ow_ptrs_addr, ow_ptrs_addr + (4 * ows_num), 4):
             data_ptr = ptr_to_addr(ow_ptr)
             original_frames_ptrs.append(ptr_to_addr(data_ptr + 0x1C))
+            FRAMES_PTRS_PTRS.add(ptr_to_addr(data_ptr + 0x1C))
 
         # Create a list with the num of frames for each OW
         frames = []
@@ -838,7 +886,7 @@ class Root:
             frames_num = 1
 
             # Check if current has different palette with the next one
-            basic_cond = (check_addr not in original_frames_ptrs) and is_frames_ptr(check_addr)
+            basic_cond = (check_addr not in FRAMES_PTRS_PTRS) and is_frames_ptr(check_addr)
             size_cond = read_word(check_addr + 0x4) == read_word(check_addr - 0x8 + 0x4)
 
             while basic_cond and size_cond:
@@ -862,6 +910,10 @@ class Root:
             # print("OW Data Pointer: "+HEX(ow_ptrs_addr+4*i))
             # print("Type: "+str(types[i]))
             SHOW("Repoining OW {}".format(i))
+            # ow_addr = ow_ptrs_addr + i*4
+            # data_addr = ptr_to_addr(ow_addr)
+            # print("Repointing OW "+str(i))
+            # print("Data Addr: "+HEX(data_addr))
             repointed_table.add_ow(types[i], frames[i])
             new_frames_ptr = read_word(repointed_table.ow_data_ptrs[-1].ow_data_addr + 0x1C)
             copy_data(ptr_to_addr(ow_ptrs_addr + i * 4),

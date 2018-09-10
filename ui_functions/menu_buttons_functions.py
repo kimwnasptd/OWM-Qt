@@ -33,7 +33,6 @@ def export_ow_image(ui):
     # fn += ext.split(" ")[2][2:-1]
     image.save(fn)
 
-
 def import_frames_sheet(ui):
     dlg = QtWidgets.QFileDialog()
     image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
@@ -62,7 +61,6 @@ def import_frames_sheet(ui):
 
         ui.tree_model.importOWFrames(sprite, ui.selected_ow, ui.selected_table, ui)
 
-
 def import_ow_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
     image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
@@ -79,7 +77,6 @@ def import_ow_sprsrc(ui):
     else:
         ui.tree_model.importOWSpr(sprite, ui.selected_ow, ui.selected_table, ui)
 
-
 def import_pokemon_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
     image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
@@ -95,7 +92,6 @@ def import_pokemon_sprsrc(ui):
         QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "File has wrong size", message)
     else:
         ui.tree_model.importPokeSpr(sprite, ui.selected_ow, ui.selected_table, ui)
-
 
 def palette_cleanup(ui):
     ui.tree_model.paletteCleanup(ui)

@@ -26,11 +26,8 @@ class RomInfo:
 
             # Initialize the OW Table Info
             change_core_info(self.ow_table_ptr, self.path)
-
             # Initialize the palette table info
             change_image_editor_info(self.palette_table_ptr_addr)
-
-            self.ow_fix()
 
     def set_name(self):
         name_raw = get_word(0xAC)
@@ -45,29 +42,6 @@ class RomInfo:
         self.ow_table_ptr = get_line_offset(start_pos + 1)
         self.palette_table_ptr_addr = get_palette_ptrs(start_pos + 2)
         self.path = 'Files/' + self.name + "/"
-
-    def ow_fix(self):
-        # Makes sure more OWs can be added
-        name = self.name
-        if name[:3] == "BPE":
-            ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        elif name[:3] == "AXV" or name[:3] == "AXP":
-            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        else:
-            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
-
-        ow_fix = find_bytes_in_rom(ow_fix_bytes)
-        if ow_fix == -1:
-            ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
-            ow_fix = find_bytes_in_rom(ow_fix_bytes)
-        # If still no ow_fix addr, set it to 0x0
-        if ow_fix == -1:
-            ow_fix = 0x0
-
-        self.ow_fix_addr = ow_fix
-        if self.ow_fix_addr != 0:
-            rom.seek(self.ow_fix_addr)
-            rom.write_byte(0xff)
 
     def load_profile_data(self, profile):
         self.set_info(get_name_line_index(profile))
