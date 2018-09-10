@@ -446,7 +446,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if (ow_type != 2) or (frames_num != 9):
             root.tables_list[ui.selected_table].resize_ow(ow_id, 2, 9)
-            resetRoot()()
+            resetRoot()
 
         ui.sprite_manager.import_pokemon(image_obj, table_id, ow_id)
 
@@ -472,7 +472,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if (ow_type != 2) or (frames_num != 9):
             root.tables_list[table_id].resize_ow(ow_id, 2, 9)
-            resetRoot()()
+            resetRoot()
 
         ui.sprite_manager.import_ow(image_obj, table_id, ow_id)
 
