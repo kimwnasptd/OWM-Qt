@@ -156,28 +156,6 @@ class MyApp(base, form):
                 palette_table_ptrs = find_ptr_in_rom(palette_table, 3)
                 break
 
-        # Check for the OW Fix Address
-        SHOW("Searching for OW Fix Address")
-        name = self.rom_info.name
-        if name[:3] == "BPE":
-            ow_fix_bytes = [0xEE, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        elif name[:3] == "AXV" or name[:3] == "AXP":
-            ow_fix_bytes = [0xD9, 0x29, 0x00, 0xD9, 0x05, 0x21, 0x03, 0x48, 0x89]
-        else:
-            ow_fix_bytes = [0x97, 0x29, 0x00, 0xD9, 0x10, 0x21, 0x03, 0x48, 0x89]
-
-        ow_fix = find_bytes_in_rom(ow_fix_bytes)
-        if ow_fix == -1:
-            ow_fix_bytes[0] = 0xff # In case the OW Fix was applied
-            ow_fix = find_bytes_in_rom(ow_fix_bytes)
-        # If still no ow_fix addr, set it to 0x0
-        if ow_fix == -1:
-            ow_fix = 0x0
-
-        if ow_fix != 0:
-            rom.seek(self.ow_fix_addr)
-            rom.write_byte(0xff)
-
         return [table_ptrs, palette_table_ptrs]
 
     def load_from_profile(self, profile):
