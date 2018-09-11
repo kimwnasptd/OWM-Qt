@@ -77,6 +77,7 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
+        SHOW("Opening ROM: "+fn)
         initRom(fn)
 
         self.rom_info = RomInfo()
@@ -108,6 +109,7 @@ class MyApp(base, form):
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
+        SHOW("Opening ROM: "+fn)
         initRom(fn)
 
         self.rom_info = RomInfo()

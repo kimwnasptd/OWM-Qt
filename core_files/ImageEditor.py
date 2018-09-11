@@ -4,7 +4,6 @@ from core_files.rom_api import *
 
 
 PAL_TBL_PTRS = []
-ORIG_PALS_NUM = 0
 FREE_SPC = 0
 
 global root
@@ -27,7 +26,6 @@ def TABLE(table_id):
 def change_image_editor_info(ptrs_list):
     global PAL_TBL_PTRS
     PAL_TBL_PTRS = ptrs_list
-    ORIG_PALS_NUM = get_orig_palette_num()
 
 def update_free_space(size, start_addr=FREE_SPC):
     global FREE_SPC
@@ -108,8 +106,10 @@ def is_palette_table_end(addr):
     # test = rom.read_byte() + rom.read_byte() + rom.read_byte() + rom.read_byte()
     test = sum(read_bytes(addr, 4))
     if test == 0:
-        if rom.read_byte() == 0xFF:
+        if read_bytes(addr+4, 2) == [0xff, 0x11]:
             return 1
+        else:
+            return 0
 
     if not is_palette_ptr(addr):
         return 1
@@ -134,7 +134,7 @@ def is_palette_ptr(addr):
     return palette_ptr
 
 def write_palette_table_end(addr):
-    write_bytes(addr, [0x0, 0x0, 0x0, 0x0, 0xFF, 0xFF, 0x0, 0x0])
+    write_bytes(addr, [0x0, 0x0, 0x0, 0x0, 0xFF, 0x11, 0x0, 0x0])
 
 def replace_palette_id_in_ows(old_palette_id, new_palette_id):
     # Replaces the old palette with the new palette number in all the OWs
@@ -156,19 +156,11 @@ def remove_palette(palette_addr):
 
     # Move all the other palettes left (the palette to be removed will be just be replaced
     working_addr = palette_addr + 8
-    done = 0
-
-    while done == 0:
-
+    while not is_palette_table_end(working_addr):
         # Move the palette data left
-        move_data(working_addr, working_addr - 8, 8, 0)
-
-        # If the palette that moved left is the end of the table, break the loop
-        if is_palette_table_end(working_addr - 8) == 1:
-            done = 1
-
-        # Set the working_addr to the addr of the next table
+        move_data(working_addr, working_addr - 8, 8, 0x0)
         working_addr += 8
+    move_data(working_addr, working_addr - 8, 8, 0x0)
 
 def get_background_color(image):
     im_palette = image.getpalette()
@@ -320,6 +312,15 @@ def is_palette_used(palette_id):
             if get_ow_palette_id(ow.ow_data_addr) == palette_id:
                 return 1
     return 0
+
+def get_used_pals():
+    used_pals = set()
+    global root
+    # Search all the tables
+    for table in root.tables_list:
+        for ow in table.ow_data_ptrs:
+            used_pals.add(get_ow_palette_id(ow.ow_data_addr))
+    return used_pals
 
 
 # === Classes ===
@@ -669,16 +670,21 @@ class ImageManager(PaletteManager):
 
     def palette_cleanup(self):
 
+        orig_pals_num = get_orig_palette_num()
         palette_num = self.get_palette_num()
-        users_palettes = palette_num - ORIG_PALS_NUM  # The game's original palettes are 18 total
+        users_palettes = palette_num - orig_pals_num
 
         # Get the addres of the non-used palettes
+        used_palettes = get_used_pals()
+
+        # Find the addresses of the unused palettes
         unused_palettes_addres = []
-        working_addr = self.table_addr + (ORIG_PALS_NUM * 8)
+        working_addr = self.table_addr + (orig_pals_num * 8)
         for i in range(0, users_palettes):
             palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
-            if is_palette_used(palette_id) == 0:
+            if palette_id not in used_palettes:
+                print("Image: Removing pal: "+HEX(palette_id))
                 unused_palettes_addres.append(working_addr + (i * 8))
 
         # Delete all the unused palettes
