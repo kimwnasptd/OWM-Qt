@@ -8,5 +8,7 @@ if __name__ == '__main__':
     app.setWindowIcon(QtGui.QIcon("Files/App.ico"))
 
     window = MyApp()
+    app.aboutToQuit.connect(window.exit_app)
     window.show()
+
     sys.exit(app.exec())

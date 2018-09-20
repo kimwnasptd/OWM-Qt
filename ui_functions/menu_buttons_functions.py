@@ -1,11 +1,7 @@
-from core_files.ImageEditor import *
+import sys, os
 from PyQt5 import QtWidgets, QtCore
+from core_files.ImageEditor import *
 from ui_functions.supportWindows import *
-import sys
-
-
-def exit_app():
-    sys.exit()
 
 
 # Menu Functions
@@ -16,33 +12,33 @@ def export_ow_image(ui):
     palette_id = get_ow_palette_id(root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].ow_data_addr)
     palette_addr = ui.sprite_manager.get_palette_addr(palette_id)
     sprite_palette = create_palette_from_gba(ptr_to_addr(palette_addr))
-
     image.putpalette(sprite_palette)
 
     name = '/' + str(ui.selected_table) + '_' + str(ui.selected_ow)
-
     fn, ext = QtWidgets.QFileDialog.getSaveFileName(ui, 'Export Frames Sheet',
-                                                  QtCore.QDir.homePath() + name,
+                                                  ui.paths['EXP_FRMS_PATH'] + name,
                                                   "PNG File (*.png);;"
                                                   "BMP File (*.bmp);;"
-                                                  "JPEG File (*.jpg);;"
-                                                  "All files (*)")
+                                                  "JPEG File (*.jpg)")
 
     if not fn:
         return
-    # fn += ext.split(" ")[2][2:-1]
+    ui.paths['EXP_FRMS_PATH'] = os.path.dirname(os.path.realpath(fn))
+
     try:
         image.save(fn)
-        SHOW("Saved "+fn)
     except ValueError:
-        SHOW("Please write the file extension at the end of the file's name")
+        fn += ext.replace(")","").split("*")[-1]
+        image.save(fn)
+    SHOW("Saved "+fn)
 
 def import_frames_sheet(ui):
     dlg = QtWidgets.QFileDialog()
-    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
+    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', ui.paths['IMP_FRMS_PATH'], "PNG Files (*.png);;"
                                                                                        "BMP Files (*.bmp)")
     if not image_loc:
         return
+    ui.paths['IMP_FRMS_PATH'] = os.path.dirname(os.path.realpath(image_loc))
 
     sprite = Image.open(image_loc)
 
@@ -67,10 +63,11 @@ def import_frames_sheet(ui):
 
 def import_ow_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
-    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
+    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', ui.paths['OW_PATH'], "PNG Files (*.png);;"
                                                                                        "BMP Files (*.bmp)")
     if not image_loc:
         return
+    ui.paths['OW_PATH'] = os.path.dirname(os.path.realpath(image_loc))
 
     sprite = Image.open(image_loc)
 
@@ -84,10 +81,11 @@ def import_ow_sprsrc(ui):
 
 def import_pokemon_sprsrc(ui):
     dlg = QtWidgets.QFileDialog()
-    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', QtCore.QDir.homePath(), "PNG Files (*.png);;"
+    image_loc, _ = dlg.getOpenFileName(dlg, 'Open Image file', ui.paths['PKMN_PATH'], "PNG Files (*.png);;"
                                                                                        "BMP Files (*.bmp)")
     if not image_loc:
         return
+    ui.paths['PKMN_PATH'] = os.path.dirname(os.path.realpath(image_loc))
 
     sprite = Image.open(image_loc)
 
@@ -102,7 +100,6 @@ def import_pokemon_sprsrc(ui):
 def palette_cleanup(ui):
     ui.tree_model.paletteCleanup(ui)
 
-
 def remove_table(ui):
     ui.tree_model.removeTable(ui.selected_table, ui)
 
@@ -112,20 +109,16 @@ def addOWButtonFunction(ui):
     owWindow = addOWWindow(ui)
     owWindow.exec()
 
-
 def insertOWButtonFunction(ui):
     owWindow = insertOWWindow(ui)
     owWindow.exec()
-
 
 def resizeOWButtonFunction(ui):
     owWindow = resizeOWWindow(ui)
     owWindow.exec()
 
-
 def removeOWButtonFunction(ui):
     ui.tree_model.removeOWs(ui.selected_ow, ui.selected_table, 1, ui)
-
 
 def addTableButtonFunction(ui):
     addTable = addTableWindow(ui)

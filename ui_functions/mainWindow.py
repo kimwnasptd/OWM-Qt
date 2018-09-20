@@ -5,6 +5,7 @@ from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
 from pprint import pprint
+import os, sys
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -54,7 +55,7 @@ class MyApp(base, form):
         self.actionOpen_and_Analyze_ROM.triggered.connect(lambda: self.open_analyze())
         self.actionSave_ROM.triggered.connect(lambda: self.save_rom(rom.rom_path))
         self.actionSave_ROM_As.triggered.connect(lambda: self.save_rom_as())
-        self.actionExit_2.triggered.connect(menu_buttons_functions.exit_app)
+        self.actionExit_2.triggered.connect(lambda: self.exit_app())
 
         self.actionImport_Frames_Sheet.triggered.connect(lambda: menu_buttons_functions.import_frames_sheet(self))
         self.actionExport_Frames_Sheet.triggered.connect(lambda: menu_buttons_functions.export_ow_image(self))
@@ -65,15 +66,17 @@ class MyApp(base, form):
         # micro patches, fix the header sizes
         self.OWTreeView.resizeColumnToContents(1)
         self.OWTreeView.resizeColumnToContents(2)
+        self.initPaths()
         initBar(self.statusbar)
 
     def open_rom(self, fn=None):
         """ If no filename is given, it'll prompt the user with a nice dialog """
         if fn is None:
             dlg = QtWidgets.QFileDialog()
-            fn, _ = dlg.getOpenFileName(dlg, 'Open ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
+            fn, _ = dlg.getOpenFileName(dlg, 'Open ROM file', self.paths['OPEN_ROM_PATH'], "GBA ROM (*.gba)")
         if not fn:
             return
+        self.paths['OPEN_ROM_PATH'] = os.path.dirname(os.path.realpath(fn))
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
@@ -103,9 +106,10 @@ class MyApp(base, form):
 
     def open_analyze(self):
         dlg = QtWidgets.QFileDialog()
-        fn, _ = dlg.getOpenFileName(dlg, 'Open and Analyze ROM file', QtCore.QDir.homePath(), "GBA ROM (*.gba)")
+        fn, _ = dlg.getOpenFileName(dlg, 'Open and Analyze ROM file', self.paths['OPEN_ROM_PATH'], "GBA ROM (*.gba)")
         if not fn:
             return
+        self.paths['OPEN_ROM_PATH'] = os.path.dirname(os.path.realpath(fn))
 
         print("----------------------------")
         print("Opened a new ROM: " + fn)
@@ -215,15 +219,17 @@ class MyApp(base, form):
             return
 
         fn, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save ROM file',
-                                                      QtCore.QDir.homePath(),
-                                                      "GBA ROM (*.gba);;"
-                                                      "All files (*)")
+                                                      self.paths['SAVE_ROM_PATH'],
+                                                      "GBA ROM (*.gba)")
 
         if not fn:
             self.statusbar.showMessage("Cancelled...")
             return
+        self.paths['SAVE_ROM_PATH'] = os.path.dirname(os.path.realpath(fn))
 
-        # fn += ".gba"
+        if fn[-4:] != ".gba":
+            fn += ".gba"
+
         import shutil, os
         if os.path.exists(fn):
             os.remove(fn)
@@ -442,3 +448,28 @@ class MyApp(base, form):
 
         self.paletteSlotComboBox.clear()
         self.paletteSlotComboBox.addItems(items)
+
+    def initPaths(self):
+        import pickle
+        self.paths = {}
+
+        try:
+            with open("Files/paths.pkl", 'rb') as f:
+                self.paths =  pickle.load(f)
+        except FileNotFoundError:
+            self.paths['OPEN_ROM_PATH'] = QtCore.QDir.homePath()
+            self.paths['SAVE_ROM_PATH'] = QtCore.QDir.homePath()
+            self.paths['EXP_FRMS_PATH'] = QtCore.QDir.homePath()
+            self.paths['IMP_FRMS_PATH'] = QtCore.QDir.homePath()
+            self.paths['OW_PATH']       = QtCore.QDir.homePath()
+            self.paths['PKMN_PATH']     = QtCore.QDir.homePath()
+
+            with open("Files/paths.pkl", 'wb') as f:
+                pickle.dump(self.paths, f)
+
+    def exit_app(self):
+        import pickle
+
+        with open("Files/paths.pkl", 'wb') as f:
+            pickle.dump(self.paths, f)
+        sys.exit()
