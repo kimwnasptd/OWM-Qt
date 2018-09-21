@@ -87,20 +87,23 @@ def update_palette_info(ui):
     if ui.selected_table is not None:
         ui.paletteIDComboBox.setEnabled(False)
         ui.textColorComboBox.setEnabled(False)
+        ui.footprintComboBox.setEnabled(False)
         ui.paletteSlotComboBox.setEnabled(False)
 
         if ui.selected_ow is not None:
             ui.paletteIDComboBox.setEnabled(True)
             ui.textColorComboBox.setEnabled(True)
+            ui.footprintComboBox.setEnabled(True)
             ui.paletteSlotComboBox.setEnabled(True)
 
-            # Sync the Text Color ComboBox
-            ow_data_addr = root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].ow_data_addr
+            # Sync the TextColor/Footprint ComboBox
+            ow_data_addr = OW(ui.selected_table, ui.selected_ow).ow_data_addr
             ui.textColorComboBox.setCurrentIndex(get_text_color(ow_data_addr))
+            ui.footprintComboBox.setCurrentIndex(get_footprint(ow_data_addr))
 
             # Sync the Palette Id ComboBox
             id_list = [HEX(pal_id) for pal_id in ui.sprite_manager.used_palettes]
-            palette_id = get_ow_palette_id(OW(ui.selected_table, ui.selected_ow).ow_data_addr)
+            palette_id = get_ow_palette_id(ow_data_addr)
 
             index = id_list.index(HEX(palette_id))
             ui.paletteIDComboBox.setCurrentIndex(index)
@@ -114,7 +117,7 @@ def update_palette_info(ui):
 
         ui.paletteTableAddressLabel.setText(capitalized_hex(ui.sprite_manager.table_addr))
         ui.usedPalettesLabel.setText(str(ui.sprite_manager.get_palette_num()))
-        ui.availablePalettesLabel.setText(str(ui.sprite_manager.get_free_slots()))
+        # ui.availablePalettesLabel.setText(str(ui.sprite_manager.get_free_slots()))
 
 def update_menu_actions(ui):
     ui.menuFrames_Sheet.setEnabled(False)

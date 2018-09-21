@@ -40,6 +40,7 @@ class MyApp(base, form):
         self.paletteIDComboBox.currentIndexChanged.connect(self.palette_id_changed)
         self.profilesComboBox.currentIndexChanged.connect(self.profile_selected)
         self.textColorComboBox.currentIndexChanged.connect(self.text_color_changed)
+        self.footprintComboBox.currentIndexChanged.connect(self.footprint_changed)
         self.paletteSlotComboBox.currentIndexChanged.connect(self.palette_slot_changed)
 
         # Buttons
@@ -98,12 +99,14 @@ class MyApp(base, form):
 
             update_gui(self)
             self.initColorTextComboBox()
+            self.initFootprintComboBox()
             self.initPaletteIdComboBox()
             self.initProfileComboBox()
             self.initPaletteSlotComboBox()
         else:
             self.statusbar.showMessage("Couldn't find a Profile in the INI for your ROM. Open it with 'Open and Analyze ROM'.")
 
+    # ROM IO Functions
     def open_analyze(self):
         dlg = QtWidgets.QFileDialog()
         fn, _ = dlg.getOpenFileName(dlg, 'Open and Analyze ROM file', self.paths['OPEN_ROM_PATH'], "GBA ROM (*.gba)")
@@ -183,6 +186,7 @@ class MyApp(base, form):
             update_tree_model(self)
             update_gui(self)
             self.initColorTextComboBox()
+            self.initFootprintComboBox()
             self.initPaletteIdComboBox()
             self.initPaletteSlotComboBox()
 
@@ -405,7 +409,13 @@ class MyApp(base, form):
 
     def text_color_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
-            set_text_color(OW(self.selected_table, self.selected_ow).ow_data_addr, byte)
+            ow_data_addr = OW(self.selected_table, self.selected_ow).ow_data_addr
+            set_text_color(ow_data_addr, byte)
+
+    def footprint_changed(self, byte):
+        if self.selected_table is not None and self.selected_ow is not None:
+            ow_data_addr = OW(self.selected_table, self.selected_ow).ow_data_addr
+            set_footprint(ow_data_addr, byte)
 
     def palette_slot_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
@@ -422,6 +432,15 @@ class MyApp(base, form):
             colors_list = ['Blue', 'Red', 'Black']
             self.textColorComboBox.clear()
             self.textColorComboBox.addItems(colors_list)
+        else:
+            self.textColorComboBox.setEnabled(False)
+
+    def initFootprintComboBox(self):
+        self.footprintComboBox.clear()
+        self.footprintComboBox.setEnabled(True)
+        steps_list = ['None', 'Steps', 'Bike']
+        self.footprintComboBox.clear()
+        self.footprintComboBox.addItems(steps_list)
 
     def initPaletteIdComboBox(self):
 

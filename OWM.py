@@ -6,6 +6,7 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon("Files/App.ico"))
+    app.setStyle("fusion")
 
     window = MyApp()
     app.aboutToQuit.connect(window.exit_app)

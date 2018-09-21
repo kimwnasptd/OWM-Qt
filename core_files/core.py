@@ -345,12 +345,16 @@ def write_animation_ptr(ow_data_addr, data_tuple):
     write_ptr(data_tuple[1], ow_data_addr + 0x20)
 
 def get_text_color(ow_data_addr):
-    rom.seek(ow_data_addr + 0xE)
-    return rom.read_byte()
+    return read_byte(ow_data_addr + 0xE)
 
 def set_text_color(ow_data_addr, val):
-    rom.seek(ow_data_addr + 0xE)
-    rom.write_byte(val)
+    write_byte(ow_data_addr + 0xE, val)
+
+def get_footprint(ow_data_addr):
+    return read_byte(ow_data_addr + 13)
+
+def set_footprint(ow_data_addr, val):
+    write_byte(ow_data_addr + 13, val)
 
 # -----------------Classes--------------------
 
