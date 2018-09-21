@@ -683,7 +683,7 @@ class OWPointerTable:
 
     def insert_ow(self, pos, ow_type, num_of_frames):
         # Get number of OWs
-        l = self.ow_data_ptrs.__len__()
+        l = len(self.ow_data_ptrs)
 
         # Move the data and the ptrs of all the OWs to the right
         for i in range(l - 1, pos - 1, -1):
@@ -700,7 +700,7 @@ class OWPointerTable:
         ow_data_addr = self.ow_data_ptrs[pos].ow_data_addr
         animation_ptr = get_animation_addr(ow_data_addr)
         palette_slot = get_palette_slot(ow_data_addr)
-        magic_byte = read_byte(ow_data_addr + 13)
+        footprint_byte = read_byte(ow_data_addr + 13)
 
         self.ow_data_ptrs[pos].remove()
         self.add_ow(ow_type, num_of_frames)
@@ -708,7 +708,7 @@ class OWPointerTable:
         # Restore Info
         write_animation_ptr(ow_data_addr, animation_ptr)
         write_palette_slot(ow_data_addr, palette_slot)
-        write_byte(ow_data_addr + 13, magic_byte)
+        write_byte(ow_data_addr + 13, footprint_byte)
 
         # Re-initialise the ow ptrs
         self.re_initialize_ow()

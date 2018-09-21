@@ -5,7 +5,7 @@ from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
 from pprint import pprint
-import os, sys
+import os, sys, shutil
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -230,7 +230,6 @@ class MyApp(base, form):
         if fn[-4:] != ".gba":
             fn += ".gba"
 
-        import shutil, os
         if os.path.exists(fn):
             os.remove(fn)
 
@@ -349,6 +348,7 @@ class MyApp(base, form):
             self.ow_graphics_scene.addItem(image_to_draw)
             self.ow_graphics_scene.update()
 
+    # Status Change Functions
     def spinbox_changed(self, i):
 
         if self.selected_ow is None:
@@ -405,13 +405,14 @@ class MyApp(base, form):
 
     def text_color_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
-            set_text_color(root.tables_list[self.selected_table].ow_data_ptrs[self.selected_ow].ow_data_addr, byte)
+            set_text_color(OW(self.selected_table, self.selected_ow).ow_data_addr, byte)
 
     def palette_slot_changed(self, byte):
         if self.selected_table is not None and self.selected_ow is not None:
             ow_data_addr = root.tables_list[self.selected_table].ow_data_ptrs[self.selected_ow].ow_data_addr
             write_palette_slot(ow_data_addr, byte)
 
+    # Init Functions
     def initColorTextComboBox(self):
         # Text color ComboBox
         name = self.rom_info.name
