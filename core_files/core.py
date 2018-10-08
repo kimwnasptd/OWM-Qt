@@ -55,28 +55,14 @@ def find_free_space_update(size, start_addr=0, ending=0):
 def is_ow_data(addr):
     # Checks various bytes to see if they are the same with the templates
     try:
-        rom.seek(addr)
+        if read_byte(addr + 0x0) != 0xFF: return 0
+        if read_byte(addr + 0x1) != 0xFF: return 0
 
-        if rom.read_byte() != 0xFF:
-            return 0
-        if rom.read_byte() != 0xFF:
-            return 0
-
-        # if not rom.check_byte(addr + 0xE, 0x00):
-        #     return 0
-        # if not rom.check_byte(addr + 0xF, 0x00):
-            return 0
-
-        if is_ptr(addr + 0x10) != 1:
-            return 0
-        # if is_ptr(addr + 0x14) != 1:
-            return 0
-        if is_ptr(addr + 0x18) != 1:
-            return 0
-        if is_ptr(addr + 0x1c) != 1:
-            return 0
-        if is_ptr(addr + 0x20) != 1:
-            return 0
+        if not is_ptr(addr + 0x10): return 0
+        if not is_ptr(addr + 0x14): return 0
+        if not is_ptr(addr + 0x18): return 0
+        if not is_ptr(addr + 0x1c): return 0
+        if not is_ptr(addr + 0x20): return 0
     except IndexError:
         return 0
     return 1
@@ -500,7 +486,6 @@ class FramesPointers:
         # Clear the actual data of the frames, watch out for overlays
         clear_frames(self.frames_addr, frames_num, get_frame_size(ow_type))
 
-
 class OWData:
     ow_ptr_addr = 0x0
     ow_data_addr = 0x0
@@ -565,7 +550,6 @@ class OWData:
 
         # Move the OW Pointer right
         move_data(self.ow_ptr_addr, self.ow_ptr_addr + 4, 4, 0x22)  # 0x22
-
 
 class OWPointerTable:
     table_ptr_addr = 0
@@ -717,7 +701,6 @@ class OWPointerTable:
         # Re-initialise the ow ptrs
         self.re_initialize_ow()
 
-
 class Root:
     ow_tables_addr = 0x0    # Talbe 0
     ow_tables_addrs = []    # [ptr:Table 2] or Table 1's entries
@@ -736,17 +719,16 @@ class Root:
         addr = self.ow_tables_addr
         ow_tbls_addrs = []  #[ptr:Table 1] or Table 0's entries
         while is_table_ptr(addr):
+            if ptr_to_addr(addr) in [0x39FFB0, 0x39FEB0]:
+                fill_with_data(addr, 4, 0)
+                continue
             ow_tbls_addrs.append(addr)
             self.ow_tables_addrs.append(ptr_to_addr(addr))
             addr += 4
 
         for addr in ow_tbls_addrs:
             print("\nroot: About to check: {} ({})".format(HEX(addr), HEX(ptr_to_addr(addr))))
-            if (ptr_to_addr(addr) == 0x39FFB0) or (ptr_to_addr(addr) == 0x39FEB0):
-                # Those addrs are after the original table but not needed according to JPAN
-                fill_with_data(addr, 4, 0)
-                break
-            elif table_needs_repoint(addr):
+            if table_needs_repoint(addr):
                 # If it was the first table, change any pointer in the
                 # ROM that might be pointing to it
                 if addr == self.ow_tables_addr:
@@ -857,7 +839,6 @@ class Root:
         return len(self.tables_list)
 
     def repoint_table(self, table_ptrs_addr):
-
         # Find number of OWs
         SHOW("Determining number of OWs for Table: "+HEX(table_ptrs_addr))
         ow_ptrs_addr = ptr_to_addr(table_ptrs_addr)
@@ -869,6 +850,8 @@ class Root:
                 break
             ows_num += 1
             addr += 4
+        print("Found OWs: {} | Not OW Pointer: {} | Pointing to: {}".format(\
+            ows_num, HEX(addr), HEX(ptr_to_addr(addr))))
 
         # Create the new table and fix the previous ptrs
         SHOW("Searching Free Space for the New Table")
