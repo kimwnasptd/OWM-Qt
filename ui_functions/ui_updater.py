@@ -66,9 +66,9 @@ def update_tables_menu_buttons(ui):
         ui.addTableButton.setEnabled(False)
 
 def update_tables_text_menu(ui):
-    if ui.selected_ow is None and ui.selected_table is not None:
+    if ui.selected_table is not None:
         # A Table was selected
-        print("Table: {} | Available Tables: {}".format(ui.selected_table, root.tables_num()))
+        # print("Table: {} | Available Tables: {}".format(ui.selected_table, root.tables_num()))
         ui.tableAddressLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].table_ptr_addr))
         ui.ptrsAddressTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].table_addr))
         ui.dataAddressTableLabel.setText(capitalized_hex(root.tables_list[ui.selected_table].ow_data_addr))
