@@ -89,14 +89,22 @@ class resizeOWWindow(resizeOWBase, resizeOWForm):
         self.buttonBox.accepted.connect(lambda: self.resizeOW(ui))
 
     def resizeOW(self, ui):
+        
         ow_type = int(self.owTypeLineEdit.text())
         frames_num = int(self.framesNumLineEdit.text())
 
-        if check_type_availability(ow_type, ui) and frames_num != 0:
-            ui.tree_model.resizeOW(ui.selected_ow, ui.selected_table, ow_type, frames_num, ui)
-        else:
-            message = "Please insert a correct type"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't create OW with Type: " + str(ow_type), message)
+        selectedOWs = ui.OWTreeView.selectionModel().selectedRows(0);
+        #total = len(selectedOWs)
+        for selected_ow in sorted(selectedOWs):
+            selected_table = selected_ow.parent().row()
+            
+            if selected_table != -1:
+                if check_type_availability(ow_type, ui) and frames_num != 0:
+                    ui.tree_model.resizeOW(selected_ow.row(), selected_table, ow_type, frames_num, ui)
+                else:
+                    message = "Please insert a correct type"
+                    QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't create OW with Type: " + str(ow_type), message)
+                    break
 
 
 class addTableWindow(addTableBase, addTableForm):

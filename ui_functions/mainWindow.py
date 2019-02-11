@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from ui_functions import menu_buttons_functions
+from PyQt5.QtWidgets import QAbstractItemView
 from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
@@ -27,6 +28,8 @@ class MyApp(base, form):
         self.treeRootNode = Node("root")
         self.tree_model = TreeViewModel(self.treeRootNode)
         self.OWTreeView.setModel(self.tree_model)
+        self.OWTreeView.tabstop = 1
+        self.OWTreeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree_selection_model = self.OWTreeView.selectionModel()
         self.tree_selection_model.currentChanged.connect(self.item_selected)
 
