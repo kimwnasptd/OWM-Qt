@@ -59,7 +59,7 @@ def is_ow_data(addr):
         if read_byte(addr + 0x1) != 0xFF: return 0
 
         if not is_ptr(addr + 0x10): return 0
-        if not is_ptr(addr + 0x14): return 0
+        if not is_ptr(addr + 0x14) and read_word(addr + 0x14) != 0: return 0
         if not is_ptr(addr + 0x18): return 0
         if not is_ptr(addr + 0x1c): return 0
         if not is_ptr(addr + 0x20): return 0

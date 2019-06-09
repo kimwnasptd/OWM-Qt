@@ -1,4 +1,4 @@
 .idea
-core_files/__pycache__
-ui_functions/__pycache__
-__pycache__
+.vscode
+__pycache__/
+settings.ini
