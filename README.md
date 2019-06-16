@@ -13,7 +13,10 @@ Features
 
 Dependencies:
 -
+You will need the following Python packages
+```
 PyQt5, pillow
+```
 
 Running from source:
 -
