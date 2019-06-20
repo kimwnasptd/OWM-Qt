@@ -118,7 +118,12 @@ def resizeOWButtonFunction(ui):
     owWindow.exec()
 
 def removeOWButtonFunction(ui):
-    ui.tree_model.removeOWs(ui.selected_ow, ui.selected_table, 1, ui)
+    selectedOWs = ui.OWTreeView.selectionModel().selectedRows(0);
+    for selected_ow in sorted(selectedOWs, reverse=True):
+        selected_table = selected_ow.parent().row()
+        if selected_table != -1:
+            ui.tree_model.removeOWs(selected_ow.row(), selected_table, 1, ui)
+        #ui.tree_model.removeOWs(index.selected_ow, index.selected_table, 1, ui)
 
 def addTableButtonFunction(ui):
     addTable = addTableWindow(ui)

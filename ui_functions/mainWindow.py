@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from ui_functions import menu_buttons_functions
+from PyQt5.QtWidgets import QAbstractItemView
 from ui_functions.graphics_class import ImageItem
 from ui_functions.supportWindows import *
 from ui_functions.ui_updater import *
@@ -27,15 +28,18 @@ class MyApp(base, form):
         self.treeRootNode = Node("root")
         self.tree_model = TreeViewModel(self.treeRootNode)
         self.OWTreeView.setModel(self.tree_model)
+        self.OWTreeView.tabstop = 1
+        self.OWTreeView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree_selection_model = self.OWTreeView.selectionModel()
         self.tree_selection_model.currentChanged.connect(self.item_selected)
 
         # Graphics Viewer
         self.ow_graphics_scene = QtWidgets.QGraphicsScene()
 
-        # SpinBox
+        # SpinBox / SliderBox
         self.framesSpinBox.valueChanged.connect(self.spinbox_changed)
-
+        self.framesSpinSlider.valueChanged.connect(self.spinslider_changed)
+	
         # ComboBoxes
         self.paletteIDComboBox.currentIndexChanged.connect(self.palette_id_changed)
         self.profilesComboBox.currentIndexChanged.connect(self.profile_selected)
@@ -354,9 +358,18 @@ class MyApp(base, form):
 
     # Status Change Functions
     def spinbox_changed(self, i):
-
+        self.framesSpinSlider.setValue(i)
         if self.selected_ow is None:
             self.framesSpinBox.setValue(0)
+            self.framesSpinSlider.setValue(0)
+            return
+
+        self.paint_graphics_view(self.sprite_manager.get_ow_frame(self.selected_ow, self.selected_table, i))
+    def spinslider_changed(self, i):
+        self.framesSpinBox.setValue(i)
+        if self.selected_ow is None:
+            self.framesSpinBox.setValue(0)
+            self.framesSpinSlider.setValue(0)
             return
 
         self.paint_graphics_view(self.sprite_manager.get_ow_frame(self.selected_ow, self.selected_table, i))
@@ -388,9 +401,12 @@ class MyApp(base, form):
             self.selected_ow = node.getId()
             self.paint_graphics_view(node.image)
 
-            # Update the SpinBox
+            # Update the SpinBox/SliderBox
             self.framesSpinBox.setRange(0, node.frames - 1)
             self.framesSpinBox.setValue(0)
+            self.framesSpinSlider.setMinimum(0)
+            self.framesSpinSlider.setMaximum(node.frames - 1)
+            self.framesSpinSlider.setValue(0)
         else:
             self.selected_table = node.getId()
             self.selected_ow = None
