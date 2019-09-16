@@ -1,6 +1,7 @@
-from core_files.rom_api import HEX, HEX_LST
+from core_files.rom_api import HEX
 
 ini = open('settings.ini', 'r')
+
 
 def check_if_name_exists(name):
     ini.seek(0)
@@ -12,12 +13,14 @@ def check_if_name_exists(name):
 
     return 0
 
+
 def get_line_string(pos):
     ini.seek(0)
     for i, line in enumerate(ini):
         if i == pos:
             line = line[:-1]
             return line
+
 
 def get_line_offset(pos, profile=-1):
     # If profile != 1 return a decimal and not a hex
@@ -30,6 +33,7 @@ def get_line_offset(pos, profile=-1):
                 return int(offset)
             return int(offset, 16)
 
+
 def get_name_line_index(name):
     ini.seek(0)
 
@@ -37,6 +41,7 @@ def get_name_line_index(name):
     for i, line in enumerate(ini):
         if line == search_name:
             return i
+
 
 def get_palette_ptrs(pos):
     ini.seek(0)
@@ -51,6 +56,7 @@ def get_palette_ptrs(pos):
             ptrs[2] = int(ptrs[2], 16)
             return ptrs
 
+
 def check_if_name(pos):
     ini.seek(0)
 
@@ -60,6 +66,7 @@ def check_if_name(pos):
                 return 1
             return 0
 
+
 def get_name_from_line(pos):
     ini.seek(0)
 
@@ -67,12 +74,14 @@ def get_name_from_line(pos):
         if i == pos:
             return line[1:-2]
 
+
 def write_text_end(data):
     with open('settings.ini', 'a+') as current_ini:
         current_ini.write(data)
 
     global ini
     ini = open('settings.ini', 'r')
+
 
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
     text = '\n[' + profile_name + ']' + '\n'

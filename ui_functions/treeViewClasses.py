@@ -124,19 +124,19 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         super(TreeViewModel, self).__init__(parent)
         self._rootNode = model_root
 
-        for table in range(len(root.tables_list)):
-            # add the table nodes
-            newTableNode = TableNode(table, self._rootNode)
+        # for table in range(len(root.tables_list)):
+        #     # add the table nodes
+        #     newTableNode = TableNode(table, self._rootNode)
 
-            for ow in range(len(root.tables_list[table].ow_data_ptrs)):
-                # add the ow nodes
-                newOWNode = OWNode(ow, newTableNode)
-
-
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
+        #     for ow in range(len(root.tables_list[table].ow_data_ptrs)):
+        #         # add the ow nodes
+        #         newOWNode = OWNode(ow, newTableNode)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int
+        """
         if not parent.isValid():
             parentNode = self._rootNode
         else:
@@ -144,17 +144,18 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return parentNode.childCount()
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
-
     def columnCount(self, parent):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int
+        """
         return 3
 
-    """INPUTS: QModelIndex, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
-
     def data(self, index, role):
-
+        """
+        INPUTS: QModelIndex, int
+        OUTPUT: QVariant, strings are cast to QString which is a QVariant
+        """
         if not index.isValid():
             return None
 
@@ -176,10 +177,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
                 if typeInfo == "ow_node":
                     return QtGui.QIcon(QtGui.QPixmap.fromImage(ImageQt(node.image)))
 
-    """INPUTS: QModelIndex, QVariant, int (flag)"""
-
     def setData(self, index, value, role=QtCore.Qt.EditRole):
-
+        """INPUTS: QModelIndex, QVariant, int (flag)"""
         if index.isValid():
 
             node = index.internalPointer()
@@ -199,10 +198,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return False
 
-    """INPUTS: int, Qt::Orientation, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
-
     def headerData(self, section, orientation, role):
+        """
+        INPUTS: int, Qt::Orientation, int
+        OUTPUT: QVariant, strings are cast to QString which is a QVariant
+        """
         if role == QtCore.Qt.DisplayRole:
             if section == 0:
                 return "OWs Structure"
@@ -211,18 +211,19 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             elif section == 2:
                 return "Frames"
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int (flag)"""
-
     def flags(self, index):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int (flag)
+        """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return the parent of the node with the given QModelIndex"""
-
     def parent(self, index):
-
+        """
+        INPUTS: QModelIndex
+        OUTPUT: QModelIndex
+        Should return the parent of the node with the given QModelIndex
+        """
         node = self.getNode(index)
         parentNode = node.parent()
 
@@ -231,12 +232,13 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return self.createIndex(parentNode.row(), 0, parentNode)
 
-    """INPUTS: int, int, QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
-
     def index(self, row, column, parent):
-
+        """
+        INPUTS: int, int, QModelIndex
+        OUTPUT: QModelIndex
+        Should return a QModelIndex that corresponds to the given row, 
+        column and parent node
+        """
         parentNode = self.getNode(parent)
 
         if row >= parentNode.childCount():
@@ -249,10 +251,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         else:
             return QtCore.QModelIndex()
 
-    """CUSTOM"""
-    """INPUTS: QModelIndex"""
-
     def getNode(self, index):
+        """
+        CUSTOM
+        INPUTS: QModelIndex
+        """
         if index.isValid():
             node = index.internalPointer()
             if node:
@@ -260,10 +263,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return self._rootNode
 
-    """INPUTS: int, int, QModelIndex"""
-
     def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
-
+        """INPUTS: int, int, QModelIndex"""
         parentNode = self.getNode(parent)
 
         self.beginInsertRows(parent, position, position + rows - 1)
@@ -290,10 +291,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return success
 
-    """INPUTS: int, int, QModelIndex"""
-
     def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
-
+        """INPUTS: int, int, QModelIndex"""
         success = True
         if rows == 0:
             return
@@ -335,9 +334,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.endResetModel()
 
     # OW/Table interacting functionsqt
-
     def insertOWs(self, ow_id, table_id, rows, ow_type, num_of_frames):
-
         parent = self.index(table_id, 0, QtCore.QModelIndex())
         parentNode = self.getNode(parent)
 
@@ -367,7 +364,6 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
     def resizeOW(self, ow_id, table_id, ow_type, num_of_frames, ui):
-
         root.tables_list[table_id].resize_ow(ow_id, ow_type, num_of_frames)
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         owNode = self.index(ow_id, 0, tableNode)

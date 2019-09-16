@@ -54,10 +54,6 @@ class Game:
         except IndexError:
             return 0
 
-    def get(self, addr):
-        self.seek(addr)
-        return rom.read_byte()
-
     def flush(self):
         pass
 

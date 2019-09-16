@@ -16,5 +16,3 @@ class ImageItem(QtWidgets.QGraphicsObject):
 
     def paint(self, painter, option, widget):
         painter.drawPixmap(QtCore.QPoint(0, 0), self.pixmap)
-
-

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+import sys
+import shutil
 from ui_functions import menu_buttons_functions
 from ui_functions.graphics_class import ImageItem
-from ui_functions.supportWindows import *
+from ui_functions.supportWindows import uic
 from ui_functions.ui_updater import *
-from pprint import pprint
-import os, sys, shutil
+from PyQt5 import QtWidgets
 
 # the root is defined in ImageEditor.py
 # the rom is defined in the rom_api.py
@@ -163,8 +165,9 @@ class MyApp(base, form):
                 palette_table = ptr_to_addr(addr)
                 palettes_data_addr = ptr_to_addr(palette_table)
                 palette_table_ptrs = find_ptr_in_rom(palette_table, 3)
+                print("Found the Palette Table at " + HEX(palette_table))
                 break
-
+        
         return [table_ptrs, palette_table_ptrs]
 
     def load_from_profile(self, profile):

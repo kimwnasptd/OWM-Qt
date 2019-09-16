@@ -1,8 +1,5 @@
-import mmap
-import core_files.rom_api as rom
-
-TemplateList = ["Template{}".format(i) for i in range(1, 9)]
-Templates = []
+from . import rom_api as rom
+from . import conversions as conv
 
 frametype1 = [0x0, 0x1]     # [16x32]
 frametype2 = [0x0, 0x2]     # [32x32]
@@ -14,46 +11,17 @@ frametype7 = [0x80, 0x5]    # [88x32] Emerald only
 frametype8 = [0x80, 0x7]    # [96x40] Emerald only
 
 # DEFINES
-TBL_0 = 0x0
-FREE_SPC = 0x0
-FRAMES_PER_OW = 15
-FRAMES_END = 0x2135F0
-
-# This will be used to determin number of frames
-# When repointing a table. Used in ow_initializer, repoint_table
-FRAMES_PTRS_PTRS = set()
+T16x32 = 1
+T32x32 = 2
+T16x16 = 3
+T64x64 = 4
+T128x64 = 5
+T48x48 = 6
+T88x32 = 7
+T96x40 = 8
 
 
 # ----------------------Functions------------------------------
-def change_core_info(ow_tbls_ptrs_tbl, files_path):
-    global TBL_0, FREE_SPC
-    TBL_0 = ow_tbls_ptrs_tbl
-
-    import os
-    if os.path.exists(files_path):
-        global TemplateList
-
-        for i in range(0, 8):
-            path = files_path + TemplateList[i]
-
-            temp = open(path, 'r+b')
-            template = mmap.mmap(temp.fileno(), 0)
-            Templates.append(template)
-
-
-def update_free_space(size, start_addr=FREE_SPC):
-    global FREE_SPC
-    FREE_SPC = rom.find_free_space(size, start_addr, 2)
-
-
-def find_free_space_update(size, start_addr=0, ending=0):
-    addr = rom.find_free_space(size, start_addr, ending)
-    # Update the Free Space addr
-    global FREE_SPC
-    FREE_SPC = addr + size
-    return addr
-
-
 def is_ow_data(addr):
     # Checks various bytes to see if they are the same with the templates
     try:
@@ -147,9 +115,7 @@ def is_ow_data_ptr(addr):
 
 
 def is_frames_end(addr):
-    global FRAMES_END
-
-    if rom.ptr_to_addr(addr) == FRAMES_END:
+    if rom.ptr_to_addr(addr) == rom.FRAMES_END:
         return 1
     else:
         return 0
@@ -191,21 +157,21 @@ def update_frames_addr(num, addr, ow_type):
 
 
 def get_frame_size(ow_type):
-    if ow_type == 1:
+    if ow_type == T16x32:
         return 256  # 0x100
-    if ow_type == 2:
+    if ow_type == T32x32:
         return 512  # 0x200
-    if ow_type == 3:
+    if ow_type == T16x16:
         return 128  # 0x80
-    if ow_type == 4:
+    if ow_type == T64x64:
         return 2048  # 0x800
-    if ow_type == 5:
+    if ow_type == T128x64:
         return 4096  # 0x1000
-    if ow_type == 6:
+    if ow_type == T48x48:
         return 1152  # 0x480
-    if ow_type == 7:
+    if ow_type == T88x32:
         return 1408  # 0x580
-    if ow_type == 8:
+    if ow_type == T96x40:
         return 1920  # 0x780
 
 
@@ -217,7 +183,7 @@ def clear_frames(addr, frames, size):
         return
 
     rom.fill_with_data(addr, frames * size, 0xFF)
-    print(rom.HEX(addr))
+    print(conv.HEX(addr))
     rom.write_word(addr, 0xFFFFFFFF)
 
 
@@ -229,33 +195,32 @@ def available_frames_ptr_addr(addr, num_of_frames):
 
 
 def write_frames_end(addr):
-    global FRAMES_END
-    rom.write_ptr(FRAMES_END, addr)
+    rom.write_ptr(rom.FRAMES_END, addr)
 
 
 def get_frame_dimensions(ow_type):
-    if ow_type == 1:
+    if ow_type == T16x32:
         width = 16
         height = 32
-    elif ow_type == 2:
+    elif ow_type == T32x32:
         width = 32
         height = 32
-    elif ow_type == 3:
+    elif ow_type == T16x16:
         width = 16
         height = 16
-    elif ow_type == 4:
+    elif ow_type == T64x64:
         width = 64
         height = 64
-    elif ow_type == 5:
+    elif ow_type == T128x64:
         width = 128
         height = 64
-    elif ow_type == 6:
+    elif ow_type == T48x48:
         width = 48
         height = 48
-    elif ow_type == 7:
+    elif ow_type == T88x32:
         width = 88
         height = 32
-    elif ow_type == 8:
+    elif ow_type == T96x40:
         width = 96
         height = 40
 
@@ -263,7 +228,7 @@ def get_frame_dimensions(ow_type):
 
 
 def get_template(ow_type):
-    return Templates[ow_type - 1]
+    return rom.TEMPLATES[ow_type - 1]
 
 
 def get_ow_palette_id(addr):
@@ -277,12 +242,12 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
     # 0xA000 is ~ 256 * (4 + 36 + FRAMES_PER_OW * 8)
     if new_table == 0:
         # 3 more for the table's info + 1 for rounding
-        new_table = find_free_space_update((260 * 4), FREE_SPC, 4)
+        new_table = rom.find_free_space_update((260 * 4), rom.FREE_SPC, 4)
     else:
         new_table = rom.find_free_space((260 * 4), new_table, 4)
 
     if ow_data_addr == 0:
-        ow_data_addr = find_free_space_update(
+        ow_data_addr = rom.find_free_space_update(
             (256 * 36) + 4,
             new_table + 259 * 4,
             4
@@ -291,7 +256,7 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
         ow_data_addr = rom.find_free_space((256 * 36) + 4, ow_data_addr, 4)
 
     if frames_ptrs == 0:
-        frames_ptrs = find_free_space_update(
+        frames_ptrs = rom.find_free_space_update(
             (9 * 8 * 256) + 4,
             ow_data_addr + (256 * 36) + 4,
             4
@@ -300,7 +265,7 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
         frames_ptrs = rom.find_free_space((9 * 8 * 256) + 4, frames_addr, 4)
 
     if frames_addr == 0:
-        frames_addr = find_free_space_update(
+        frames_addr = rom.find_free_space_update(
             0x40000,
             frames_ptrs + (9 * 8 * 256) + 4,
             2)
@@ -308,22 +273,20 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
         frames_addr = rom.find_free_space(0x40000, frames_addr, 2)
 
     print("Found Addresses: {} {} {} {}".format(
-        rom.HEX(new_table),
-        rom.HEX(ow_data_addr),
-        rom.HEX(frames_ptrs),
-        rom.HEX(frames_addr))
+        conv.HEX(new_table),
+        conv.HEX(ow_data_addr),
+        conv.HEX(frames_ptrs),
+        conv.HEX(frames_addr))
     )
     return new_table, ow_data_addr, frames_ptrs, frames_addr
 
 
 def write_ow_palette_id(addr, palette_id):
-    rom.seek(addr + 2)
     byte1 = int(palette_id / 256)
     byte2 = int(palette_id % 256)
 
-    rom.write_byte(byte2)
-    rom.write_byte(byte1)
-    rom.flush()
+    rom.write_byte(addr + 2, byte2)
+    rom.write_byte(addr + 3, byte1)
 
 
 def is_frames_ptr(addr):
@@ -423,7 +386,7 @@ class FramesPointers:
                            num_of_frames * get_frame_size(ow_type),
                            -1)
         # Write the frame_end prefix
-        rom.write_ptr(FRAMES_END,
+        rom.write_ptr(rom.FRAMES_END,
                       frames_addr + num_of_frames * get_frame_size(ow_type))
 
         self.write_frames_ptrs(ow_type, num_of_frames)
@@ -456,21 +419,21 @@ class FramesPointers:
         frame_addr = self.frames_addr
 
         frametype = []
-        if ow_type == 1:
+        if ow_type == T16x32:
             frametype = frametype1
-        elif ow_type == 2:
+        elif ow_type == T32x32:
             frametype = frametype2
-        elif ow_type == 3:
+        elif ow_type == T16x16:
             frametype = frametype3
-        elif ow_type == 4:
+        elif ow_type == T64x64:
             frametype = frametype4
-        elif ow_type == 5:
+        elif ow_type == T128x64:
             frametype = frametype5
-        elif ow_type == 6:
+        elif ow_type == T48x48:
             frametype = frametype6
-        elif ow_type == 7:
+        elif ow_type == T88x32:
             frametype = frametype7
-        elif ow_type == 8:
+        elif ow_type == T96x40:
             frametype = frametype8
 
         # Write the frames Pointers
@@ -593,22 +556,22 @@ class OWData:
 
     def move_left(self):
         # Move the OW Data left
-        rom.move_data(self.ow_data_addr, self.ow_data_addr - 36, 36, 0x22)  # 0x22
+        rom.move_data(self.ow_data_addr, self.ow_data_addr - 36, 36, 0x22)
         # Change the ow_ptr to point to the new addr
         rom.write_ptr(self.ow_data_addr - 36, self.ow_ptr_addr)
         # Move the OW Pointer left
-        rom.move_data(self.ow_ptr_addr, self.ow_ptr_addr - 4, 4, 0x22)  # 0x22
+        rom.move_data(self.ow_ptr_addr, self.ow_ptr_addr - 4, 4, 0x22)
 
     def move_right(self):
 
         # Move the OW Data right
-        rom.move_data(self.ow_data_addr, self.ow_data_addr + 36, 36, 0x22)  # 0x22
+        rom.move_data(self.ow_data_addr, self.ow_data_addr + 36, 36, 0x22)
 
         # Change the ow_ptr to point to the new addr
         rom.write_ptr(self.ow_data_addr + 36, self.ow_ptr_addr)
 
         # Move the OW Pointer right
-        rom.move_data(self.ow_ptr_addr, self.ow_ptr_addr + 4, 4, 0x22)  # 0x22
+        rom.move_data(self.ow_ptr_addr, self.ow_ptr_addr + 4, 4, 0x22)
 
 
 class OWPointerTable:
@@ -638,14 +601,16 @@ class OWPointerTable:
             rom.fill_with_data(self.table_addr, 256 * 4, 0x11)
             rom.fill_with_data(self.ow_data_addr, 256 * 36, 0x22)
             rom.fill_with_data(self.frames_ptrs_addr,
-                               256 * 8 * FRAMES_PER_OW,
+                               256 * 8 * rom.FRAMES_PER_OW,
                                0x33)
 
             # Write the table's info
-            print("\ntbl_init: OW Pointers(WR): " + rom.HEX(self.table_addr))
-            print("tbl_init: OW Data(WR): " + rom.HEX(self.ow_data_addr))
-            print("tbl_init: Frames Pointers(WR): " + rom.HEX(self.frames_ptrs_addr))
-            print("tbl_init: Frames Address(WR): " + rom.HEX(self.frames_addr))
+            print("\ntbl_init: OW Pointers(WR): " + conv.HEX(self.table_addr))
+            print("tbl_init: OW Data(WR): " + conv.HEX(self.ow_data_addr))
+            print("tbl_init: Frames Pointers(WR): " +
+                  conv.HEX(self.frames_ptrs_addr))
+            print("tbl_init: Frames Address(WR): " +
+                  conv.HEX(self.frames_addr))
             rom.write_ptr(self.ow_data_addr, self.end_of_table)
             rom.write_ptr(self.frames_ptrs_addr, self.end_of_table + 4)
             rom.write_ptr(self.frames_addr, self.end_of_table + 8)
@@ -660,7 +625,7 @@ class OWPointerTable:
         ow_data_addr = rom.ptr_to_addr(ow_ptr)
         frames_ptrs_addr = rom.ptr_to_addr(ow_data_addr + 0x1C)
         frames_addr = rom.ptr_to_addr(frames_ptrs_addr)
-        FRAMES_PTRS_PTRS.add(frames_ptrs_addr)
+        rom.FRAMES_PTRS_PTRS.add(frames_ptrs_addr)
 
         # Create the Frames OBJ
         FramesOBJ = FramesPointers(frames_ptrs_addr, frames_addr,
@@ -777,13 +742,12 @@ class Root:
 
     def __init__(self):
         # Don't initialize in case a rom is not loaded
-        if rom.rom.rom_contents is None:
+        if rom.rom is None or rom.rom.rom_contents is None:
             return
 
         self.tables_list = []
-        self.ow_tables_addr = TBL_0
-        global FRAMES_PTRS_PTRS
-        FRAMES_PTRS_PTRS = set()
+        self.ow_tables_addr = rom.TBL_0
+        rom.FRAMES_PTRS_PTRS = set()
 
         # Get addresses of OW Data Pointers Tables (Table 1)
         addr = self.ow_tables_addr
@@ -799,8 +763,8 @@ class Root:
 
         for addr in ow_tbls_addrs:
             print("\nroot: About to check: {} ({})".format(
-                rom.HEX(addr),
-                rom.HEX(rom.ptr_to_addr(addr)))
+                conv.HEX(addr),
+                conv.HEX(rom.ptr_to_addr(addr)))
             )
             if table_needs_repoint(addr):
                 # If it was the first table, change any pointer in the
@@ -820,12 +784,13 @@ class Root:
                 ow_data_addr = rom.ptr_to_addr(end_of_table)
                 frames_ptrs = rom.ptr_to_addr(end_of_table + 4)
                 frames_addr = rom.ptr_to_addr(end_of_table + 8)
-                rom.SHOW("Loading Table (" + rom.HEX(table_addr) + ")")
-                print("root: Tables Table: " + rom.HEX(table_ptr_addr))
-                print("root: Table: " + rom.HEX(rom.ptr_to_addr(self.ow_tables_addr)))
-                print("root: OW Data: " + rom.HEX(ow_data_addr))
-                print("root: Frames Pointers: " + rom.HEX(frames_ptrs))
-                print("root: Frames Address: " + rom.HEX(frames_addr))
+                rom.SHOW("Loading Table (" + conv.HEX(table_addr) + ")")
+                print("root: Tables Table: " + conv.HEX(table_ptr_addr))
+                print("root: Table: " +
+                      conv.HEX(rom.ptr_to_addr(self.ow_tables_addr)))
+                print("root: OW Data: " + conv.HEX(ow_data_addr))
+                print("root: Frames Pointers: " + conv.HEX(frames_ptrs))
+                print("root: Frames Address: " + conv.HEX(frames_addr))
                 # Create the Table Object
                 ptr_tbl_obj = OWPointerTable(table_ptr_addr,
                                              table_addr,
@@ -835,17 +800,17 @@ class Root:
                 self.tables_list.append(ptr_tbl_obj)
 
             print("\nroot: About to check: {} ({})".format(
-                rom.HEX(addr),
-                rom.HEX(rom.ptr_to_addr(addr)))
+                conv.HEX(addr),
+                conv.HEX(rom.ptr_to_addr(addr)))
             )
-        print("\nroot: Not a ptr: {} ({})".format(
-            rom.HEX(addr),
-            rom.HEX(rom.ptr_to_addr(addr)))
+        print("\nroot: Not a ptr: Address {} | Pointing to {}".format(
+            conv.HEX(addr),
+            conv.HEX(rom.ptr_to_addr(addr)))
         )
 
     def reload(self):
         self.tables_list = []
-        self.ow_tables_addr = TBL_0
+        self.ow_tables_addr = rom.TBL_0
 
         # Get addresses of OW Data Pointers Tables (Table 1)
         addr = self.ow_tables_addr
@@ -863,7 +828,7 @@ class Root:
             ow_data_addr = rom.ptr_to_addr(end_of_table)
             frames_ptrs = rom.ptr_to_addr(end_of_table + 4)
             frames_addr = rom.ptr_to_addr(end_of_table + 8)
-            rom.SHOW("Loading Table (" + rom.HEX(table_addr) + ")")
+            rom.SHOW("Loading Table (" + conv.HEX(table_addr) + ")")
 
             # Create the Table Object
             ptr_tbl_obj = OWPointerTable(table_ptr_addr,
@@ -879,7 +844,7 @@ class Root:
             *addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr)
         )
 
-    def clear_OW_Tables(self, ow_table_addr=TBL_0):
+    def clear_OW_Tables(self, ow_table_addr=rom.TBL_0):
         # Clear all the table entries after the original OW Table
         ow_table_addr += 4
         for i in range(ow_table_addr, ow_table_addr + 25):
@@ -908,18 +873,20 @@ class Root:
             ow.remove()
 
         # Clear all of the godam data
-        rom.fill_with_data(tbl.frames_ptrs_addr, 256 * 8 * FRAMES_PER_OW, 0xFF)
+        rom.fill_with_data(tbl.frames_ptrs_addr,
+                           256 * 8 * rom.FRAMES_PER_OW,
+                           0xFF)
         rom.fill_with_data(tbl.ow_data_addr, 256 * 36, 0xFF)
         rom.fill_with_data(tbl.table_addr, 259 * 4, 0xFF)
 
         # Move all the table ptrs to the left
         addr = self.ow_tables_addr + (i * 4)
-        print("remove_table: about to remove: " + rom.HEX(addr))
+        print("remove_table: about to remove: " + conv.HEX(addr))
         rom.fill_with_data(addr, 4, 0)
 
         addr += 4
         while is_table_ptr(addr):
-            print("remove_table: Moving left ptr: " + rom.HEX(addr))
+            print("remove_table: Moving left ptr: " + conv.HEX(addr))
             rom.move_data(addr, addr - 4, 4, 0)
             addr += 4
 
@@ -931,7 +898,8 @@ class Root:
 
     def repoint_table(self, table_ptrs_addr):
         # Find number of OWs
-        rom.SHOW("Determining number of OWs for Table: " + rom.HEX(table_ptrs_addr))
+        rom.SHOW("Determining number of OWs for Table: " +
+                 conv.HEX(table_ptrs_addr))
         ow_ptrs_addr = rom.ptr_to_addr(table_ptrs_addr)
         ows_num = 0
         addr = ow_ptrs_addr
@@ -942,11 +910,11 @@ class Root:
             ows_num += 1
             addr += 4
         print("Found OWs: {} | Not OW Pointer: {} | Pointing to: {}".format(
-            ows_num, rom.HEX(addr), rom.HEX(rom.ptr_to_addr(addr))))
+            ows_num, conv.HEX(addr), conv.HEX(rom.ptr_to_addr(addr))))
 
         # Create the new table and fix the previous ptrs
         rom.SHOW("Searching Free Space for the New Table")
-        repointed_table = OWPointerTable(TBL_0, *addrs_filter(0, 0, 0, 0))
+        repointed_table = OWPointerTable(rom.TBL_0, *addrs_filter(0, 0, 0, 0))
         rom.write_ptr(repointed_table.table_addr, table_ptrs_addr)
         self.tables_list.append(repointed_table)
 
@@ -955,7 +923,7 @@ class Root:
         for ow_ptr in range(ow_ptrs_addr, ow_ptrs_addr + (4 * ows_num), 4):
             data_ptr = rom.ptr_to_addr(ow_ptr)
             original_frames_ptrs.append(rom.ptr_to_addr(data_ptr + 0x1C))
-            FRAMES_PTRS_PTRS.add(rom.ptr_to_addr(data_ptr + 0x1C))
+            rom.FRAMES_PTRS_PTRS.add(rom.ptr_to_addr(data_ptr + 0x1C))
 
         # Create a list with the num of frames for each OW
         frames = []
@@ -964,7 +932,7 @@ class Root:
             frames_num = 1
 
             # Check if current has different palette with the next one
-            basic_cond = (check_addr not in FRAMES_PTRS_PTRS) \
+            basic_cond = (check_addr not in rom.FRAMES_PTRS_PTRS) \
                 and is_frames_ptr(check_addr)
             size_cond = rom.read_word(check_addr + 0x4) == \
                 rom.read_word(check_addr - 0x8 + 0x4)
@@ -994,7 +962,7 @@ class Root:
             rom.copy_data(rom.ptr_to_addr(ow_ptrs_addr + i * 4),
                           repointed_table.ow_data_ptrs[-1].ow_data_addr,
                           0x24)
-            rom.write_word(repointed_table.ow_data_ptrs[-1].ow_data_addr + 0x1C,
+            rom.write_word(repointed_table.ow_data_ptrs[-1].ow_data_addr+0x1C,
                            new_frames_ptr)
 
             # Copy the actual frames
@@ -1057,3 +1025,16 @@ class Root:
                 check_addr += 4
                 i += 1
         return i
+
+    def getTable(self, table_id):
+        '''
+        Return an OWPointerTable obj for the specified Table. Might throw
+        an IndexError
+        '''
+        return self.tables_list[table_id]
+
+    def getOW(self, table_id, ow_id):
+        '''
+        Return an OWData obj for the specified OW. Might throw an IndexError
+        '''
+        return self.tables_list[table_id].ow_data_ptrs[ow_id]

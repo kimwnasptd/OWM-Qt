@@ -24,6 +24,7 @@ def update_ow_menu_buttons(ui):
         ui.removeOwButton.setEnabled(True)
         return
 
+
 def update_ow_text_menu(ui):
     if ui.selected_ow is None and ui.selected_table is not None:
         # Table selected
@@ -50,6 +51,7 @@ def update_ow_text_menu(ui):
         ui.framesAddressLabel.setText(capitalized_hex(
             root.tables_list[ui.selected_table].ow_data_ptrs[ui.selected_ow].frames.frames_addr))
 
+
 def update_tables_menu_buttons(ui):
     # They are actually always open
     ui.removeTableButton.setEnabled(False)
@@ -64,6 +66,7 @@ def update_tables_menu_buttons(ui):
         ui.addTableButton.setEnabled(True)
     else:
         ui.addTableButton.setEnabled(False)
+
 
 def update_tables_text_menu(ui):
     if ui.selected_table is not None:
@@ -82,6 +85,7 @@ def update_tables_text_menu(ui):
         ui.dataAddressTableLabel.setText("")
         ui.framesPointersTableLabel.setText("")
         ui.framesAddressTableLabel.setText("")
+
 
 def update_palette_info(ui):
     if ui.selected_table is not None:
@@ -119,6 +123,7 @@ def update_palette_info(ui):
         ui.usedPalettesLabel.setText(str(ui.sprite_manager.get_palette_num()))
         # ui.availablePalettesLabel.setText(str(ui.sprite_manager.get_free_slots()))
 
+
 def update_menu_actions(ui):
     ui.menuFrames_Sheet.setEnabled(False)
     ui.menuSpriters_Resource.setEnabled(False)
@@ -132,15 +137,18 @@ def update_menu_actions(ui):
         ui.actionImport_Frames_Sheet.setEnabled(True)
         ui.actionExport_Frames_Sheet.setEnabled(True)
 
+
 def update_viewer(ui):
     if ui.selected_ow is not None:
         frame = ui.framesSpinBox.value()
         ui.paint_graphics_view(ui.sprite_manager.get_ow_frame(ui.selected_ow, ui.selected_table, frame))
 
+
 def update_tree_model(ui):
     ui.statusbar.showMessage("Updating the TreeView...")
     ui.tree_model.resetModel()
     ui.statusbar.showMessage("Ready...")
+
 
 def update_gui(ui):
     try:

@@ -6,6 +6,7 @@ from ui_functions.supportWindows import *
 
 # Menu Functions
 def export_ow_image(ui):
+    # FIXME
     image = make_image_from_rom(ui.selected_ow, ui.selected_table)
 
     # For the Palette

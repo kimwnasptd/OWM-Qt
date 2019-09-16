@@ -5,8 +5,8 @@ insertOWBase, insertOWForm = uic.loadUiType("ui/insertow.ui")
 resizeOWBase, resizeOWForm = uic.loadUiType("ui/resizeow.ui")
 addTableBase, addTableForm = uic.loadUiType("ui/addtable.ui")
 
-def check_type_availability(ow_type, ui):
 
+def check_type_availability(ow_type, ui):
     base = ui.rom_info.name
     if base[:3] == 'BPR' or base[:4] == 'JPAN' or base[:3] == 'BPG' or base[:4] == 'MrDS':
         if (ow_type >= 1) and (ow_type <= 5):
