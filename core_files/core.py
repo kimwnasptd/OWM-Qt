@@ -1,4 +1,5 @@
 from . import rom_api as rom
+from . import statusbar as sts
 from . import conversions as conv
 
 frametype1 = [0x0, 0x1]     # [16x32]
@@ -455,10 +456,8 @@ class FramesPointers:
 
     def get_type(self):
         # It checks first the type of the frames from the data next to the ptr
-        frame = []
-
-        rom.seek(self.frames_ptrs_addr + 4)
-        frame = [rom.read_byte(), rom.read_byte()]
+        addr = self.frames_ptrs_addr
+        frame = [rom.read_byte(addr + 4), rom.read_byte(addr + 5)]
 
         tp = -1
         if frame == frametype1:
@@ -526,10 +525,9 @@ class OWData:
         ow_data_addr = self.find_available_ow_data_addr()
         self.ow_data_addr = ow_data_addr
 
-        rom.seek(ow_data_addr)
         template.seek(0)
         for i in range(0x24):
-            rom.write_byte(template.read_byte())
+            rom.write_byte(ow_data_addr + i, template.read_byte())
 
         # Write the ptr to the frames
         rom.write_ptr(frames_ptrs_addr, ow_data_addr + 0x1c)
@@ -770,7 +768,7 @@ class Root:
                 # If it was the first table, change any pointer in the
                 # ROM that might be pointing to it
                 if addr == self.ow_tables_addr:
-                    rom.SHOW("Searching for Pointers for the Default OW Table")
+                    sts.show("Searching for Pointers for the Default OW Table")
                     ptrs = rom.find_ptr_in_rom(rom.ptr_to_addr(addr), True)
                     self.repoint_table(addr)
                     for ptr in ptrs:
@@ -784,7 +782,7 @@ class Root:
                 ow_data_addr = rom.ptr_to_addr(end_of_table)
                 frames_ptrs = rom.ptr_to_addr(end_of_table + 4)
                 frames_addr = rom.ptr_to_addr(end_of_table + 8)
-                rom.SHOW("Loading Table (" + conv.HEX(table_addr) + ")")
+                sts.show("Loading Table (" + conv.HEX(table_addr) + ")")
                 print("root: Tables Table: " + conv.HEX(table_ptr_addr))
                 print("root: Table: " +
                       conv.HEX(rom.ptr_to_addr(self.ow_tables_addr)))
@@ -828,7 +826,7 @@ class Root:
             ow_data_addr = rom.ptr_to_addr(end_of_table)
             frames_ptrs = rom.ptr_to_addr(end_of_table + 4)
             frames_addr = rom.ptr_to_addr(end_of_table + 8)
-            rom.SHOW("Loading Table (" + conv.HEX(table_addr) + ")")
+            sts.show("Loading Table (" + conv.HEX(table_addr) + ")")
 
             # Create the Table Object
             ptr_tbl_obj = OWPointerTable(table_ptr_addr,
@@ -898,7 +896,7 @@ class Root:
 
     def repoint_table(self, table_ptrs_addr):
         # Find number of OWs
-        rom.SHOW("Determining number of OWs for Table: " +
+        sts.show("Determining number of OWs for Table: " +
                  conv.HEX(table_ptrs_addr))
         ow_ptrs_addr = rom.ptr_to_addr(table_ptrs_addr)
         ows_num = 0
@@ -913,7 +911,7 @@ class Root:
             ows_num, conv.HEX(addr), conv.HEX(rom.ptr_to_addr(addr))))
 
         # Create the new table and fix the previous ptrs
-        rom.SHOW("Searching Free Space for the New Table")
+        sts.show("Searching Free Space for the New Table")
         repointed_table = OWPointerTable(rom.TBL_0, *addrs_filter(0, 0, 0, 0))
         rom.write_ptr(repointed_table.table_addr, table_ptrs_addr)
         self.tables_list.append(repointed_table)
@@ -955,7 +953,7 @@ class Root:
 
         # Restore the Data
         for i in range(0, ows_num):
-            rom.SHOW("Repoining OW {}".format(i))
+            sts.show("Repoining OW {}".format(i))
             repointed_table.add_ow(types[i], frames[i])
             new_frames_ptr = rom.read_word(
                 repointed_table.ow_data_ptrs[-1].ow_data_addr + 0x1C)
@@ -976,12 +974,12 @@ class Root:
                               get_frame_size(types[i]))
 
         if len(frames) >= 218:
-            rom.SHOW("Paddding the extra OWs")
+            sts.show("Paddding the extra OWs")
             for i in range(0, 256 - len(frames)):
                 repointed_table.add_ow(1, 9)
 
         # Clean the data of the original table
-        rom.SHOW("Cleaning up...")
+        sts.show("Cleaning up...")
         i = 0
         for ow_ptr in range(ow_ptrs_addr, ow_ptrs_addr + (4 * ows_num), 4):
 
@@ -1015,9 +1013,8 @@ class Root:
         done = 0
         while done == 0:
             adder = 0
-            rom.seek(check_addr)
-            for j in range(0, 4):
-                adder += rom.read_byte()
+            for j in range(4):
+                adder += rom.read_byte(check_addr + j)
 
             if adder != 0:
                 done = 1

@@ -6,7 +6,9 @@ imports it, different parts can modify the ROM simultaneously.
 In other words, any module that does `import rom_api as rom` will have a local
 rom object that will reference the same object.
 '''
+import os
 import mmap
+from core_files import statusbar as sts
 from core_files.game import Game
 from random import randint
 
@@ -47,34 +49,23 @@ def update_ow_tables_pointers_table(ow_tbls_ptrs_tbl):
 
 
 def update_rom_tamplates(files_path):
-    import os
+    global TEMPLATES
     if os.path.exists(files_path):
         for tmpl in ["Template{}".format(i) for i in range(1, 9)]:
             path = files_path + tmpl
             temp = open(path, 'r+b')
             template = mmap.mmap(temp.fileno(), 0)
-            rom.TEMPLATES.append(template)
-
-
-# The StatusBar in QtApplication
-def initBar(bar):
-    global prntbar
-    prntbar = bar
-
-
-def SHOW(msg):
-    global prntbar
-    prntbar.showMessage(msg)
+            TEMPLATES.append(template)
 
 
 # Free Space Searching
 def update_free_space(size, start_addr=FREE_SPC):
     global FREE_SPC
-    FREE_SPC = rom.find_free_space(size, start_addr, 2)
+    FREE_SPC = find_free_space(size, start_addr, 2)
 
 
 def find_free_space_update(size, start_addr=0, ending=0):
-    addr = rom.find_free_space(size, start_addr, ending)
+    addr = find_free_space(size, start_addr, ending)
     # Update the Free Space addr
     global FREE_SPC
     FREE_SPC = addr + size
@@ -155,7 +146,7 @@ def find_free_space(size, start_addr=0, ending=0):
         return addr
 
     # The ROM is seriously running out of space
-    SHOW("ERROR: No Free Space available. Closing")
+    sts.show("ERROR: No Free Space available. Closing")
     from time import sleep
     sleep(2)
     exit()

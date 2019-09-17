@@ -1,4 +1,4 @@
-from core_files.rom_api import HEX
+from . import conversions as conv
 
 ini = open('settings.ini', 'r')
 
@@ -85,11 +85,11 @@ def write_text_end(data):
 
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
     text = '\n[' + profile_name + ']' + '\n'
-    text += "OW Table Pointers = " + HEX(ow_table_ptrs) + "\n"
+    text += "OW Table Pointers = " + conv.HEX(ow_table_ptrs) + "\n"
     text += "Palette Table Pointers Address = "
-    text += HEX(palette_table_ptrs[0]) + ", "
-    text += HEX(palette_table_ptrs[1]) + ", "
-    text += HEX(palette_table_ptrs[2]) + "\n"
+    text += conv.HEX(palette_table_ptrs[0]) + ", "
+    text += conv.HEX(palette_table_ptrs[1]) + ", "
+    text += conv.HEX(palette_table_ptrs[2]) + "\n"
     write_text_end(text)
 
 

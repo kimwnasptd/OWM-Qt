@@ -1,6 +1,8 @@
 from PIL import Image
 import core_files.core as core
 import core_files.rom_api as rom
+import core_files.statusbar as sts
+import core_files.conversions as conv
 
 
 def write_two_pixels(index1, index2, addr):
@@ -54,8 +56,8 @@ def import_frame(im, addr, ow_type, row_grid=0, column_grid=0):
 # Palette Functions
 def get_orig_palette_num():
     name_raw = rom.get_word(0xA8)
-    rom_name = rom.capitalized_hex(name_raw)[2:]  # Removes the 0x
-    name = rom.hex_to_text(rom_name)
+    rom_name = conv.capitalized_hex(name_raw)[2:]  # Removes the 0x
+    name = conv.hex_to_text(rom_name)
     print("NAME: "+name)
 
     if name in ["FIRE", "LEAF"]:
@@ -269,14 +271,14 @@ class PaletteManager:
 
     def __init__(self, root):
         self.root = root
-        self.table_addr = rom.ptr_to_addr(PAL_TBL_PTRS[0])
+        self.table_addr = rom.ptr_to_addr(rom.PAL_TBL_PTRS[0])
         self.palette_num = self.get_palette_num()
         self.max_size = self.get_max_size()
         self.free_slots = self.max_size - self.palette_num\
 
         if self.free_slots == 0:
             print("Repointing the Palette Table")
-            rom.SHOW("Updating the Free Space Address for Palettes")
+            sts.show("Updating the Free Space Address for Palettes")
             rom.update_free_space(self.palette_num * 10)
             self.repoint_palette_table()
 
@@ -373,7 +375,7 @@ class PaletteManager:
         # Search all the tables
         for table in self.root.tables_list:
             for ow in table.ow_data_ptrs:
-                used_pals.add(rom.get_ow_palette_id(ow.ow_data_addr))
+                used_pals.add(core.get_ow_palette_id(ow.ow_data_addr))
         return used_pals
 
     def insert_rgb_to_gba_palette(self, palette):
@@ -427,8 +429,7 @@ class PaletteManager:
                         [0xFF, 0x11])
 
         # Change the ptrs pointing the table
-        global PAL_TBL_PTRS
-        for ptr_addr in PAL_TBL_PTRS:
+        for ptr_addr in rom.PAL_TBL_PTRS:
             rom.write_ptr(new_table_addr, ptr_addr)
 
         # Change the OBJ's table_addr var
@@ -558,7 +559,7 @@ class ImageManager(PaletteManager):
         working_addr = ow.frames.frames_addr
         num_of_frames = ow.frames.get_num()
         sprite_type = ow.frames.get_type()
-        dimensions = rom.get_frame_dimensions(sprite_type)
+        dimensions = core.get_frame_dimensions(sprite_type)
         frame_width = dimensions[0]
 
         row = 0
@@ -566,7 +567,7 @@ class ImageManager(PaletteManager):
             column = i * frame_width
             import_frame(sprite, working_addr, sprite_type, row, column)
 
-            working_addr += rom.get_frame_size(sprite_type)
+            working_addr += core.get_frame_size(sprite_type)
 
         self.set_used_palettes()
 
@@ -585,7 +586,7 @@ class ImageManager(PaletteManager):
             palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
             if palette_id not in used_palettes:
-                print("Image: Removing pal: " + rom.HEX(palette_id))
+                print("Image: Removing pal: " + conv.HEX(palette_id))
                 unused_palettes_addres.append(working_addr + (i * 8))
 
         # Delete all the unused palettes
@@ -598,13 +599,13 @@ class ImageManager(PaletteManager):
         ow = self.root.getOW(table_num, ow_num)
         ow_type = ow.frames.get_type()
         frames_addr = ow.frames.frames_addr
-        width, height = rom.get_frame_dimensions(ow_type)
+        width, height = core.get_frame_dimensions(ow_type)
 
         # For the palette
-        palette_id = rom.get_ow_palette_id(ow.ow_data_addr)
+        palette_id = core.get_ow_palette_id(ow.ow_data_addr)
         palette_addr = self.get_palette_addr(palette_id)
         sprite_palette = create_palette_from_gba(rom.ptr_to_addr(palette_addr))
-        frame_size = rom.get_frame_size(ow_type)
+        frame_size = core.get_frame_size(ow_type)
 
         image = create_image_from_addr((frame_num * frame_size) + frames_addr,
                                        width,
