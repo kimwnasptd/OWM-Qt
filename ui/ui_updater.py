@@ -1,4 +1,3 @@
-# from ui_functions.treeViewClasses import *
 import core_files.conversions as conv
 from core_files import core
 

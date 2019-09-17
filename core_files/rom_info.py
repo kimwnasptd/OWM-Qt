@@ -1,5 +1,4 @@
-import core_files.ImageEditor as img
-import core_files.IniHandler as ini
+import core_files.ini_handler as ini
 import core_files.rom_api as rom
 import core_files.conversions as conv
 

@@ -7,20 +7,20 @@ import core_files.rom_api as rom
 
 from core_files import statusbar as sts
 from core_files import core
-from core_files import IniHandler as ini
+from core_files import ini_handler as ini
 from core_files import conversions as conv
-from core_files import ImageEditor as img
+from core_files import image_editor as img
 
-from ui_functions import treeViewClasses as model
-from ui_functions import menu_buttons_functions
-from ui_functions.ui_updater import update_gui, update_viewer
-from ui_functions.graphics_class import ImageItem
-from ui_functions.RomInfo import RomInfo
-from ui_functions.supportWindows import uic
+from core_files.rom_info import RomInfo
+from ui import tree_view_classes as model
+from ui import menu_buttons_functions
+from ui.ui_updater import update_gui, update_viewer
+from ui.graphics_class import ImageItem
+from ui.support_windows import uic
 
 from PyQt5 import QtWidgets, QtCore
 
-base, form = uic.loadUiType("ui/mainwindow.ui")
+base, form = uic.loadUiType("ui_templates/mainwindow.ui")
 
 
 class MyApp(base, form):
@@ -227,7 +227,7 @@ class MyApp(base, form):
             self.selected_table = None
             self.selected_ow = None
 
-            from ui_functions.ui_updater import update_gui, update_tree_model
+            from ui.ui_updater import update_gui, update_tree_model
             update_tree_model(self)
             update_gui(self)
             self.initColorTextComboBox()

@@ -1,12 +1,12 @@
 import os
 import core_files.statusbar as sts
-import core_files.ImageEditor as img
+import core_files.image_editor as img
 import core_files.rom_api as rom
+import ui.support_windows as windows
 
+from core_files import core
 from PyQt5 import QtWidgets
 from PIL import Image
-from core_files import core
-import ui_functions.supportWindows as windows
 
 
 # Menu Functions

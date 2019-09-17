@@ -1,11 +1,8 @@
-import core_files.ImageEditor as img
+import core_files.image_editor as img
+import core_files.conversions as conv
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PIL.ImageQt import ImageQt
-# from ..core_files import rom_api as rom
-from core_files import conversions as conv
-
-# the root is defined in ImageEditor.py
-# the rom is defined in the rom_api.py
 
 
 class Node(object):
@@ -422,7 +419,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ui.selected_table = table_id - 1
         ui.selected_ow = None
 
-        from ui_functions.ui_updater import update_gui
+        from ui.ui_updater import update_gui
         update_gui(ui)
 
     def tablesCount(self):
@@ -450,7 +447,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.paletteIDComboBox.addItem(
             conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def importPokeSpr(self, image_obj, ow_id, table_id, ui):
@@ -465,7 +462,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if (ow_type != 2) or (frames_num != 9):
             self.root.getTable(ui.selected_table).resize_ow(ow_id, 2, 9)
-            resetRoot()
+            ui.root = ui.root.__init__()
 
         ui.sprite_manager.import_pokemon(image_obj, table_id, ow_id)
 
@@ -477,7 +474,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.paletteIDComboBox.addItem(
             conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def importOWSpr(self, image_obj, ow_id, table_id, ui):
@@ -492,7 +489,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if (ow_type != 2) or (frames_num != 9):
             self.root.getTable(table_id).resize_ow(ow_id, 2, 9)
-            resetRoot()
+            ui.root = ui.root.__init__()
 
         ui.sprite_manager.import_ow(image_obj, table_id, ow_id)
 
@@ -504,7 +501,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.paletteIDComboBox.addItem(
             conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def paletteCleanup(self, ui):
@@ -518,7 +515,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             self.setData(owNode, None)
             ui.item_selected(self.index(ui.selected_ow, 0, tableNode))
 
-        from ui_functions.ui_updater import update_gui
+        from ui.ui_updater import update_gui
         update_gui(ui)
 
     def initOW(self, table_id, ow_id):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ui_functions.mainWindow import MyApp
+from ui.main_window import MyApp
 from PyQt5 import QtWidgets, QtGui
 
 if __name__ == '__main__':

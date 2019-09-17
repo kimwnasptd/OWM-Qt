@@ -1,14 +1,17 @@
 from PyQt5 import uic, QtGui, QtWidgets
 
-addOWBase, addOWForm = uic.loadUiType("ui/addow.ui")
-insertOWBase, insertOWForm = uic.loadUiType("ui/insertow.ui")
-resizeOWBase, resizeOWForm = uic.loadUiType("ui/resizeow.ui")
-addTableBase, addTableForm = uic.loadUiType("ui/addtable.ui")
+addOWBase, addOWForm = uic.loadUiType("ui_templates/addow.ui")
+insertOWBase, insertOWForm = uic.loadUiType("ui_templates/insertow.ui")
+resizeOWBase, resizeOWForm = uic.loadUiType("ui_templates/resizeow.ui")
+addTableBase, addTableForm = uic.loadUiType("ui_templates/addtable.ui")
 
 
 def check_type_availability(ow_type, ui):
     base = ui.rom_info.name
-    if base[:3] == 'BPR' or base[:4] == 'JPAN' or base[:3] == 'BPG' or base[:4] == 'MrDS':
+    if base[:3] == 'BPR' \
+            or base[:4] == 'JPAN'\
+            or base[:3] == 'BPG'\
+            or base[:4] == 'MrDS':
         if (ow_type >= 1) and (ow_type <= 5):
             return 1
         return 0
@@ -40,11 +43,17 @@ class addOWWindow(addOWBase, addOWForm):
 
             if ui.tree_model.owsCount(ui.selected_table) + ows_num <= 256:
                 ui.statusbar.showMessage("Adding OWs...")
-                ui.tree_model.insertOWs(-1, ui.selected_table, ows_num, ow_type, frames_num)
+                ui.tree_model.insertOWs(-1,
+                                        ui.selected_table,
+                                        ows_num,
+                                        ow_type,
+                                        frames_num)
                 ui.statusbar.showMessage("Ready")
             else:
-                message = "Cant add that number of OWs\nMax number of OWs a table can hold is 256"
-                QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't Add so many OWs", message)
+                message = "Cant add that number of OWs\nMax number of OWs a \
+                           table can hold is 256"
+                QtWidgets.QMessageBox.critical(
+                    QtWidgets.QMessageBox(), "Can't Add so many OWs", message)
 
 
 class insertOWWindow(insertOWBase, insertOWForm):
@@ -69,13 +78,24 @@ class insertOWWindow(insertOWBase, insertOWForm):
             if ui.tree_model.owsCount(ui.selected_table) + ows_num <= 256:
                 ui.statusbar.showMessage("Inserting OWs...")
                 if ui.selected_ow is None:
-                    ui.tree_model.insertOWs(0, ui.selected_table, ows_num, ow_type, frames_num)
+                    ui.tree_model.insertOWs(0,
+                                            ui.selected_table,
+                                            ows_num,
+                                            ow_type,
+                                            frames_num)
                 else:
-                    ui.tree_model.insertOWs(ui.selected_ow, ui.selected_table, ows_num, ow_type, frames_num)
+                    ui.tree_model.insertOWs(ui.selected_ow,
+                                            ui.selected_table,
+                                            ows_num,
+                                            ow_type,
+                                            frames_num)
                 ui.statusbar.showMessage("Ready")
             else:
-                message = "Cant insert that number of OWs\nMax number of OWs a table can hold is 256"
-                QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't Add so many OWs", message)
+                message = "Cant insert that number of OWs\nMax number of OWs a \
+                           table can hold is 256"
+                QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(),
+                                               "Can't Add so many OWs",
+                                               message)
 
 
 class resizeOWWindow(resizeOWBase, resizeOWForm):
@@ -93,10 +113,17 @@ class resizeOWWindow(resizeOWBase, resizeOWForm):
         frames_num = int(self.framesNumLineEdit.text())
 
         if check_type_availability(ow_type, ui) and frames_num != 0:
-            ui.tree_model.resizeOW(ui.selected_ow, ui.selected_table, ow_type, frames_num, ui)
+            ui.tree_model.resizeOW(ui.selected_ow,
+                                   ui.selected_table,
+                                   ow_type,
+                                   frames_num,
+                                   ui)
         else:
             message = "Please insert a correct type"
-            QtWidgets.QMessageBox.critical(QtWidgets.QMessageBox(), "Can't create OW with Type: " + str(ow_type), message)
+            QtWidgets.QMessageBox.critical(
+                QtWidgets.QMessageBox(),
+                "Can't create OW with Type: " + str(ow_type),
+                message)
 
 
 class addTableWindow(addTableBase, addTableForm):
@@ -146,7 +173,11 @@ class addTableWindow(addTableBase, addTableForm):
         else:
             frames_addr = int(frames_addr, 16)
 
-        ui.tree_model.insertTable(ow_ptrs, data_ptrs, frames_ptrs, frames_addr, ui)
+        ui.tree_model.insertTable(ow_ptrs,
+                                  data_ptrs,
+                                  frames_ptrs,
+                                  frames_addr,
+                                  ui)
 
-        from ui_functions.ui_updater import update_gui
+        from ui.ui_updater import update_gui
         update_gui(ui)
