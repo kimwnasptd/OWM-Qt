@@ -4,6 +4,8 @@ import core_files.rom_api as rom
 import core_files.statusbar as sts
 import core_files.conversions as conv
 
+log = sts.get_logger(__name__)
+
 
 def write_two_pixels(index1, index2, addr):
     # Index <= 0xF
@@ -58,7 +60,7 @@ def get_orig_palette_num():
     name_raw = rom.get_word(0xA8)
     rom_name = conv.capitalized_hex(name_raw)[2:]  # Removes the 0x
     name = conv.hex_to_text(rom_name)
-    print("NAME: "+name)
+    log.info("NAME: "+name)
 
     if name in ["FIRE", "LEAF"]:
         return 18
@@ -277,7 +279,8 @@ class PaletteManager:
         self.free_slots = self.max_size - self.palette_num\
 
         if self.free_slots == 0:
-            print("Repointing the Palette Table")
+            log.info("The Palette Table can't have new Palettes. "
+                     "It will be repointed to have more space")
             sts.show("Updating the Free Space Address for Palettes")
             rom.update_free_space(self.palette_num * 10)
             self.repoint_palette_table()
@@ -435,6 +438,8 @@ class PaletteManager:
         # Change the OBJ's table_addr var
         self.table_addr = new_table_addr
         self.set_used_palettes()
+        log.info("Palette Table was repointed at {}"
+                 .format(conv.HEX(self.table_addr)))
 
 
 class ImageManager(PaletteManager):
@@ -586,7 +591,7 @@ class ImageManager(PaletteManager):
             palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
             if palette_id not in used_palettes:
-                print("Image: Removing pal: " + conv.HEX(palette_id))
+                log.info("Image: Removing pal: " + conv.HEX(palette_id))
                 unused_palettes_addres.append(working_addr + (i * 8))
 
         # Delete all the unused palettes

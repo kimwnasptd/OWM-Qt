@@ -8,13 +8,17 @@ from core_files import core
 from PyQt5 import QtWidgets
 from PIL import Image
 
+log = sts.get_logger(__name__)
+
 
 # Menu Functions
 def export_ow_image(ui):
+    tbl, ow = ui.selected_table, ui.selected_ow
+    log.info("Exporting the frames of OW ({}, {})".format(tbl, ow))
     image = ui.sprite_manager.make_image_from_rom(ui.selected_ow,
                                                   ui.selected_table)
     # For the Palette
-    addr = ui.root.getOW(ui.selected_table, ui.selected_ow).ow_data_addr
+    addr = ui.root.getOW(tbl, ow).ow_data_addr
     palette_id = core.get_ow_palette_id(addr)
     palette_addr = ui.sprite_manager.get_palette_addr(palette_id)
     sprite_palette = img.create_palette_from_gba(rom.ptr_to_addr(palette_addr))
@@ -145,6 +149,7 @@ def import_pokemon_sprsrc(ui):
 
 
 def palette_cleanup(ui):
+    log.info("Initiating the Palette Table cleanup...")
     ui.tree_model.paletteCleanup(ui)
 
 
@@ -154,7 +159,6 @@ def remove_table(ui):
 
 # Buttons Functions
 def addOWButtonFunction(ui):
-
     owWindow = windows.addOWWindow(ui)
     owWindow.exec()
 

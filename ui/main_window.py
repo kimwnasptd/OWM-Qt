@@ -20,6 +20,7 @@ from ui.support_windows import uic
 
 from PyQt5 import QtWidgets, QtCore
 
+log = sts.get_logger(__name__)
 base, form = uic.loadUiType("ui_templates/mainwindow.ui")
 
 
@@ -117,8 +118,7 @@ class MyApp(base, form):
             return
         self.paths['OPEN_ROM_PATH'] = os.path.dirname(os.path.realpath(fn))
 
-        print("----------------------------")
-        print("Opened a new ROM: " + fn)
+        log.info("Opened a new ROM: " + fn)
         sts.show("Opening ROM: "+fn)
         rom.rom.load_rom(fn)
 
@@ -158,8 +158,7 @@ class MyApp(base, form):
             return
         self.paths['OPEN_ROM_PATH'] = os.path.dirname(os.path.realpath(fn))
 
-        print("----------------------------")
-        print("Opened a new ROM: " + fn)
+        log.info("Opened a new ROM: " + fn)
         sts.show("Opening ROM: "+fn)
         rom.rom.load_rom(fn)
 
@@ -198,7 +197,7 @@ class MyApp(base, form):
             elif core.is_orig_table_ptr(addr):
                 table_ptrs = addr
 
-        print(conv.HEX(table_ptrs))
+        log.info(conv.HEX(table_ptrs))
         # Find Palette Offsets
         self.statusbar.showMessage("Searching for Palette Offsets")
         for addr in range(0, rom.rom.rom_size, 4):
@@ -207,7 +206,7 @@ class MyApp(base, form):
                     img.is_palette_ptr(rom.ptr_to_addr(addr))):
                 palette_table = rom.ptr_to_addr(addr)
                 palette_table_ptrs = rom.find_ptr_in_rom(palette_table, 3)
-                print("Found the Palette Table at " + conv.HEX(palette_table))
+                log.info("Found the Palette Table at " + conv.HEX(palette_table))
                 break
 
         return [table_ptrs, palette_table_ptrs]

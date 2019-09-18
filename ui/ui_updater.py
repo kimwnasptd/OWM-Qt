@@ -1,5 +1,8 @@
 import core_files.conversions as conv
 from core_files import core
+import core_files.statusbar as sts
+
+log = sts.get_logger(__name__)
 
 
 def update_ow_menu_buttons(ui):
@@ -181,6 +184,6 @@ def update_gui(ui):
         update_menu_actions(ui)
         ui.OWTreeView.setFocus()
     except IndexError:
-        print("update_gui: Caught an IndexError Exception!")
+        log.info("update_gui: Caught an IndexError Exception!")
         pass
     # update_viewer(ui)

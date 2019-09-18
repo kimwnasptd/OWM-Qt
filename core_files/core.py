@@ -2,6 +2,8 @@ from . import rom_api as rom
 from . import statusbar as sts
 from . import conversions as conv
 
+log = sts.get_logger(__name__)
+
 frametype1 = [0x0, 0x1]     # [16x32]
 frametype2 = [0x0, 0x2]     # [32x32]
 frametype3 = [0x80, 0x0]    # [16x16]
@@ -180,11 +182,13 @@ def clear_frames(addr, frames, size):
     # first check if FRAMES_END is inside the data (overlay: happens with 0xFF)
     if sublist([0xF0, 0x35, 0x21, 0x08], rom.read_bytes(addr, frames*size)):
         rom.write_word(addr + frames*size, 0xFFFFFFFF)
-        print("WARNING: Found a colision")
+        log.info("WARNING: Found a colision")
         return
 
     rom.fill_with_data(addr, frames * size, 0xFF)
-    print(conv.HEX(addr))
+    log.info("Removing the OW's frames data ({} frames)".format(frames))
+    log.info("Set to 0xFF the bytes {}-{} ({} bytes)".format(
+        conv.HEX(addr), conv.HEX(addr + frames * size), frames * size))
     rom.write_word(addr, 0xFFFFFFFF)
 
 
@@ -273,12 +277,6 @@ def addrs_filter(new_table, ow_data_addr, frames_ptrs, frames_addr):
     else:
         frames_addr = rom.find_free_space(0x40000, frames_addr, 2)
 
-    print("Found Addresses: {} {} {} {}".format(
-        conv.HEX(new_table),
-        conv.HEX(ow_data_addr),
-        conv.HEX(frames_ptrs),
-        conv.HEX(frames_addr))
-    )
     return new_table, ow_data_addr, frames_ptrs, frames_addr
 
 
@@ -477,9 +475,6 @@ class FramesPointers:
         elif frame == frametype8:
             tp = 8
 
-        # if tp == -1:
-        #     print("get_type: Cant find type for " + HEX_LST(frame))
-            # print(HEX_LST(read_bytes(self.frames_ptrs_addr, 8)))
         return tp
 
     def get_num(self):
@@ -492,9 +487,6 @@ class FramesPointers:
         while is_frames_end(addr) != 1:
             i += 1
             addr += size
-
-            # if (addr == 0xc6921a):
-            #     print("HELLOOOOO")
         return i
 
     def clear(self):
@@ -603,12 +595,11 @@ class OWPointerTable:
                                0x33)
 
             # Write the table's info
-            print("\ntbl_init: OW Pointers(WR): " + conv.HEX(self.table_addr))
-            print("tbl_init: OW Data(WR): " + conv.HEX(self.ow_data_addr))
-            print("tbl_init: Frames Pointers(WR): " +
-                  conv.HEX(self.frames_ptrs_addr))
-            print("tbl_init: Frames Address(WR): " +
-                  conv.HEX(self.frames_addr))
+            log.info("New OW Pointers Table: " + conv.HEX(self.table_addr))
+            log.info("New OW Data Table: " + conv.HEX(self.ow_data_addr))
+            log.info("New Frames Pointers Table: " +
+                     conv.HEX(self.frames_ptrs_addr))
+            log.info("New Frames Addresses: " + conv.HEX(self.frames_addr))
             rom.write_ptr(self.ow_data_addr, self.end_of_table)
             rom.write_ptr(self.frames_ptrs_addr, self.end_of_table + 4)
             rom.write_ptr(self.frames_addr, self.end_of_table + 8)
@@ -747,9 +738,9 @@ class Root:
         self.ow_tables_addr = rom.TBL_0
         rom.FRAMES_PTRS_PTRS = set()
 
-        # Get addresses of OW Data Pointers Tables (Table 1)
+        log.info("--- Start checking if any OWs Table need repointing ---")
+        log.info("Finding the addresses of OWs Tables (Table 1)")
         addr = self.ow_tables_addr
-        # [ptr:Table 1] or Table 0's entries
         ow_tbls_addrs = []
         while is_table_ptr(addr):
             if rom.ptr_to_addr(addr) in [0x39FFB0, 0x39FEB0]:
@@ -759,23 +750,30 @@ class Root:
             self.ow_tables_addrs.append(rom.ptr_to_addr(addr))
             addr += 4
 
+        log.debug("OW Tables: {}".format(
+            conv.HEX_LST(self.ow_tables_addrs)))
         for addr in ow_tbls_addrs:
-            print("\nroot: About to check: {} ({})".format(
-                conv.HEX(addr),
+            log.info("Check if OWs Table at {} needs repointing".format(
                 conv.HEX(rom.ptr_to_addr(addr)))
             )
             if table_needs_repoint(addr):
                 # If it was the first table, change any pointer in the
                 # ROM that might be pointing to it
                 if addr == self.ow_tables_addr:
+                    log.info("OWs Table at {} (default) must be repointed"
+                             .format(conv.HEX(rom.ptr_to_addr(addr))))
                     sts.show("Searching for Pointers for the Default OW Table")
                     ptrs = rom.find_ptr_in_rom(rom.ptr_to_addr(addr), True)
                     self.repoint_table(addr)
                     for ptr in ptrs:
                         rom.write_ptr(rom.ptr_to_addr(addr), ptr)
                 else:
+                    log.info("OWs Table at {} must be repointed"
+                             .format(conv.HEX(rom.ptr_to_addr(addr))))
                     self.repoint_table(addr)
             else:
+                log.info("OWs Table at {} has already been repointed from OWM"
+                         .format(conv.HEX(rom.ptr_to_addr(addr))))
                 table_ptr_addr = addr
                 table_addr = rom.ptr_to_addr(addr)
                 end_of_table = table_addr + (256 * 4)
@@ -783,12 +781,14 @@ class Root:
                 frames_ptrs = rom.ptr_to_addr(end_of_table + 4)
                 frames_addr = rom.ptr_to_addr(end_of_table + 8)
                 sts.show("Loading Table (" + conv.HEX(table_addr) + ")")
-                print("root: Tables Table: " + conv.HEX(table_ptr_addr))
-                print("root: Table: " +
-                      conv.HEX(rom.ptr_to_addr(self.ow_tables_addr)))
-                print("root: OW Data: " + conv.HEX(ow_data_addr))
-                print("root: Frames Pointers: " + conv.HEX(frames_ptrs))
-                print("root: Frames Address: " + conv.HEX(frames_addr))
+                log.info("Existing Tables Table: " + conv.HEX(table_ptr_addr))
+                log.info("Existing OWs Table: " +
+                         conv.HEX(rom.ptr_to_addr(self.ow_tables_addr)))
+                log.info("Existing OW Data Table: " + conv.HEX(ow_data_addr))
+                log.info("Existing Frames Pointers Table: " +
+                         conv.HEX(frames_ptrs))
+                log.info("Existing Frames Address Table: " +
+                         conv.HEX(frames_addr))
                 # Create the Table Object
                 ptr_tbl_obj = OWPointerTable(table_ptr_addr,
                                              table_addr,
@@ -797,14 +797,12 @@ class Root:
                                              frames_addr)
                 self.tables_list.append(ptr_tbl_obj)
 
-            print("\nroot: About to check: {} ({})".format(
+            log.info("Check the next table for repointing: {} ({})".format(
                 conv.HEX(addr),
                 conv.HEX(rom.ptr_to_addr(addr)))
             )
-        print("\nroot: Not a ptr: Address {} | Pointing to {}".format(
-            conv.HEX(addr),
-            conv.HEX(rom.ptr_to_addr(addr)))
-        )
+        log.info("Address {} is not a pointer.".format(conv.HEX(addr)))
+        log.info("--- Stop checking the OWs Tables for repointing ---")
 
     def reload(self):
         self.tables_list = []
@@ -879,12 +877,12 @@ class Root:
 
         # Move all the table ptrs to the left
         addr = self.ow_tables_addr + (i * 4)
-        print("remove_table: about to remove: " + conv.HEX(addr))
+        log.info("remove_table: about to remove: " + conv.HEX(addr))
         rom.fill_with_data(addr, 4, 0)
 
         addr += 4
         while is_table_ptr(addr):
-            print("remove_table: Moving left ptr: " + conv.HEX(addr))
+            log.info("remove_table: Moving left ptr: " + conv.HEX(addr))
             rom.move_data(addr, addr - 4, 4, 0)
             addr += 4
 
@@ -907,8 +905,7 @@ class Root:
                 break
             ows_num += 1
             addr += 4
-        print("Found OWs: {} | Not OW Pointer: {} | Pointing to: {}".format(
-            ows_num, conv.HEX(addr), conv.HEX(rom.ptr_to_addr(addr))))
+        log.info("Found OWs: {}".format(ows_num))
 
         # Create the new table and fix the previous ptrs
         sts.show("Searching Free Space for the New Table")

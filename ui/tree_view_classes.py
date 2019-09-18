@@ -118,7 +118,7 @@ class OWNode(Node):
 
         self.image = img.ImageManager(
             self.root).get_ow_frame(ow_id, table_id, 0)
-        # print("OW: "+str(ow_id))
+
         self.frames = self.root.getOW(table_id, ow_id).frames.get_num()
 
 
