@@ -1,9 +1,12 @@
-from PyQt5 import QtCore, QtGui
-from ui_functions.RomInfo import *
+import core_files.image_editor as img
+import core_files.conversions as conv
+import core_files.statusbar as sts
+
+from core_files import core
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PIL.ImageQt import ImageQt
 
-# the root is defined in ImageEditor.py
-# the rom is defined in the rom_api.py
+log = sts.get_logger(__name__)
 
 
 class Node(object):
@@ -97,10 +100,15 @@ class TableNode(Node):
 
 
 class OWNode(Node):
-    def __init__(self, id, parent=None):
+    '''
+    Represent an OW in Qt.
+    INPUTS: id, root, parent
+    '''
+    def __init__(self, id, root=None, parent=None):
         super(OWNode, self).__init__(id, parent)
         self.name = "Overworld "
         self.frames = 0
+        self.root = root
 
         if parent is not None:
             self.setInfo()
@@ -112,17 +120,19 @@ class OWNode(Node):
         table_id = self._parent.getId()
         ow_id = self._id
 
-        self.image = ImageManager().get_ow_frame(ow_id, table_id, 0)
-        # print("OW: "+str(ow_id))
-        self.frames = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_num()
+        self.image = img.ImageManager(
+            self.root).get_ow_frame(ow_id, table_id, 0)
+
+        self.frames = self.root.getOW(table_id, ow_id).frames.get_num()
 
 
 class TreeViewModel(QtCore.QAbstractItemModel):
-    """INPUTS: Node, QObject"""
+    """INPUTS: Node, OWM root, QObject"""
 
-    def __init__(self, model_root, parent=None):
+    def __init__(self, model_root, root, parent=None):
         super(TreeViewModel, self).__init__(parent)
         self._rootNode = model_root
+        self.root = root
 
         for table in range(len(root.tables_list)):
             # add the table nodes
@@ -130,13 +140,13 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
             for ow in range(len(root.tables_list[table].ow_data_ptrs)):
                 # add the ow nodes
-                newOWNode = OWNode(ow, newTableNode)
-
-
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
+                newOWNode = OWNode(ow, newTableNode, self.root)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int
+        """
         if not parent.isValid():
             parentNode = self._rootNode
         else:
@@ -144,17 +154,18 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return parentNode.childCount()
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
-
     def columnCount(self, parent):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int
+        """
         return 3
 
-    """INPUTS: QModelIndex, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
-
     def data(self, index, role):
-
+        """
+        INPUTS: QModelIndex, int
+        OUTPUT: QVariant, strings are cast to QString which is a QVariant
+        """
         if not index.isValid():
             return None
 
@@ -174,12 +185,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
                 typeInfo = node.typeInfo()
 
                 if typeInfo == "ow_node":
-                    return QtGui.QIcon(QtGui.QPixmap.fromImage(ImageQt(node.image)))
-
-    """INPUTS: QModelIndex, QVariant, int (flag)"""
+                    return QtGui.QIcon(
+                        QtGui.QPixmap.fromImage(ImageQt(node.image)))
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
-
+        """INPUTS: QModelIndex, QVariant, int (flag)"""
         if index.isValid():
 
             node = index.internalPointer()
@@ -199,10 +209,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return False
 
-    """INPUTS: int, Qt::Orientation, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
-
     def headerData(self, section, orientation, role):
+        """
+        INPUTS: int, Qt::Orientation, int
+        OUTPUT: QVariant, strings are cast to QString which is a QVariant
+        """
         if role == QtCore.Qt.DisplayRole:
             if section == 0:
                 return "OWs Structure"
@@ -211,18 +222,19 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             elif section == 2:
                 return "Frames"
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int (flag)"""
-
     def flags(self, index):
+        """
+        INPUTS: QModelIndex
+        OUTPUT: int (flag)
+        """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return the parent of the node with the given QModelIndex"""
-
     def parent(self, index):
-
+        """
+        INPUTS: QModelIndex
+        OUTPUT: QModelIndex
+        Should return the parent of the node with the given QModelIndex
+        """
         node = self.getNode(index)
         parentNode = node.parent()
 
@@ -231,12 +243,13 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return self.createIndex(parentNode.row(), 0, parentNode)
 
-    """INPUTS: int, int, QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
-
     def index(self, row, column, parent):
-
+        """
+        INPUTS: int, int, QModelIndex
+        OUTPUT: QModelIndex
+        Should return a QModelIndex that corresponds to the given row,
+        column and parent node
+        """
         parentNode = self.getNode(parent)
 
         if row >= parentNode.childCount():
@@ -249,10 +262,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         else:
             return QtCore.QModelIndex()
 
-    """CUSTOM"""
-    """INPUTS: QModelIndex"""
-
     def getNode(self, index):
+        """
+        CUSTOM
+        INPUTS: QModelIndex
+        """
         if index.isValid():
             node = index.internalPointer()
             if node:
@@ -260,10 +274,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return self._rootNode
 
-    """INPUTS: int, int, QModelIndex"""
-
     def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
-
+        """INPUTS: int, int, QModelIndex"""
         parentNode = self.getNode(parent)
 
         self.beginInsertRows(parent, position, position + rows - 1)
@@ -273,15 +285,16 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
             if parentNode.typeInfo() == "table_node":
                 # Adding OWs
-                childNode = OWNode(position + row)
+                childNode = OWNode(position + row, self.root)
                 success = parentNode.insertChild(position + row, childNode)
                 # Re-init the node, so it loads the frame
                 self.setData(self.index(row + position, 0, parent), None)
             if parentNode.typeInfo() == "NODE":
-                childNode = TableNode(childCount)
+                childNode = TableNode(childCount, self.root)
                 success = parentNode.insertChild(childCount, childNode)
 
-        # Only for the OWs, increase the name Id by one, in case an OW was INSERTED
+        # Only for the OWs, increase the name Id by one,
+        # in case an OW was INSERTED
         if parentNode.typeInfo() == "table_node":
             for row in range(position + rows, childCount + rows):
                 self.setData(self.index(row, 0, parent), row)
@@ -290,10 +303,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         return success
 
-    """INPUTS: int, int, QModelIndex"""
-
     def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
-
+        """INPUTS: int, int, QModelIndex"""
         success = True
         if rows == 0:
             return
@@ -305,10 +316,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             success = parentNode.removeChild(position)
 
             if parentNode.typeInfo() == "table_node":
-                #remove OW
-                root.tables_list[parentNode.getId()].remove_ow(position)
+                # remove OW
+                self.root.getTable(parentNode.getId()).remove_ow(position)
             elif parentNode.typeInfo() == "NODE":
-                root.remove_table(position)
+                self.root.remove_table(position)
 
         for row in range(position, parentNode.childCount()):
             self.setData(self.index(row, 0, parent), row)
@@ -324,29 +335,30 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         self.removeRows(0, self.tablesCount())
 
-        for table in range(root.tables_num()):
+        for table in range(self.root.tables_num()):
             # add the table nodes
             newTableNode = TableNode(table, self._rootNode)
 
-            for ow in range(len(root.tables_list[table].ow_data_ptrs)):
+            for ow in range(len(self.root.getTable(table).ow_data_ptrs)):
                 # add the ow nodes
-                newOWNode = OWNode(ow, newTableNode)
+                newOWNode = OWNode(ow, self.root, newTableNode)
 
         self.endResetModel()
 
     # OW/Table interacting functionsqt
-
     def insertOWs(self, ow_id, table_id, rows, ow_type, num_of_frames):
-
         parent = self.index(table_id, 0, QtCore.QModelIndex())
         parentNode = self.getNode(parent)
 
         for ow in range(rows):
             if ow_id == -1:
                 ow_id = parentNode.childCount()
-                root.tables_list[parentNode.getId()].add_ow(ow_type, num_of_frames)
+                self.root.getTable(parentNode.getId()).add_ow(ow_type,
+                                                              num_of_frames)
             else:
-                root.tables_list[parentNode.getId()].insert_ow(ow_id, ow_type, num_of_frames)
+                self.root.getTable(parentNode.getId()).insert_ow(ow_id,
+                                                                 ow_type,
+                                                                 num_of_frames)
 
         self.insertRows(ow_id, rows, parent)
 
@@ -355,7 +367,8 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.removeRows(ow_id, rows, tableNode)
 
         # Manually reset the selected Item in the View, removeRows
-        # removeRows deletes the currentIndex in the selectionModel, so the next one becomes current
+        # removeRows deletes the currentIndex in the selectionModel,
+        # so the next one becomes current
         if not self.owsCount(table_id):
             return
 
@@ -363,12 +376,12 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ow_id -= 1
 
         model = ui.OWTreeView.selectionModel()
-        model.setCurrentIndex(self.index(ow_id, 0, tableNode), QtCore.QItemSelectionModel.Current)
+        model.setCurrentIndex(self.index(ow_id, 0, tableNode),
+                              QtCore.QItemSelectionModel.Current)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
     def resizeOW(self, ow_id, table_id, ow_type, num_of_frames, ui):
-
-        root.tables_list[table_id].resize_ow(ow_id, ow_type, num_of_frames)
+        self.root.getTable(table_id).resize_ow(ow_id, ow_type, num_of_frames)
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
@@ -378,7 +391,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         parent = QtCore.QModelIndex()
         parentNode = self.getNode(parent)
 
-        root.custom_table_import(ow_ptrs, data_ptrs, frames_ptrs, frames_addr)
+        self.root.custom_table_import(ow_ptrs,
+                                      data_ptrs,
+                                      frames_ptrs,
+                                      frames_addr)
         self.insertRows(-1, 1, parent)
 
         ui.selected_table = self.tablesCount() - 1
@@ -387,7 +403,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
     def removeTable(self, table_id, ui):
         quit_msg = "Are you sure you want to delete the entire table?"
-        reply = QtWidgets.QMessageBox.question(ui, 'Message', quit_msg, QtWidgets.QMessageBox.Yes,
+        reply = QtWidgets.QMessageBox.question(ui,
+                                               'Message',
+                                               quit_msg,
+                                               QtWidgets.QMessageBox.Yes,
                                                QtWidgets.QMessageBox.No)
 
         if reply == QtWidgets.QMessageBox.No:
@@ -396,7 +415,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.statusbar.showMessage("Removing Table...")
         self.removeRows(table_id, 1, QtCore.QModelIndex())
         ui.statusbar.showMessage("Ready")
-        n = root.tables_num()
+        n = self.root.tables_num()
 
         if n == 0:
             ui.selected_table = None
@@ -404,7 +423,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ui.selected_table = table_id - 1
         ui.selected_ow = None
 
-        from ui_functions.ui_updater import update_gui
+        from ui.ui_updater import update_gui
         update_gui(ui)
 
     def tablesCount(self):
@@ -429,9 +448,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
         # ui.initPaletteIdComboBox()
-        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+        ui.paletteIDComboBox.addItem(
+            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def importPokeSpr(self, image_obj, ow_id, table_id, ui):
@@ -441,12 +461,17 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ui.sprite_manager.repoint_palette_table()
             ui.rom_info.palette_table_addr = ui.sprite_manager.table_addr
 
-        ow_type = root.tables_list[ui.selected_table].ow_data_ptrs[ow_id].frames.get_type()
-        frames_num = root.tables_list[ui.selected_table].ow_data_ptrs[ow_id].frames.get_num()
+        ow_type = self.root.getOW(ui.selected_table, ow_id).frames.get_type()
+        frames_num = self.root.getOW(ui.selected_table, ow_id).frames.get_num()
 
-        if (ow_type != 2) or (frames_num != 9):
-            root.tables_list[ui.selected_table].resize_ow(ow_id, 2, 9)
-            resetRoot()
+        log.info("OW Type: {} | Num of Frames: {}".format(ow_type, frames_num))
+        if (ow_type != core.T32x32) or (frames_num != 9):
+            log.info(
+                "Need to repoint the OW before importing the pokemon data")
+            self.root.getTable(ui.selected_table).resize_ow(ow_id,
+                                                            core.T32x32,
+                                                            9)
+            ui.root.__init__()
 
         ui.sprite_manager.import_pokemon(image_obj, table_id, ow_id)
 
@@ -455,9 +480,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+        ui.paletteIDComboBox.addItem(
+            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def importOWSpr(self, image_obj, ow_id, table_id, ui):
@@ -467,12 +493,12 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             ui.sprite_manager.repoint_palette_table()
             ui.rom_info.palette_table_addr = ui.sprite_manager.table_addr
 
-        ow_type = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_type()
-        frames_num = root.tables_list[table_id].ow_data_ptrs[ow_id].frames.get_num()
+        ow_type = self.root.getOW(table_id, ow_id).frames.get_type()
+        frames_num = self.root.getOW(table_id, ow_id).frames.get_num()
 
         if (ow_type != 2) or (frames_num != 9):
-            root.tables_list[table_id].resize_ow(ow_id, 2, 9)
-            resetRoot()
+            self.root.getTable(table_id).resize_ow(ow_id, 2, 9)
+            ui.root.__init__()
 
         ui.sprite_manager.import_ow(image_obj, table_id, ow_id)
 
@@ -481,9 +507,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
-        ui.paletteIDComboBox.addItem(capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+        ui.paletteIDComboBox.addItem(
+            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
 
-        from ui_functions.ui_updater import update_palette_info
+        from ui.ui_updater import update_palette_info
         update_palette_info(ui)
 
     def paletteCleanup(self, ui):
@@ -497,7 +524,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
             self.setData(owNode, None)
             ui.item_selected(self.index(ui.selected_ow, 0, tableNode))
 
-        from ui_functions.ui_updater import update_gui
+        from ui.ui_updater import update_gui
         update_gui(ui)
 
     def initOW(self, table_id, ow_id):

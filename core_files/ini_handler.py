@@ -1,6 +1,15 @@
-from core_files.rom_api import HEX, HEX_LST
+from . import conversions as conv
+from . import statusbar as sts
 
-ini = open('settings.ini', 'r')
+log = sts.get_logger(__name__)
+
+ini = None
+try:
+    ini = open('settings.ini', 'r')
+except FileNotFoundError:
+    log.info("Creating the settings.ini file")
+    ini = open('settings.ini', 'w+')
+
 
 def check_if_name_exists(name):
     ini.seek(0)
@@ -12,12 +21,14 @@ def check_if_name_exists(name):
 
     return 0
 
+
 def get_line_string(pos):
     ini.seek(0)
     for i, line in enumerate(ini):
         if i == pos:
             line = line[:-1]
             return line
+
 
 def get_line_offset(pos, profile=-1):
     # If profile != 1 return a decimal and not a hex
@@ -30,6 +41,7 @@ def get_line_offset(pos, profile=-1):
                 return int(offset)
             return int(offset, 16)
 
+
 def get_name_line_index(name):
     ini.seek(0)
 
@@ -37,6 +49,7 @@ def get_name_line_index(name):
     for i, line in enumerate(ini):
         if line == search_name:
             return i
+
 
 def get_palette_ptrs(pos):
     ini.seek(0)
@@ -51,6 +64,7 @@ def get_palette_ptrs(pos):
             ptrs[2] = int(ptrs[2], 16)
             return ptrs
 
+
 def check_if_name(pos):
     ini.seek(0)
 
@@ -60,12 +74,14 @@ def check_if_name(pos):
                 return 1
             return 0
 
+
 def get_name_from_line(pos):
     ini.seek(0)
 
     for i, line in enumerate(ini):
         if i == pos:
             return line[1:-2]
+
 
 def write_text_end(data):
     with open('settings.ini', 'a+') as current_ini:
@@ -74,13 +90,14 @@ def write_text_end(data):
     global ini
     ini = open('settings.ini', 'r')
 
+
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
     text = '\n[' + profile_name + ']' + '\n'
-    text += "OW Table Pointers = " + HEX(ow_table_ptrs) + "\n"
+    text += "OW Table Pointers = " + conv.HEX(ow_table_ptrs) + "\n"
     text += "Palette Table Pointers Address = "
-    text += HEX(palette_table_ptrs[0]) + ", "
-    text += HEX(palette_table_ptrs[1]) + ", "
-    text += HEX(palette_table_ptrs[2]) + "\n"
+    text += conv.HEX(palette_table_ptrs[0]) + ", "
+    text += conv.HEX(palette_table_ptrs[1]) + ", "
+    text += conv.HEX(palette_table_ptrs[2]) + "\n"
     write_text_end(text)
 
 
