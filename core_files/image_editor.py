@@ -85,13 +85,11 @@ def write_palette_id(addr, palette_id):
 def is_palette_table_end(addr):
     if sum(rom.read_bytes(addr, 4)) == 0:
         if rom.read_bytes(addr + 4, 2) == [0xff, 0x11]:
-            return 1
+            return True
         else:
-            return 0
-
-    if not is_palette_ptr(addr):
-        return 1
-    return 0
+            return False
+    else:
+        return False
 
 
 def is_palette_ptr(addr):
@@ -293,8 +291,7 @@ class PaletteManager:
 
         working_addr = self.table_addr
 
-        while is_palette_table_end(working_addr) == 0 and \
-                is_palette_ptr(working_addr):
+        while not is_palette_table_end(working_addr):
             self.used_palettes.append(get_palette_id(working_addr))
             working_addr += 8
 
@@ -351,7 +348,7 @@ class PaletteManager:
         max_id = -1
         working_addr = self.table_addr
 
-        while is_palette_table_end(working_addr) == 0:
+        while not is_palette_table_end(working_addr):
             if get_palette_id(working_addr) > max_id:
                 # Found new max
                 max_id = get_palette_id(working_addr)
@@ -396,23 +393,27 @@ class PaletteManager:
         return palette_addr
 
     def import_palette(self, palette):
-
+        log.info("Importing new palette")
         # Import the palette in the ROM
         colors_addr = self.insert_rgb_to_gba_palette(palette)
 
         # Import the palette in the palette table
         table_end = self.get_table_end()
         rom.move_data(table_end, table_end + 8, 8, 0)
+        new_pal_addr = table_end
 
         palette_id = self.get_max_palette_id() + 1
         # Make sure that the palette id is NOT
         # 0x11FF -> FF 11 (Palette Table End)
         if palette_id == 0x11FF:
             palette_id += 1
+        log.info("The new palette ID will be " + conv.HEX(palette_id))
 
-        rom.write_ptr(colors_addr, table_end)
-        write_palette_id(table_end, palette_id)
-        rom.write_bytes(table_end + 6, [0x0, 0x0])
+        rom.write_ptr(colors_addr, new_pal_addr)
+        write_palette_id(new_pal_addr, palette_id)
+        rom.write_bytes(new_pal_addr + 6, [0x0, 0x0])
+
+        return palette_id
 
     def repoint_palette_table(self):
 
@@ -484,8 +485,7 @@ class ImageManager(PaletteManager):
         palette = pokemon.getpalette()
 
         # Insert the palette
-        self.import_palette(palette)
-        palette_id = self.get_max_palette_id()
+        palette_id = self.import_palette(palette)
 
         ow = self.root.getOW(working_table, working_ow)
         core.write_ow_palette_id(ow.ow_data_addr, palette_id)
@@ -527,8 +527,7 @@ class ImageManager(PaletteManager):
         ow = self.root.getOW(working_table, working_ow)
 
         # Insert the palette
-        self.import_palette(palette)
-        palette_id = self.get_max_palette_id()
+        palette_id = self.import_palette(palette)
         core.write_ow_palette_id(ow.ow_data_addr, palette_id)
 
         # Insert the 9 frames
@@ -560,9 +559,7 @@ class ImageManager(PaletteManager):
         palette = sprite.getpalette()
 
         # Insert the palette
-        self.import_palette(palette)
-        palette_id = self.get_max_palette_id()
-
+        palette_id = self.import_palette(palette)
         ow = self.root.getOW(working_table, working_ow)
         core.write_ow_palette_id(ow.ow_data_addr, palette_id)
 
@@ -586,8 +583,6 @@ class ImageManager(PaletteManager):
         orig_pals_num = get_orig_palette_num()
         palette_num = self.get_palette_num()
         users_palettes = palette_num - orig_pals_num
-
-        # Get the addres of the non-used palettes
         used_palettes = self.get_used_pals()
 
         # Find the addresses of the unused palettes
@@ -597,7 +592,7 @@ class ImageManager(PaletteManager):
             palette_id = get_palette_id(working_addr + (i * 8))
             # Check every palette to see if it is used
             if palette_id not in used_palettes:
-                log.info("Image: Removing pal: " + conv.HEX(palette_id))
+                log.info("Removing unused Palette: " + conv.HEX(palette_id))
                 unused_palettes_addres.append(working_addr + (i * 8))
 
         # Delete all the unused palettes
