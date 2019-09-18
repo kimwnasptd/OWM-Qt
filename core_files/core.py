@@ -484,7 +484,7 @@ class FramesPointers:
         # Reads the total number of bytes
         addr = self.frames_addr
         i = 0
-        while is_frames_end(addr) != 1:
+        while not is_frames_end(addr):
             i += 1
             addr += size
         return i
@@ -653,7 +653,6 @@ class OWPointerTable:
                 break
 
     def add_ow(self, ow_type, num_of_frames):
-
         # First create the frames
         FramesOBJ = FramesPointers(0,
                                    0,

@@ -1,8 +1,12 @@
 import core_files.image_editor as img
 import core_files.conversions as conv
+import core_files.statusbar as sts
 
+from core_files import core
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PIL.ImageQt import ImageQt
+
+log = sts.get_logger(__name__)
 
 
 class Node(object):
@@ -460,9 +464,14 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ow_type = self.root.getOW(ui.selected_table, ow_id).frames.get_type()
         frames_num = self.root.getOW(ui.selected_table, ow_id).frames.get_num()
 
-        if (ow_type != 2) or (frames_num != 9):
-            self.root.getTable(ui.selected_table).resize_ow(ow_id, 2, 9)
-            ui.root = ui.root.__init__()
+        log.info("OW Type: {} | Num of Frames: {}".format(ow_type, frames_num))
+        if (ow_type != core.T32x32) or (frames_num != 9):
+            log.info(
+                "Need to repoint the OW before importing the pokemon data")
+            self.root.getTable(ui.selected_table).resize_ow(ow_id,
+                                                            core.T32x32,
+                                                            9)
+            ui.root.__init__()
 
         ui.sprite_manager.import_pokemon(image_obj, table_id, ow_id)
 
@@ -489,7 +498,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         if (ow_type != 2) or (frames_num != 9):
             self.root.getTable(table_id).resize_ow(ow_id, 2, 9)
-            ui.root = ui.root.__init__()
+            ui.root.__init__()
 
         ui.sprite_manager.import_ow(image_obj, table_id, ow_id)
 

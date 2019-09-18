@@ -1,6 +1,14 @@
 from . import conversions as conv
+from . import statusbar as sts
 
-ini = open('settings.ini', 'r')
+log = sts.get_logger(__name__)
+
+ini = None
+try:
+    ini = open('settings.ini', 'r')
+except FileNotFoundError:
+    log.info("Creating the settings.ini file")
+    ini = open('settings.ini', 'w+')
 
 
 def check_if_name_exists(name):

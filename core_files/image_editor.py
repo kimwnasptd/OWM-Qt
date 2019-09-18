@@ -470,6 +470,7 @@ class ImageManager(PaletteManager):
         of the pokemon. This function will map the tiles of the image to the
         correct OW's images/sides.
         '''
+        log.info("Importing pokemon from Spriter's Resource")
         # Check if the image is indexed
         palette = pokemon_image.getpalette()
         if palette is None:
@@ -489,16 +490,21 @@ class ImageManager(PaletteManager):
         ow = self.root.getOW(working_table, working_ow)
         core.write_ow_palette_id(ow.ow_data_addr, palette_id)
 
+        # Insert the frames
         working_addr = ow.frames.frames_addr
-
         positions = [(3, 0), (0, 0), (1, 1), (3, 0), (2, 0),
                      (1, 0), (0, 0), (1, 1), (0, 1)]
         for pos in positions:
             row = pos[0] * 32
             column = pos[1] * 32
-            working_addr += core.get_frame_size(2)
             import_frame(pokemon, working_addr, core.T32x32, row, column)
+            working_addr += core.get_frame_size(core.T32x32)
 
+        log.info("Inserted the image data at {}-{} ({} bytes)".format(
+            conv.HEX(ow.frames.frames_addr),
+            conv.HEX(working_addr),
+            9 * core.get_frame_size(core.T32x32)
+        ))
         self.set_used_palettes()
 
     def import_ow(self, ow_image, working_table, working_ow):
@@ -532,11 +538,11 @@ class ImageManager(PaletteManager):
         for pos in positions:
             row = pos[0] * 32
             column = pos[1] * 32
-            working_addr += core.get_frame_size(2)
             import_frame(ow_image_indexed,
                          working_addr,
                          core.T32x32,
                          row, column)
+            working_addr += core.get_frame_size(core.T32x32)
 
         self.set_used_palettes()
 
