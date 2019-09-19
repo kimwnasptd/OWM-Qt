@@ -433,6 +433,7 @@ class MyApp(base, form):
                 and self.selected_table is not None \
                 and not combobox_gets_initialized:
             palette_id = int(palette_id, 16)
+            log.info("Palette id will be written to " + conv.HEX(palette_id))
 
             tbl, ow = self.selected_table, self.selected_ow
             ow_data_addr = self.root.getOW(tbl, ow).ow_data_addr

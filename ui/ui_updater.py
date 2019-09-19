@@ -124,10 +124,15 @@ def update_palette_info(ui):
             # Sync the Palette Id ComboBox
             id_list = [conv.HEX(pal_id) for pal_id in
                        ui.sprite_manager.used_palettes]
+            id_list.sort()
             palette_id = core.get_ow_palette_id(ow_data_addr)
 
             index = id_list.index(conv.HEX(palette_id))
+            log.info("About to set palette ({}, {})".format(conv.HEX(palette_id), index))
             ui.paletteIDComboBox.setCurrentIndex(index)
+            # if ui.selected_table is not None and ui.selected_ow is not None:
+            #     ow = ui.root.getOW(ui.selected_table, ui.selected_ow)
+            #     log.info("PALETTEK7: " + conv.capitalized_hex(core.get_ow_palette_id(ow.ow_data_addr)))
 
             # Sync the Palette Slot Combobox
             ui.paletteSlotComboBox.setCurrentIndex(
@@ -142,7 +147,6 @@ def update_palette_info(ui):
         ui.paletteTableAddressLabel.setText(
             conv.capitalized_hex(ui.sprite_manager.table_addr))
         ui.usedPalettesLabel.setText(str(ui.sprite_manager.get_palette_num()))
-        # ui.availablePalettesLabel.setText(str(ui.sprite_manager.get_free_slots()))
 
 
 def update_menu_actions(ui):

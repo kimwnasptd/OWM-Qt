@@ -266,7 +266,7 @@ class PaletteManager:
     palette_num = 0
     max_size = 0
     free_slots = 0
-    used_palettes = []
+    used_palettes = set()
     root = None
 
     def __init__(self, root):
@@ -287,12 +287,12 @@ class PaletteManager:
 
     def set_used_palettes(self):
 
-        self.used_palettes = []
+        self.used_palettes = set()
 
         working_addr = self.table_addr
 
         while not is_palette_table_end(working_addr):
-            self.used_palettes.append(get_palette_id(working_addr))
+            self.used_palettes.add(get_palette_id(working_addr))
             working_addr += 8
 
     def get_table_end(self):
@@ -357,6 +357,22 @@ class PaletteManager:
 
         return max_id
 
+    def get_available_palette_id(self):
+        test_id = 0x1103
+
+        while test_id in self.used_palettes and test_id <= 0xFFFF:
+            test_id += 1
+            # Don't use the 0x11FF since this is reserved for the end
+            # of the palette table
+            if test_id == 0x11FF:
+                test_id += 1
+
+        if test_id > 0xFFFF:
+            log.warn("Can't find a valid palette_id! Aborting")
+            raise ValueError
+
+        return test_id
+
     def get_palette_addr(self, palette_id):
 
         working_addr = self.table_addr
@@ -402,11 +418,7 @@ class PaletteManager:
         rom.move_data(table_end, table_end + 8, 8, 0)
         new_pal_addr = table_end
 
-        palette_id = self.get_max_palette_id() + 1
-        # Make sure that the palette id is NOT
-        # 0x11FF -> FF 11 (Palette Table End)
-        if palette_id == 0x11FF:
-            palette_id += 1
+        palette_id = self.get_available_palette_id()
         log.info("The new palette ID will be " + conv.HEX(palette_id))
 
         rom.write_ptr(colors_addr, new_pal_addr)
@@ -505,7 +517,9 @@ class ImageManager(PaletteManager):
             conv.HEX(working_addr),
             9 * core.get_frame_size(core.T32x32)
         ))
-        self.set_used_palettes()
+
+        # Track the new palette as used
+        self.used_palettes.add(palette_id)
 
     def import_ow(self, ow_image, working_table, working_ow):
         '''
@@ -543,7 +557,8 @@ class ImageManager(PaletteManager):
                          row, column)
             working_addr += core.get_frame_size(core.T32x32)
 
-        self.set_used_palettes()
+        # Track the new palette as used
+        self.used_palettes.add(palette_id)
 
     def import_sprites(self, sprite_image, working_table, working_ow):
         # Check if the image is indexed
@@ -577,7 +592,8 @@ class ImageManager(PaletteManager):
 
             working_addr += core.get_frame_size(sprite_type)
 
-        self.set_used_palettes()
+        # Track the new palette as used
+        self.used_palettes.add(palette_id)
 
     def palette_cleanup(self):
         orig_pals_num = get_orig_palette_num()

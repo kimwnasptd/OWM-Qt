@@ -442,17 +442,24 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
         ui.sprite_manager.import_sprites(image_obj, table_id, ow_id)
 
+        # Select the correct palette for the OW
+        ow = ui.root.getOW(table_id, ow_id)
+
+        # need to keep the ids sorted
+        palette_id = core.get_ow_palette_id(ow.ow_data_addr)
+        ids = [conv.HEX(pal_id) for pal_id in
+               ui.sprite_manager.used_palettes]
+        ids.sort()
+        log.info("About to insert palette ({}, {})".format(conv.capitalized_hex(palette_id), ids.index(conv.HEX(palette_id))))
+        ui.paletteIDComboBox.insertItem(
+            ids.index(conv.HEX(palette_id)),
+            conv.capitalized_hex(palette_id))
+
+        # Update the tree model
         tableNode = self.index(table_id, 0, QtCore.QModelIndex())
         owNode = self.index(ow_id, 0, tableNode)
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
-
-        # ui.initPaletteIdComboBox()
-        ui.paletteIDComboBox.addItem(
-            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
-
-        from ui.ui_updater import update_palette_info
-        update_palette_info(ui)
 
     def importPokeSpr(self, image_obj, ow_id, table_id, ui):
 
@@ -480,8 +487,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
+        # Select the correct palette for the OW
+        ow = ui.root.getOW(table_id, ow_id)
         ui.paletteIDComboBox.addItem(
-            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+            conv.capitalized_hex(core.get_ow_palette_id(ow.ow_data_addr)))
 
         from ui.ui_updater import update_palette_info
         update_palette_info(ui)
@@ -507,8 +516,10 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         self.setData(owNode, None)
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
+        # Select the correct palette for the OW
+        ow = ui.root.getOW(table_id, ow_id)
         ui.paletteIDComboBox.addItem(
-            conv.capitalized_hex(ui.sprite_manager.used_palettes[-1]))
+            conv.capitalized_hex(core.get_ow_palette_id(ow.ow_data_addr)))
 
         from ui.ui_updater import update_palette_info
         update_palette_info(ui)
