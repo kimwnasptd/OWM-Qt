@@ -10,6 +10,7 @@ class RomInfo:
     palette_table_ptr_addr = []
     path = ''
     free_space = 0x0
+    reserved_regions = []
     rom_successfully_loaded = 0
 
     Profiler = ini.ProfileManager("")
@@ -27,6 +28,7 @@ class RomInfo:
             # Update the ROM's OW Table Info and Templates
             rom.update_ow_tables_pointers_table(self.ow_table_ptr)
             rom.update_rom_tamplates(self.path)
+            rom.update_resesrved_regions(self.reserved_regions)
             # Update the palette table info
             rom.update_palette_table_pointers(self.palette_table_ptr_addr)
 
@@ -39,17 +41,18 @@ class RomInfo:
         if rom.ptr_to_addr(0x160EE0) == 0x1A2000:
             self.name = "JPAN"
 
-    def set_info(self, start_pos):
-        self.ow_table_ptr = ini.get_line_offset(start_pos + 1)
-        self.palette_table_ptr_addr = ini.get_palette_ptrs(start_pos + 2)
+    def set_info(self, profile_pos):
+        self.ow_table_ptr = ini.get_line_offset(profile_pos + 1)
+        self.palette_table_ptr_addr = ini.get_palette_ptrs(profile_pos + 2)
+        self.reserved_regions = ini.get_reserved_regions(profile_pos)
         self.path = 'Files/' + self.name + "/"
 
     def load_profile_data(self, profile):
-        self.set_info(ini.get_name_line_index(profile))
         self.Profiler = ini.ProfileManager(self.name)
 
         # Update the ROM's OW Table Info and Templates
         rom.update_ow_tables_pointers_table(self.ow_table_ptr)
         rom.update_rom_tamplates(self.path)
+        rom.update_resesrved_regions(self.reserved_regions)
         # Update the palette table info
         rom.update_palette_table_pointers(self.palette_table_ptr_addr)

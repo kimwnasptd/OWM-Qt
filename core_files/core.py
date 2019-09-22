@@ -800,7 +800,6 @@ class Root:
                 conv.HEX(addr),
                 conv.HEX(rom.ptr_to_addr(addr)))
             )
-        log.info("Address {} is not a pointer.".format(conv.HEX(addr)))
         log.info("--- Stop checking the OWs Tables for repointing ---")
 
     def reload(self):

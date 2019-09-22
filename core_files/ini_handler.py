@@ -59,10 +59,36 @@ def get_palette_ptrs(pos):
             line = line[:-1]
             offset = line.split(' = ')[1]
             ptrs = offset.split(", ")
-            ptrs[0] = int(ptrs[0], 16)
-            ptrs[1] = int(ptrs[1], 16)
-            ptrs[2] = int(ptrs[2], 16)
-            return ptrs
+            tbl_ptrs = [int(ptr, 16) for ptr in ptrs]
+            return tbl_ptrs
+
+
+def get_reserved_regions(profile_pos):
+    '''
+    Reads the ROM's profile at given position and returns the list of address
+    ranges that should not be used.
+
+    If the field Reserved Regions at profile_pos + 3 does not exist then it
+    will return [].
+    '''
+    ini.seek(0)
+
+    reserved_regions = []
+    for i, line in enumerate(ini):
+        if i == profile_pos + 3:
+            if "Reserved Regions" not in line:
+                log.info("Reserved Regions not in the Profile. OWM will "
+                         "use the entire ROM's free space")
+                break
+
+            ranges = line.strip().split("=")[1].strip().split(", ")
+            for rng in ranges:
+                start, end = rng.split("-")
+                reserved_regions.append(
+                    (int(start, 16), int(end, 16))
+                )
+
+    return reserved_regions
 
 
 def check_if_name(pos):
@@ -93,11 +119,15 @@ def write_text_end(data):
 
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
     text = '\n[' + profile_name + ']' + '\n'
+
     text += "OW Table Pointers = " + conv.HEX(ow_table_ptrs) + "\n"
+
     text += "Palette Table Pointers Address = "
-    text += conv.HEX(palette_table_ptrs[0]) + ", "
-    text += conv.HEX(palette_table_ptrs[1]) + ", "
-    text += conv.HEX(palette_table_ptrs[2]) + "\n"
+    for ptr in palette_table_ptrs[:-1]:
+        text += conv.HEX(ptr) + ", "
+    text += conv.HEX(palette_table_ptrs[-1]) + "\n"
+
+    text += "Reserved Regions = 0x00000000-0x00000001, 0x00000002-0x00000003\n"
     write_text_end(text)
 
 

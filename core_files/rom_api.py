@@ -9,12 +9,13 @@ rom object that will reference the same object.
 import os
 import mmap
 from core_files import statusbar as sts
+from core_files import conversions as conv
 from core_files.game import Game
 from random import randint
 
-global rom, prntbar
+global rom
 rom = Game()
-prntbar = ""
+log = sts.get_logger(__name__)
 
 FREE_SPC = 0x0
 PAL_TBL_PTRS = []
@@ -58,6 +59,10 @@ def update_rom_tamplates(files_path):
             TEMPLATES.append(template)
 
 
+def update_resesrved_regions(new_regions):
+    rom.update_layered_rom_contents(new_regions)
+
+
 # Free Space Searching
 def update_free_space(size, start_addr=FREE_SPC):
     global FREE_SPC
@@ -79,11 +84,7 @@ def aggressive_search(size, start_addr=0, ending=0):
 
     # Search by Blocks
     for addr in range(start_addr, rom.rom_size, size):
-        if not rom.check_byte(addr, 0xFF):
-            continue
-        if not rom.check_byte(addr, 0xFF):
-            continue
-        if not rom.check_byte(addr, 0xFF):
+        if not rom.check_free_byte(addr):
             continue
 
         # Search that spectrum for the FFs
@@ -96,7 +97,7 @@ def aggressive_search(size, start_addr=0, ending=0):
                     candidate_addr += candidate_addr % ending
                 return candidate_addr
 
-            if not rom.check_byte(i, 0xFF):
+            if not rom.check_free_byte(i):
                 candidate_addr = i + 1
                 ffs = 0
             else:
@@ -112,7 +113,7 @@ def slow_search(size, start_addr=0, ending=0):
     target_addr = start_addr
     ffs = 0
     while ffs < size + ending:
-        if rom.check_byte(working_addr, 0xFF):
+        if rom.check_free_byte(working_addr):
             ffs += 1
         else:
             ffs = 0
@@ -147,6 +148,8 @@ def find_free_space(size, start_addr=0, ending=0):
 
     # The ROM is seriously running out of space
     sts.show("ERROR: No Free Space available. Closing")
+    log.error("Now Cant find free space in ROM: Size {} | Start Address {}"
+              .format(conv.HEX(size), conv.HEX(start_addr)))
     from time import sleep
     sleep(2)
     exit()
@@ -274,20 +277,20 @@ def find_bytes_in_rom(bytes_to_find):
     return -1
 
 
-def find_ptr_in_rom(pointing_addr, search_for_all=None):
-
+def find_ptr_in_rom(pointing_addr, search_for_all=False):
+    '''
+    Finds the addresses of all the pointers that point to a specific address
+    INPUTS: pointing_addr, search_for_all=False
+    '''
     ptrs_addr = []
     for addr in range(0, rom.rom_size, 4):
         if is_ptr(addr) and ptr_to_addr(addr) == pointing_addr:
-            if search_for_all is None:
-                return addr
-            else:
-                ptrs_addr += [addr]
+            ptrs_addr += [addr]
 
-    if search_for_all:
-        return ptrs_addr
-    else:
-        return 0
+            if not search_for_all:
+                break
+
+    return ptrs_addr
 
 
 def fill_with_data(addr, num_of_bytes, write_data):
@@ -302,7 +305,6 @@ def fill_with_data(addr, num_of_bytes, write_data):
     rom.seek(addr)
     for i in range(1, num_of_bytes + 1):
         rom.write_byte(write_data)
-    rom.flush()
 
 
 def copy_data(addr_to_copy_from, addr_to_copy_to, num_of_bytes):

@@ -205,8 +205,9 @@ class MyApp(base, form):
             if (rom.is_ptr(addr) and
                     img.is_palette_ptr(rom.ptr_to_addr(addr))):
                 palette_table = rom.ptr_to_addr(addr)
-                palette_table_ptrs = rom.find_ptr_in_rom(palette_table, 3)
-                log.info("Found the Palette Table at " + conv.HEX(palette_table))
+                palette_table_ptrs = rom.find_ptr_in_rom(palette_table, True)
+                log.info("Found the Palette Table at " +
+                         conv.HEX(palette_table))
                 break
 
         return [table_ptrs, palette_table_ptrs]
