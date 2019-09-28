@@ -1,5 +1,7 @@
+from datetime import datetime as dt
 from . import conversions as conv
 from . import statusbar as sts
+from . import rom_api as rom
 
 log = sts.get_logger(__name__)
 
@@ -118,16 +120,20 @@ def write_text_end(data):
 
 
 def create_profile(profile_name, ow_table_ptrs, palette_table_ptrs):
-    text = '\n[' + profile_name + ']' + '\n'
+    log.info("Creating Profile for ROM: " + rom.rom.rom_path)
 
+    text = "# Profile created for ROM: {}\n".format(rom.rom.rom_path)
+    text += "# Profile Creation Timestamp: {}\n".format(dt.now())
+    text += '[' + profile_name + ']\n'
     text += "OW Table Pointers = " + conv.HEX(ow_table_ptrs) + "\n"
-
     text += "Palette Table Pointers Address = "
+
     for ptr in palette_table_ptrs[:-1]:
         text += conv.HEX(ptr) + ", "
     text += conv.HEX(palette_table_ptrs[-1]) + "\n"
 
-    text += "Reserved Regions = 0x00000000-0x00000001, 0x00000002-0x00000003\n"
+    text += "Reserved Regions = 0x00000000-0x00000001, "
+    text += "0x00000002-0x00000003\n\n"
     write_text_end(text)
 
 

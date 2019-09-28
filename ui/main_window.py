@@ -197,7 +197,7 @@ class MyApp(base, form):
             elif core.is_orig_table_ptr(addr):
                 table_ptrs = addr
 
-        log.info(conv.HEX(table_ptrs))
+        log.info("Found the OW Tables Pointers at " + conv.HEX(table_ptrs))
         # Find Palette Offsets
         self.statusbar.showMessage("Searching for Palette Offsets")
         for addr in range(0, rom.rom.rom_size, 4):
