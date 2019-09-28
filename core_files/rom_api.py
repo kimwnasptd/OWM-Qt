@@ -238,6 +238,9 @@ def write_byte(addr, val):
 
 
 def read_bytes(addr, num):
+    '''
+    Read a variable number of bytes and return them as a list
+    '''
     rom.seek(addr)
     return [rom.read_byte() for _ in range(num)]
 
@@ -249,6 +252,9 @@ def write_bytes(addr, bytes):
 
 
 def ptr_to_addr(addr):
+    '''
+    Return the address that the pointer on addr is pointing to
+    '''
     rom.seek(addr)
     byte1 = rom.read_byte()
     byte2 = rom.read_byte() << 8

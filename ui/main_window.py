@@ -292,7 +292,6 @@ class MyApp(base, form):
         self.romNameLabel.setText(rom.rom.rom_file_name.split('/')[-1])
 
     def create_templates(self, ow_ptrs_addr):
-
         rom_base = self.rom_info.name
 
         if os.path.exists("Files/" + rom_base):
@@ -311,93 +310,37 @@ class MyApp(base, form):
                                   "wb+"))
             os.chmod("Files/" + rom_base + "/Template" + str(i), 0o777)
 
-        # Create Template for Type 1
-        rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr))
-        template_bytes = bytearray([rom.rom.read_byte() for i in range(0x24)])
-        templates[0].write(template_bytes)
+        sts.show("Creating the ROM Templates...")
+        log.info("Creating the Templates for the OW Data Pointers")
+        sizes = [core.FT16x32, core.FT32x32, core.FT16x16, core.FT64x64,
+                 core.FT128x64, core.FT48x48, core.FT88x32, core.FT96x40]
 
-        # Create Template for Type 2
-        rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 4))
-        template_bytes = bytearray([rom.rom.read_byte() for i in range(0x24)])
-        templates[1].write(template_bytes)
+        for i, size in enumerate(sizes):
+            # Search all the OWs in the ROM and copy the OW Data of the first
+            # OW with the specific size. If an OW doesn't exist with this size
+            # then there will be a WARNING in the log.
+            ow = 0
+            found_ow = None
+            while core.is_ow_data_ptr(ow_ptrs_addr + 4 * ow):
+                ow_data = rom.ptr_to_addr(ow_ptrs_addr + 4 * ow)
+                frame_ptr = rom.ptr_to_addr(ow_data + 0x1C)
+                if rom.read_bytes(frame_ptr + 4, 2) == size:
+                    found_ow = ow
+                    break
 
-        # Create Template for Type 3
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
+                ow += 1
 
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 16*4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[2].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 5 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[2].write(template_bytes)
+            if found_ow is not None:
+                log.info("Using OW {} for Template {}, size {}".format(
+                    ow, i + 1, conv.HEX_LST(size)))
+            else:
+                log.info("This ROM doesn't have an OW with size: " +
+                         conv.HEX_LST(size))
 
-        # Create Template for Type 4
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
-
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 108 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[3].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 114 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[3].write(template_bytes)
-
-        # Create Template for Type 5 // FR/LG only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
-
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 151 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[4].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[4].write(template_bytes)
-
-        # Create Template for Type 6 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
-
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[5].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 94 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[5].write(template_bytes)
-
-        # Create Template for Type 7 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
-
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[6].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 141 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[6].write(template_bytes)
-
-        # Create Template for Type 8 // EM/Rby/Sap only
-        if rom_base[:3] == "BPR" or rom_base[:3] == "BPG":
-
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[7].write(template_bytes)
-        else:
-            rom.rom.seek(rom.ptr_to_addr(ow_ptrs_addr + 140 * 4))
-            template_bytes = bytearray(
-                [rom.rom.read_byte() for i in range(0x24)])
-            templates[7].write(template_bytes)
+            # Write the Template data
+            ow_data = rom.ptr_to_addr(ow_ptrs_addr + 4 * ow)
+            template_bytes = bytearray(rom.read_bytes(ow_data, 0x24))
+            templates[i].write(template_bytes)
 
     def paint_graphics_view(self, image):
         # Print an Image obj on the Graphics View

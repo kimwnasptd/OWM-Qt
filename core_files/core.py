@@ -4,15 +4,6 @@ from . import conversions as conv
 
 log = sts.get_logger(__name__)
 
-frametype1 = [0x0, 0x1]     # [16x32]
-frametype2 = [0x0, 0x2]     # [32x32]
-frametype3 = [0x80, 0x0]    # [16x16]
-frametype4 = [0x0, 0x8]     # [64x64]
-frametype5 = [0x0, 0x10]    # [128x64] FR Only
-frametype6 = [0x80, 0x4]    # [48x48] Emerald only
-frametype7 = [0x80, 0x5]    # [88x32] Emerald only
-frametype8 = [0x80, 0x7]    # [96x40] Emerald only
-
 # DEFINES
 T16x32 = 1
 T32x32 = 2
@@ -22,6 +13,15 @@ T128x64 = 5
 T48x48 = 6
 T88x32 = 7
 T96x40 = 8
+
+FT16x32 = [0x0, 0x1]     # [16x32]
+FT32x32 = [0x0, 0x2]     # [32x32]
+FT16x16 = [0x80, 0x0]    # [16x16]
+FT64x64 = [0x0, 0x8]     # [64x64]
+FT128x64 = [0x0, 0x10]    # [128x64] FR Only
+FT48x48 = [0x80, 0x4]    # [48x48] Emerald only
+FT88x32 = [0x80, 0x5]    # [88x32] Emerald only
+FT96x40 = [0x80, 0x7]    # [96x40] Emerald only
 
 
 # ----------------------Functions------------------------------
@@ -294,21 +294,21 @@ def is_frames_ptr(addr):
     # It checks first the type of the frames from the data next to the ptr
     frame = [rom.read_byte(addr + 4), rom.read_byte(addr + 5)]
 
-    if frame == frametype1:
+    if frame == FT16x32:
         tp = 1
-    elif frame == frametype2:
+    elif frame == FT32x32:
         tp = 2
-    elif frame == frametype3:
+    elif frame == FT16x16:
         tp = 3
-    elif frame == frametype4:
+    elif frame == FT64x64:
         tp = 4
-    elif frame == frametype5:
+    elif frame == FT128x64:
         tp = 5
-    elif frame == frametype6:
+    elif frame == FT48x48:
         tp = 6
-    elif frame == frametype7:
+    elif frame == FT88x32:
         tp = 7
-    elif frame == frametype8:
+    elif frame == FT96x40:
         tp = 8
     else:
         tp = 0
@@ -419,21 +419,21 @@ class FramesPointers:
 
         frametype = []
         if ow_type == T16x32:
-            frametype = frametype1
+            frametype = FT16x32
         elif ow_type == T32x32:
-            frametype = frametype2
+            frametype = FT32x32
         elif ow_type == T16x16:
-            frametype = frametype3
+            frametype = FT16x16
         elif ow_type == T64x64:
-            frametype = frametype4
+            frametype = FT64x64
         elif ow_type == T128x64:
-            frametype = frametype5
+            frametype = FT128x64
         elif ow_type == T48x48:
-            frametype = frametype6
+            frametype = FT48x48
         elif ow_type == T88x32:
-            frametype = frametype7
+            frametype = FT88x32
         elif ow_type == T96x40:
-            frametype = frametype8
+            frametype = FT96x40
 
         # Write the frames Pointers
         for i in range(0, frames_num):
@@ -458,22 +458,22 @@ class FramesPointers:
         frame = [rom.read_byte(addr + 4), rom.read_byte(addr + 5)]
 
         tp = -1
-        if frame == frametype1:
-            tp = 1
-        elif frame == frametype2:
-            tp = 2
-        elif frame == frametype3:
-            tp = 3
-        elif frame == frametype4:
-            tp = 4
-        elif frame == frametype5:
-            tp = 5
-        elif frame == frametype6:
-            tp = 6
-        elif frame == frametype7:
-            tp = 7
-        elif frame == frametype8:
-            tp = 8
+        if frame == FT16x32:
+            tp = T16x32
+        elif frame == FT32x32:
+            tp = T32x32
+        elif frame == FT16x16:
+            tp = T16x16
+        elif frame == FT64x64:
+            tp = T64x64
+        elif frame == FT128x64:
+            tp = T128x64
+        elif frame == FT48x48:
+            tp = T48x48
+        elif frame == FT88x32:
+            tp = T88x32
+        elif frame == FT96x40:
+            tp = T96x40
 
         return tp
 
