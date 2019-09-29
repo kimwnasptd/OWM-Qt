@@ -140,7 +140,7 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
             for ow in range(len(root.tables_list[table].ow_data_ptrs)):
                 # add the ow nodes
-                newOWNode = OWNode(ow, newTableNode, self.root)
+                OWNode(ow, newTableNode, self.root)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         """
@@ -285,13 +285,14 @@ class TreeViewModel(QtCore.QAbstractItemModel):
 
             if parentNode.typeInfo() == "table_node":
                 # Adding OWs
-                childNode = OWNode(position + row, self.root)
-                success = parentNode.insertChild(position + row, childNode)
+                ow = OWNode(position + row, self.root)
+                success = parentNode.insertChild(position + row, ow)
                 # Re-init the node, so it loads the frame
                 self.setData(self.index(row + position, 0, parent), None)
             if parentNode.typeInfo() == "NODE":
-                childNode = TableNode(childCount, self.root)
-                success = parentNode.insertChild(childCount, childNode)
+                # Create the Table Node on the rootNode
+                TableNode(childCount, self._rootNode)
+                success = True
 
         # Only for the OWs, increase the name Id by one,
         # in case an OW was INSERTED
@@ -388,14 +389,11 @@ class TreeViewModel(QtCore.QAbstractItemModel):
         ui.item_selected(self.index(ow_id, 0, tableNode))
 
     def insertTable(self, ow_ptrs, data_ptrs, frames_ptrs, frames_addr, ui):
-        parent = QtCore.QModelIndex()
-        parentNode = self.getNode(parent)
-
         self.root.custom_table_import(ow_ptrs,
                                       data_ptrs,
                                       frames_ptrs,
                                       frames_addr)
-        self.insertRows(-1, 1, parent)
+        self.insertRows(-1, 1)
 
         ui.selected_table = self.tablesCount() - 1
         if ui.selected_table == -1:

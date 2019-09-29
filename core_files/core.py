@@ -867,15 +867,25 @@ class Root:
             ow.remove()
 
         # Clear all of the godam data
+        log.info("Removing the OW Pointers Table at: {}".format(
+            conv.HEX(tbl.table_addr)
+        ))
+        rom.fill_with_data(tbl.table_addr, 259 * 4, 0xFF)
+
+        log.info("Removing the OW Data Table at: {}".format(
+            conv.HEX(tbl.ow_data_addr)
+        ))
+        rom.fill_with_data(tbl.ow_data_addr, 256 * 36, 0xFF)
+
+        log.info("Removing the Frames Pointers data at: {}".format(
+            conv.HEX(tbl.frames_ptrs_addr)
+        ))
         rom.fill_with_data(tbl.frames_ptrs_addr,
                            256 * 8 * rom.FRAMES_PER_OW,
                            0xFF)
-        rom.fill_with_data(tbl.ow_data_addr, 256 * 36, 0xFF)
-        rom.fill_with_data(tbl.table_addr, 259 * 4, 0xFF)
 
         # Move all the table ptrs to the left
         addr = self.ow_tables_addr + (i * 4)
-        log.info("remove_table: about to remove: " + conv.HEX(addr))
         rom.fill_with_data(addr, 4, 0)
 
         addr += 4
@@ -884,7 +894,8 @@ class Root:
             rom.move_data(addr, addr - 4, 4, 0)
             addr += 4
 
-        # Re-initialise the entire root
+        # Re-initialise the entire root and update the available free space
+        rom.update_free_space(0xA000)
         self.reload()
 
     def tables_num(self):
